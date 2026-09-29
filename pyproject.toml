@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-hcl"
+version = "0.1.0"
+description = "Agent-neutral MCP server for staged H3C Cloud Lab topology changes"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = ["mcp>=1.28,<2"]
+
+[project.scripts]
+mcp-hcl = "mcp_hcl.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
