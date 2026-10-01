@@ -411,9 +411,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             services["services"] = [{"device": "r1", "feature": "ospf",
                                      "parameters": {"area": "0.0.0.0"}}]
             body = await plan_result(session, services)
-            self.assertTrue(body["valid"])
-            self.assertIn("feature_runtime_unverified",
-                          [row.get("code") for row in body["warnings"]])
+            self.assertFalse(body["valid"])
+            self.assertEqual(body["status"], "rejected")
+            self.assertTrue(body["errors"])
 
     # ---------------------------------------------------------- path safety
     async def test_project_path_and_root_safety_rejections(self) -> None:
