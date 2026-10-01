@@ -178,5 +178,6 @@ def generate_operations(data,catalog,include_configs=True):
     if include_configs:
         operations.extend({'action':'configure_device','device':d,'commands':commands.splitlines()} for d,commands in validated['configs'].items())
     return {'status':'verified','verified_scope':'offline_hcl_operation_manifest_only','schema_version':1,
-            'operations':operations,'plan':plan,'executable':False,'requires':'P2/P3 adapters and mapping/GUI acceptance',
+            'operations':operations,'plan':plan,'executable':False,'file_executor':'hcl_stage_plan',
+            'requires':'Source project and explicit port map for file staging; P2/P3 adapters and GUI acceptance for live execution',
             'evidence':validated['evidence'],'warnings':validated.get('warnings',[]),'runtime_verified':False,'full_live_gate_passed':False}

@@ -21,6 +21,8 @@ from mcp_hcl.project import ProjectError, ProjectStore
 from mcp_hcl.parity import REGISTERED_RESOURCES, REGISTERED_TOOLS, parity_report
 from mcp_hcl.topology import validate_plan
 from mcp_hcl.offline_tools import register_offline
+from mcp_hcl.gui_relay import HclGuiRelay, register_gui_tools
+from mcp_hcl.build_pipeline import register_build_tool
 
 
 def live_writes_enabled() -> bool:
@@ -85,6 +87,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
             ),
             "catalog": "local model defaults and port families; runtime firmware unverified",
             "offline_layer": {"typed_service_generators": ["dhcp", "ospf", "rip", "vlan", "acl", "nat", "security", "wireless", "qos", "netstream"],
+                              "file_executor": "hcl_stage_plan",
                               "operation_manifests_executable": False,
                               "full_p1_acceptance": "incomplete: AC/AP default CLI mappings and per-model NIC mode compatibility are unverified"},
         }
@@ -399,7 +402,10 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                 return _rejected("invalid_argument", str(exc), "console_exec")
         return console.run(pipe, command, expect=expect)
 
-    register_offline(mcp, catalog, store.output_root, catalog_read)
+    register_offline(mcp, catalog, store, catalog_read)
+    relay = HclGuiRelay(store, writes_enabled=writes)
+    register_gui_tools(mcp, relay)
+    register_build_tool(mcp, store, catalog, relay)
     return mcp
 
 

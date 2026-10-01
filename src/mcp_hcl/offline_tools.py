@@ -3,10 +3,23 @@ import json
 from mcp_hcl.artifacts import Artifacts
 from mcp_hcl.planning import plan_topology, estimate_plan, explain_plan, fix_plan
 from mcp_hcl.generation import generate_configs, generate_operations
+from mcp_hcl.project_build import stage_plan
 
 
-def register_offline(mcp, catalog, output_root, catalog_read):
-    artifacts=Artifacts(output_root,catalog)
+def register_offline(mcp, catalog, store, catalog_read):
+    artifacts=Artifacts(store.output_root,catalog)
+
+    @mcp.tool()
+    def hcl_stage_plan(project_path: str, stage_name: str, plan: dict,
+                       port_map: dict[str, dict[str, str]], idempotency_key: str | None = None) -> dict:
+        """Compile a validated plan into a separate .net project using real source models.
+
+        Replaces source devices/notes in the copy. Every linked CLI port needs
+        an explicit model-to-scene map. Command transcripts stay outside startup
+        configs. No GUI open, VM creation, power, CLI deployment or connectivity
+        is claimed by a staged result.
+        """
+        return stage_plan(store, catalog, project_path, stage_name, plan, port_map)
 
     @mcp.tool()
     def hcl_list_modules(model: str | None = None) -> dict:

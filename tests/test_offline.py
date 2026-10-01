@@ -116,7 +116,7 @@ class OfflineStdioTests(unittest.IsolatedAsyncioTestCase):
             paths=build_fixture(Path(temporary))
             async with mcp_session(paths) as session:
                 tools={t.name:t for t in (await session.list_tools()).tools}
-                self.assertEqual(len(tools),25)
+                self.assertEqual(len(tools),29)
                 schema=tools['hcl_generate_configs'].inputSchema
                 self.assertFalse(schema['additionalProperties'])
                 self.assertIn('discriminator',schema['properties']['plan']['properties']['services']['items'])

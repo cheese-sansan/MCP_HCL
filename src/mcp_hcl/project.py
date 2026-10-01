@@ -15,6 +15,7 @@ import re
 import secrets
 import shutil
 import tempfile
+from uuid import uuid4
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -259,13 +260,14 @@ class ProjectStore:
                 if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in source.rglob("*")):
                     raise ProjectError(f"Linked files are not accepted in {dirname}")
                 shutil.copytree(source, temp_project / dirname)
-            serial = doc.directory / "SerialFile"
-            if serial.exists():
-                if not serial.is_dir() or serial.is_symlink() or getattr(serial, "is_junction", lambda: False)():
-                    raise ProjectError("Linked or invalid SerialFile directory")
-                if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in serial.rglob("*")):
-                    raise ProjectError("Linked files are not accepted in SerialFile")
-                shutil.copytree(serial, temp_project / "SerialFile")
+            for optional_name in ('SerialFile', 'MCPArtifacts'):
+                optional = doc.directory / optional_name
+                if optional.exists():
+                    if not optional.is_dir() or optional.is_symlink() or getattr(optional, "is_junction", lambda: False)():
+                        raise ProjectError(f'Linked or invalid {optional_name} directory')
+                    if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in optional.rglob('*')):
+                        raise ProjectError(f'Linked files are not accepted in {optional_name}')
+                    shutil.copytree(optional, temp_project / optional_name)
             return temp_root, final_root
         except Exception:
             shutil.rmtree(temp_root)
@@ -278,6 +280,7 @@ class ProjectStore:
         lines: list[str],
         metadata: dict[str, Any],
         new_config_name: str | None = None,
+        additional_files: dict[str, bytes] | None = None,
     ) -> dict[str, Any]:
         temp_root, final_root = self._stage(doc, stage_name)
         temp_project = temp_root / doc.directory.name
@@ -295,17 +298,32 @@ class ProjectStore:
             )
             if new_config_name is not None:
                 (temp_project / "DeviceConfig" / f"{new_config_name}.cfg").write_bytes(b"")
+            for relative, content in (additional_files or {}).items():
+                target = temp_project / relative
+                if not target.resolve().is_relative_to(temp_project.resolve()):
+                    raise ProjectError('Additional staged file escaped the project')
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
             checked = _read_document(temp_project)
             if len(checked.sections) != len(metadata["deviceInfoList"]):
                 raise ProjectError("Staged .net and project.json device counts disagree")
+            summary = checked.summary()
+            operation_id = uuid4().hex
+            marker = temp_project / 'MCPArtifacts' / 'stage-receipt.json'
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({'schema_version': 1, 'operation_id': operation_id,
+                                         'source_directory': str(doc.directory),
+                                         'project_file': str(final_project / doc.net_path.name),
+                                         'stage_name': stage_name, 'runtime_verified': False}, indent=2), encoding='utf-8')
             os.rename(temp_root, final_root)
             return {
                 "status": "staged",
+                "operation_id": operation_id,
                 "project_file": str(final_project / doc.net_path.name),
                 "project_directory": str(final_project),
                 "activation": "Open this .net file in HCL; the current canvas is unchanged",
                 "device_count": len(checked.sections),
-                "link_count": len(checked.summary()["links"]),
+                "link_count": len(summary["links"]),
             }
         except Exception:
             if temp_root.exists():

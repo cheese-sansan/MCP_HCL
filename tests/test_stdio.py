@@ -39,7 +39,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                             "hcl_device_power", "hcl_console_exec",
                             "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
                             "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
-                            "hcl_export_artifacts", "hcl_load_plan",
+                            "hcl_export_artifacts", "hcl_load_plan", "hcl_stage_plan", "hcl_open_project", "hcl_save_project", "hcl_full_build",
                         },
                     )
                     result = await asyncio.wait_for(session.call_tool("hcl_capabilities", {}), timeout=10)

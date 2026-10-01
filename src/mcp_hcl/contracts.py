@@ -32,10 +32,11 @@ def envelope(body: dict[str, Any], *, request_id: Any = None,
                       {"ok", "verified", "staged"} else "none")
     result.setdefault("evidence", [])
     if result['status'] == 'staged' and result.get('project_file'):
-        result['verified_scope'] = 'isolated_saved_project_only'
-        if not result['evidence']:
+        if 'verified_scope' not in body:
+            result['verified_scope'] = 'isolated_saved_project_only'
+        if not any(item.get('source') == result['project_file'] for item in result['evidence']):
             path = Path(result['project_file'])
-            result['evidence'] = [{'source': str(path), 'layer': 'saved_project', 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}]
+            result['evidence'].append({'source': str(path), 'layer': 'saved_project', 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
     result.setdefault("errors", [{"code": "operation_failed", "message": result["error"]}]
                       if result.get("error") else [])
     result.setdefault("warnings", [])
@@ -99,7 +100,8 @@ class StrictFastMCP(FastMCP):
                 try:
                     if name == 'hcl_backend_topology' and arguments.get('action') in {'close','status'} and set(arguments) != {'action'}:
                         body = {'status':'rejected','errors':[{'code':'invalid_arguments','message':'close/status accept only action'}]}
-                    elif self.artifact_retries and name.startswith("hcl_stage_"):
+                    elif self.artifact_retries and (name.startswith("hcl_stage_") or
+                                                    (name == 'hcl_full_build' and not validated['activate'])):
                         body = self.artifact_retries.run(
                             name, validated, lambda: tool.fn(**validated),
                             source=validated.get("project_path"))

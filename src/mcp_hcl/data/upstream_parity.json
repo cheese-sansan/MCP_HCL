@@ -299,11 +299,12 @@
       "upstream_tool": "pt_full_build",
       "category": "artifacts",
       "hcl_targets": [
-        "hcl_full_build"
+        "hcl_full_build",
+        "hcl_stage_plan"
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Registered pipeline plans and compiles an isolated HCL project from real source templates and explicit port maps. Optional GUI activation is write-gated; guest configuration and connectivity remain unverified."
     },
     {
       "upstream_tool": "pt_generate_configs",
@@ -447,7 +448,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered gated staged-project GUI relay verifies active caption and per-request receipts. Actual HCL execution on this host is not yet accepted."
     },
     {
       "upstream_tool": "pt_plan_topology",
@@ -561,7 +562,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered gated GUI save relay requires active staged-project identity and file readback. Live topology contents, guests and CLI effects remain unverified."
     },
     {
       "upstream_tool": "pt_screenshot",
