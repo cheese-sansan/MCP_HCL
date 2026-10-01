@@ -5,6 +5,7 @@ import base64
 import os
 import re
 import time
+import subprocess
 from pathlib import Path
 from mcp_hcl.console import ConsoleError, ConsoleSession, describe, open_console_pipe, _decode
 
@@ -53,6 +54,17 @@ class PersistentConsole:
         self.timeout = timeout
         self.max_bytes = max_bytes
         try:
+            if session is None and os.name == 'nt':
+                # Never close PuTTY or MultiCC automatically. Query only a
+                # boolean; do not expose other process command lines.
+                needle=pipe.replace("'","''")
+                query=("$needle='"+needle+"'; $p=@(Get-CimInstance Win32_Process -ErrorAction Stop | "
+                       "Where-Object {$_.Name -in @('putty.exe','SimwareMultiCC.exe')}); "
+                       "[bool](@($p | Where-Object {$_.Name -eq 'SimwareMultiCC.exe' -or "
+                       "[string]::IsNullOrEmpty($_.CommandLine) -or $_.CommandLine.Contains($needle)}).Count)")
+                checked=subprocess.run(['powershell.exe','-NoProfile','-Command',query],capture_output=True,timeout=10)
+                if checked.returncode != 0 or checked.stdout.strip().lower() != b'false':
+                    raise ConsoleError('PuTTY/MultiCC may own this console; release it before requesting an exclusive lease')
             self.session = session or ConsoleSession(open_console_pipe(pipe))
         except Exception:
             self.lease.close()

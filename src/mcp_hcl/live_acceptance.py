@@ -41,6 +41,7 @@ def accept_lab(deployment,project_path,topology):
     if not configuration.get('configuration_verified'):
         (directory/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');return result
     observation_error=None
+    unique=False
     try:
         expected={'r1':{'192.0.2.2'},'r2':{'192.0.2.1','192.0.2.3'},'r3':{'192.0.2.2'}}
         leases=[];client_addresses={};client_gateways={}
@@ -72,7 +73,7 @@ def accept_lab(deployment,project_path,topology):
                     result['ping_checks'].append(deployment.connectivity(project_path,topology,source,client_addresses[destination],5))
     except (ConsoleError,OSError,ValueError) as exc:
         observation_error=str(exc)
-    result['network_gate_passed']=observation_error is None and locals().get('unique',False) and all(c['passed'] for key in ('neighbor_checks','route_checks','lease_checks') for c in result[key]) and len(result['ping_checks'])==6 and all(p['connectivity_verified'] for p in result['ping_checks'])
+    result['network_gate_passed']=observation_error is None and unique and all(c['passed'] for key in ('neighbor_checks','route_checks','lease_checks') for c in result[key]) and len(result['ping_checks'])==6 and all(p['connectivity_verified'] for p in result['ping_checks'])
     if not result['network_gate_passed']:
         result['observation_error']=observation_error
         result['rollback']=[]
