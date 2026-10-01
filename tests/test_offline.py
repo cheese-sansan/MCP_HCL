@@ -66,6 +66,16 @@ class ArtifactBehaviorTests(unittest.TestCase):
         self.assertTrue(models['MSR36-20']['scene_ports'])
         self.assertFalse(any(p['mapping_verified'] for p in models['MSR36-20']['scene_ports']))
 
+    def test_operation_manifest_preserves_annotations_and_omits_configs_when_requested(self):
+        plan=copy.deepcopy(self.plan)
+        plan['annotations']=[{'text':'隔离实验\n保留说明','x':12.0,'y':34.0}]
+        result=generate_operations(plan,self.catalog,include_configs=False)
+        self.assertEqual(result['status'],'verified')
+        notes=[v for v in result['operations'] if v['action']=='add_annotation']
+        self.assertEqual(notes,[{'action':'add_annotation',**plan['annotations'][0]}])
+        self.assertFalse(any(v['action']=='configure_device' for v in result['operations']))
+        self.assertFalse(result['executable'])
+
 
 class PlanningTests(unittest.TestCase):
     def test_planning_estimates_and_export_roundtrip_for_all_templates(self):
