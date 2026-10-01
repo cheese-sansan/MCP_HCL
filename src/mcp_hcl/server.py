@@ -13,6 +13,8 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_hcl import __version__
 from mcp_hcl import console as hcl_console
+from mcp_hcl.contracts import StrictFastMCP
+from mcp_hcl.artifact_store import ArtifactRetries
 from mcp_hcl.backend import BackendError, HclBackend
 from mcp_hcl.catalog import CatalogError, HclCatalog
 from mcp_hcl.project import ProjectError, ProjectStore
@@ -47,7 +49,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     session_lock = threading.Lock()
     session_state: dict[str, Any] = {"session": None, "topology": None, "project": None,
                                      "commands": []}
-    mcp = FastMCP(
+    mcp = StrictFastMCP(
         name="mcp-hcl",
         instructions=(
             "HCL topology changes are staged as separate project files. "
@@ -58,6 +60,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     # FastMCP 1.x has no version constructor argument. Its underlying Server
     # exposes the version used by initialize; keep the handshake project-specific.
     mcp._mcp_server.version = __version__
+    mcp.artifact_retries = ArtifactRetries(store.output_root, store.project_roots)
 
     @mcp.tool()
     def hcl_capabilities() -> dict[str, Any]:
@@ -68,7 +71,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
             "stage_device_and_link": "available",
             "gui_activation": "requires opening the staged .net project in HCL",
             "live_canvas_api": "not verified and not exposed",
-            "device_start_and_console": "not implemented",
+            "device_start_and_console": "gated primitives; guest and CLI effects unverified",
             "output_root": str(store.output_root),
             "live_gate": {"state": "not_passed", "full_live_gate_passed": False},
             "registered_tools": sorted(REGISTERED_TOOLS),
@@ -132,7 +135,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         return backend.status()
 
     @mcp.tool()
-    def hcl_stage_copy(project_path: str, stage_name: str) -> dict[str, Any]:
+    def hcl_stage_copy(project_path: str, stage_name: str, idempotency_key: str | None = None) -> dict[str, Any]:
         """Create an isolated HCL project for safe live-gate verification."""
         try:
             result = store.stage_copy(project_path, stage_name)
@@ -167,6 +170,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         connect_to: str | None = None,
         connect_to_port: str | None = None,
         new_port: str | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Copy a project, add a device cloned from a known model, and optionally link it."""
         try:
@@ -185,6 +189,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         a_port: str,
         b: str,
         b_port: str,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         """Copy a project and add a reciprocal link between two free ports."""
         try:
@@ -253,6 +258,10 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         ``topology`` and a ``working_directory`` inside a configured project root.
         """
         with session_lock:
+            if action in {"close", "status"} and any(v is not None for v in (topology, working_directory, project_name)):
+                return _rejected("invalid_arguments", "close/status do not accept topology, working_directory or project_name", "backend_topology")
+            if action in {"close", "status"} and udp_port != 10000:
+                return _rejected("invalid_arguments", "udp_port belongs to action=open", "backend_topology")
             if action == "status":
                 return {"status": "verified" if session_state["session"] else "unverified",
                         "operation": "backend_topology_status", "operation_id": uuid4().hex,
@@ -327,6 +336,8 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         ``errorCode=228``. Only power-on was observed - no stop verb exists in
         the logs, so ``on=False`` is reported as unsupported rather than guessed.
         """
+        if not backend.allow_writes:
+            return _rejected("writes_disabled", "Live writes are disabled", "device_power")
         if on is not True:
             return _rejected(
                 "unsupported",
@@ -368,6 +379,10 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         drained and reported as ``discarded_stale_bytes`` so stale console text
         cannot be mistaken for this request's answer.
         """
+        if pipe is not None and (topology is not None or device is not None):
+            return _rejected("invalid_arguments", "pipe and topology/device are mutually exclusive", "console_exec")
+        if not console.writes_enabled:
+            return _rejected("writes_disabled", "Live writes are disabled", "console_exec")
         if pipe is None:
             if topology is None or device is None:
                 return _rejected("missing_argument",

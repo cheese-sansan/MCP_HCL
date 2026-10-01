@@ -53,6 +53,16 @@ class ProjectDocument:
     newline: str
 
     def summary(self) -> dict[str, Any]:
+        ids: set[int] = set()
+        for section in self.sections.values():
+            try:
+                device_id = int(section.fields["device_id"])
+                coordinates = [float(section.fields.get(axis, "0")) for axis in ("x", "y", "z")]
+            except (ValueError, KeyError, OverflowError) as exc:
+                raise ProjectError(f"Invalid device ID or coordinate: {section.name}") from exc
+            if device_id <= 0 or device_id in ids or not all(math.isfinite(v) for v in coordinates):
+                raise ProjectError(f"Duplicate/invalid device ID or nonfinite coordinate: {section.name}")
+            ids.add(device_id)
         links: set[tuple[tuple[str, str], tuple[str, str]]] = set()
         for section in self.sections.values():
             for port, value in section.fields.items():
@@ -197,7 +207,9 @@ class ProjectStore:
         directory = Path(project_path).resolve()
         if not any(directory.is_relative_to(root) for root in self.project_roots):
             raise ProjectError("Project path is outside configured roots")
-        return _read_document(directory)
+        document = _read_document(directory)
+        document.summary()
+        return document
 
     def inspect(self, project_path: str) -> dict[str, Any]:
         return self._open(project_path).summary()

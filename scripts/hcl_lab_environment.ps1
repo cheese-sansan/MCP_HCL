@@ -7,10 +7,18 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\hcl_lab_environment.ps1 `
 #     -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 
-param([Parameter(Mandatory = $true)][string]$ReceiptDirectory)
+param([Parameter(Mandatory = $true)][string]$ReceiptDirectory, [string]$EntryId, [string]$CreateReceipt)
 
 $ErrorActionPreference = 'Continue'
-$expectedEntry = '{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}'   # from the Create receipt
+. (Join-Path $PSScriptRoot 'hcl_lab_verdict.ps1')
+$expectedEntry = $EntryId
+if ($CreateReceipt) {
+    if ($EntryId) { throw 'Supply EntryId or CreateReceipt, not both.' }
+    $creation = Get-Content -LiteralPath $CreateReceipt -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($creation.action -ne 'Create' -or $creation.status -ne 'verified') { throw 'A verified Create receipt is required.' }
+    $expectedEntry = $creation.entry_id
+}
+if ($expectedEntry -notmatch '^\{[0-9a-fA-F-]{36}\}$') { throw 'Supply the explicit lab EntryId or its verified CreateReceipt.' }
 $result = [ordered]@{
     operation_id = [Guid]::NewGuid().ToString('N')
     timestamp_utc = [DateTime]::UtcNow.ToString('o')
@@ -28,11 +36,13 @@ $result = [ordered]@{
 
 try {
     # 1. Which entry did we actually boot? bcdedit's {current} is the running one.
-    $bcd = & "$env:SystemRoot\System32\bcdedit.exe" /enum '{current}' 2>&1
+    $bcd = & "$env:SystemRoot\System32\bcdedit.exe" /enum '{current}' /v 2>&1
     $result.bcd_current_read_ok = ($LASTEXITCODE -eq 0)
     $result.bcd_current = ($bcd | Out-String).Trim()
-    $result.booted_lab_entry = ($result.bcd_current -match 'MCP_HCL Lab \(Hypervisor and VSM off\)') -and
-                               ($result.bcd_current -match '(?im)^hypervisorlaunchtype\s+Off\s*$')
+    $result.booted_lab_entry = $result.bcd_current_read_ok -and
+                               ($result.bcd_current -match [regex]::Escape($expectedEntry)) -and
+                               ($result.bcd_current -match '(?im)^hypervisorlaunchtype\s+Off\s*$') -and
+                               ($result.bcd_current -match '(?im)^vsmlaunchtype\s+Off\s*$')
 
     # 2. Is a hypervisor actually present in this session?
     try {
@@ -54,7 +64,10 @@ try {
         $result.vboxmanage_read_ok = $false
     }
 
-    if (-not $result.booted_lab_entry) {
+    $result.verdict = Get-HclLabVerdict $result.bcd_current_read_ok $result.booted_lab_entry $result.hypervisor_present
+    if ($result.verdict -eq 'unknown') {
+        $result.next_step = 'Environment readings failed or are unknown; do not start the live gate.'
+    } elseif (-not $result.booted_lab_entry) {
         $result.verdict = 'not_booted_into_lab_entry'
         $result.next_step = 'Restart and select "MCP_HCL Lab (Hypervisor and VSM off)"; nothing else was changed.'
     } elseif ($result.hypervisor_present) {

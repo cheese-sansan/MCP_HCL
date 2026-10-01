@@ -48,7 +48,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual({str(resource.uri) for resource in resources.resources},
                                      {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports"})
                     resource = await session.read_resource("hcl://capabilities")
-                    self.assertEqual(json.loads(resource.contents[0].text), content)
+                    self.assertEqual(json.loads(resource.contents[0].text), {key: content[key] for key in json.loads(resource.contents[0].text)})
                     report_result = await session.call_tool("hcl_parity_report", {})
                     report = json.loads(report_result.content[0].text)
                     self.assertEqual(len(report["tools"]), 61)

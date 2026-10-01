@@ -332,7 +332,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                 ("hcl_device_power", {"device": 1, "on": True}),
                 ("hcl_console_exec", {"command": "display version", "topology": "topo1",
                                       "device": 1}),
-                ("hcl_backend_topology", {"action": "close", "topology": "topo1"}),
+                ("hcl_backend_topology", {"action": "close"}),
             ):
                 with self.subTest(tool=tool):
                     _, body = await call(session, tool, arguments)
@@ -341,7 +341,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(body["full_live_gate_passed"])
 
     # ------------------------------------------------------------------ plan
-    async def test_plan_structural_errors_use_pydantic_shape_not_semantic_codes(self) -> None:
+    async def test_plan_structural_errors_use_normalized_codes(self) -> None:
         unknown_field = base_plan()
         unknown_field["unexpected"] = 1
         wrong_version = base_plan()
@@ -360,10 +360,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(body["valid"])
                     first = body["errors"][0]
                     # structural errors carry the raw pydantic shape: no "code" key
-                    self.assertNotIn("code", first)
-                    self.assertEqual(first["type"], expected_type)
-                    self.assertIn("msg", first)
-                    self.assertIn("loc", first)
+                    self.assertEqual(first["code"], expected_type)
+                    self.assertIn("message", first)
+                    self.assertIn("path", first)
 
             result, _ = await call(session, "hcl_validate_plan", {"plan": "not-an-object"})
             self.assertTrue(result.isError, "a non-object plan is an argument error, not a verdict")
@@ -661,16 +660,15 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     result, body = await call(session, "hcl_inspect_project",
                                               {"project_path": str(path)})
                     # documented caveat: this shape escapes as a tool error
-                    self.assertTrue(result.isError,
-                                    "expected the documented tool-error escape hatch")
-                    self.assertNotEqual((body or {}).get("status"), "ok")
+                    self.assertFalse(result.isError)
+                    self.assertEqual(body["status"], "rejected")
 
     # -------------------------------------------------- argument / protocol
     async def test_argument_and_jsonrpc_edge_behaviour(self) -> None:
         async with mcp_session(self.paths) as session:
             result, _ = await call(session, "hcl_inspect_project", {})
             self.assertTrue(result.isError, "a missing required argument is an argument error")
-            self.assertIn("validation error", result.content[0].text)
+            self.assertEqual(json.loads(result.content[0].text)["errors"][0]["code"], "missing")
 
             result, _ = await call(session, "hcl_inspect_project", {"project_path": 5})
             self.assertTrue(result.isError, "a wrong JSON type is not coerced")
@@ -681,43 +679,30 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
 
             result, _ = await call(session, "hcl_live_deploy", {})
             self.assertTrue(result.isError)
-            self.assertIn("Unknown tool", result.content[0].text)
+            self.assertEqual(json.loads(result.content[0].text)["errors"][0]["code"], "unknown_tool")
 
             with self.assertRaises(McpError):
                 await session.read_resource(AnyUrl("hcl://does-not-exist"))
             with self.assertRaises(McpError):
                 await session.subscribe_resource(AnyUrl("hcl://catalog/devices"))
 
-    async def test_numeric_strings_are_coerced_but_unknown_arguments_are_ignored(self) -> None:
-        # Characterisation, not endorsement: FastMCP currently ignores unknown
-        # arguments.  A typo in an optional argument is therefore silently
-        # dropped instead of rejected, so update this test deliberately if
-        # strict argument validation is ever added.
+    async def test_raw_argument_types_and_unknown_fields_are_rejected(self) -> None:
         async with mcp_session(self.paths) as session:
-            result, _ = await call(session, "hcl_capabilities", {"bogus": 1})
-            self.assertFalse(result.isError)
-
-            result, body = await call(session, "hcl_stage_add_device",
-                                      {"project_path": self.source, "stage_name": "CoerceStr",
-                                       "template_device": "R1", "new_name": "CoerceR",
-                                       "x": "300", "y": "300", "connect_to": "R2",
-                                       "connect_to_port": "GE_0/1", "new_port": "GE_0/0"})
-            self.assertFalse(result.isError)
-            self.assertEqual(body["status"], "staged")
-            staged = await inspect(session, body["project_directory"])
-            added = [row for row in staged["devices"] if row["name"] == "CoerceR"]
-            self.assertEqual((added[0]["x"], added[0]["y"]), (300.0, 300.0))
-            new_links = [row for row in staged["links"] if "CoerceR" in (row["a"], row["b"])]
-            self.assertEqual(len(new_links), 1)
-            self.assertEqual({new_links[0]["a_port"], new_links[0]["b_port"]},
-                             {"GE_0/0", "GE_0/1"})
-
-            result, body = await call(session, "hcl_stage_copy",
-                                      {"project_path": self.source, "stage_name": "IgnoreExtra",
-                                       "not_a_real_argument": "please ignore me"})
-            self.assertFalse(result.isError,
-                             "unknown argument names are currently ignored, not rejected")
-            self.assertEqual(body["status"], "staged")
+            for tool, arguments in (
+                ("hcl_capabilities", {"bogus": 1}),
+                ("hcl_stage_add_device", {"project_path": self.source, "stage_name": "CoerceStr",
+                                         "template_device": "R1", "new_name": "CoerceR", "x": "300", "y": 300}),
+                ("hcl_stage_copy", {"project_path": self.source, "stage_name": "IgnoreExtra", "not_a_real_argument": True}),
+                ("hcl_device_power", {"device": True}),
+                ("hcl_device_power", {"device": "1"}),
+                ("hcl_validate_plan", {"plan": json.dumps(base_plan())}),
+            ):
+                with self.subTest(tool=tool, arguments=arguments):
+                    result, body = await call(session, tool, arguments)
+                    self.assertTrue(result.isError)
+                    self.assertEqual(body["status"], "rejected")
+                    self.assertTrue(body["errors"])
+            self.assertFalse((self.paths["output"] / "CoerceStr").exists())
 
 
 if __name__ == "__main__":

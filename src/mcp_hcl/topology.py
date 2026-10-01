@@ -9,10 +9,11 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from mcp_hcl.catalog import CatalogError, HclCatalog
+from mcp_hcl.contracts import validation_errors
 
 
 class StrictModel(BaseModel):
-    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False, strict=True)
 
 
 class Device(StrictModel):
@@ -104,7 +105,7 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
     try:
         plan = TopologyPlan.model_validate(data)
     except ValidationError as exc:
-        result.update(status='rejected', valid=False, errors=exc.errors(include_input=False, include_context=False))
+        result.update(status='rejected', valid=False, errors=validation_errors(exc))
         return result
     try:
         installed = catalog.devices()

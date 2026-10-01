@@ -251,12 +251,14 @@ class _Wire:
     def __init__(self, connection: socket.socket, timeout: float) -> None:
         self._connection = connection
         self._timeout = timeout
+        self.sent_commands: list[str] = []
         self._connection.settimeout(timeout)
 
     def exchange(self, command: str, *,
                  accepted_codes: frozenset[int] | None = _SUCCESS_CODES) -> dict[str, Any]:
         request_id = secrets.randbelow(900_000_000) + 100_000_000
         self._connection.sendall(f"{request_id} {command}\n".encode("ascii"))
+        self.sent_commands.append(" ".join(command.split()[:2]))
         response = bytearray()
         deadline = time.monotonic() + self._timeout
         match: dict[str, Any] | None = None
@@ -334,7 +336,7 @@ def _invoke(exchange: Callable[[str], dict[str, Any]], verb: str,
     command = f"{spec.service} {verb}" + (f" {payload}" if payload else "")
     try:
         reply = exchange(command)
-    except BackendError as exc:
+    except (BackendError, OSError, UnicodeError) as exc:
         result["status"] = "unverified"
         result["errors"] = [{"code": "backend_unreachable", "message": str(exc)}]
         return result
@@ -372,11 +374,14 @@ class BackendSession:
     commands_sent: list[str] = field(default_factory=list)
 
     def invoke(self, verb: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-        result = _invoke(lambda command: self.wire.exchange(command, accepted_codes=None),
+        def exchange(command: str) -> dict[str, Any]:
+            before = len(self.wire.sent_commands)
+            try:
+                return self.wire.exchange(command, accepted_codes=None)
+            finally:
+                self.commands_sent.extend(self.wire.sent_commands[before:])
+        result = _invoke(exchange,
                          verb, arguments, writes_enabled=self.writes_enabled)
-        spec = OBSERVED_VERBS.get(verb)
-        if spec is not None:
-            self.commands_sent.append(f"{spec.service} {verb}")
         return result
 
     def open_topology(self, topology: str, working_directory: str,
