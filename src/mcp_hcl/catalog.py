@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import re
 import json
+import os
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -26,8 +27,39 @@ class CatalogError(ValueError):
 
 
 class HclCatalog:
-    def __init__(self, installation: Path):
+    def __init__(self, installation: Path, profile_root: Path | None = None):
         self.installation = installation.resolve()
+        configured = os.environ.get('MCP_HCL_PROFILE_ROOT')
+        self.profile_root = profile_root or (Path(configured) if configured else None)
+
+    def _captured_profiles(self) -> list[dict]:
+        if self.profile_root is None: return []
+        root = self.profile_root.resolve()
+        result = []
+        for path in sorted(root.glob('*.json')):
+            if path.is_symlink() or path.stat().st_size > 65536: raise CatalogError('Invalid captured profile record')
+            record = json.loads(path.read_text(encoding='utf-8-sig'))
+            if record.get('schema_version') != 1 or len(record.get('evidence', [])) != 2:
+                raise CatalogError('Captured profile requires template and configuration evidence')
+            sources = []
+            for source in record['evidence']:
+                evidence_path = Path(source['source'])
+                if evidence_path.is_symlink() or not evidence_path.is_file() or evidence_path.stat().st_size > 1024*1024:
+                    raise CatalogError('Captured source is missing, linked or oversized')
+                data = evidence_path.read_bytes()
+                if hashlib.sha256(data).hexdigest() != source['sha256']: raise CatalogError('Captured source hash mismatch')
+                sources.append((evidence_path, data))
+            from mcp_hcl.project import ProjectStore
+            template = ProjectStore([sources[0][0].parent], root/'unused-stage')._open(str(sources[0][0].parent))
+            if not any(s.model == record['model'] for s in template.sections.values()): raise CatalogError('Captured model is not in the template')
+            text = sources[1][1].decode('utf-8-sig')
+            interfaces = re.findall(r'^interface\s+([A-Za-z][\w/.-]*)\s*$', text, re.M)
+            if interfaces != record.get('interfaces') or not interfaces: raise CatalogError('Captured interfaces do not match configuration evidence')
+            result.append({'model':record['model'], 'default_interfaces':interfaces,
+                           'default_firmware':record.get('firmware'), 'runtime_verified':False,
+                           'interface_evidence_scope':'captured_configuration_only',
+                           'factory_defaults_verified':False,'evidence':record['evidence'][1]})
+        return result
 
     def _read(self, path: Path) -> tuple[str, dict[str, str]]:
         if not path.resolve().is_relative_to(self.installation):
@@ -52,12 +84,17 @@ class HclCatalog:
             })
         if not models:
             raise CatalogError('No device defaults found; configure MCP_HCL_INSTALL_ROOT')
+        captured = self._captured_profiles()
+        if captured:
+            by_name = {row['model']:row for row in models}
+            by_name.update({row['model']:row for row in captured})
+            models = list(by_name.values())
         ini = self.installation / 'deviceInfo.ini'
         if ini.is_file():
             ports = self.ports()
             for name in ('AC', 'AP'):
                 image = self.installation / 'version' / (name.lower() + '.vmdk')
-                if name in ports['families'] and image.is_file() and not image.is_symlink():
+                if name not in {row['model'] for row in models} and name in ports['families'] and image.is_file() and not image.is_symlink():
                     models.append({'model': name, 'default_firmware': None, 'default_interfaces': [],
                                    'runtime_verified': False, 'default_configuration_available': False,
                                    'evidence': ports['evidence'][0],
@@ -96,7 +133,8 @@ class HclCatalog:
 
     def devices(self) -> dict[str, Any]:
         models = self._models()
-        return self._result('installed_model_defaults_only', devices=models,
+        scope = 'installed_defaults_and_captured_configuration_interfaces_only' if self.profile_root else 'installed_model_defaults_only'
+        return self._result(scope, devices=models,
                             evidence=[row['evidence'] for row in models])
 
     def device_details(self, model: str) -> dict[str, Any]:

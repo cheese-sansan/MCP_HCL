@@ -134,19 +134,37 @@ SERVICE_ORDER={'vlan':0,'acl':1,'dhcp':2,'ospf':3,'rip':4,'nat':5,'security':6,'
 def generate_configs(data,catalog):
     validated=validate_plan(data,catalog)
     if not validated.get('valid'): return validated
+    if validated['plan']['wireless_associations']:
+        return {'status': 'rejected', 'errors': [{'code': 'wireless_client_commands_unverified',
+                'message': 'Wireless client association commands have no verified model profile; collect evidence before generating executable commands'}],
+                'runtime_verified': False, 'full_live_gate_passed': False}
     plan=TopologyPlan.model_validate(validated['plan']);configs={};evidence=feature_evidence('base')
     for feature in sorted({s.feature for s in plan.services}): evidence+=feature_evidence(feature)
     for device in plan.devices:
         lines=['system-view',f'sysname {device.id}']
+        for sub in plan.subinterfaces:
+            if sub.device == device.id:
+                lines += view(f'interface {sub.interface}', [f'vlan-type dot1q vid {sub.vlan}'])
         for service in (s for s in plan.services if s.device==device.id and s.feature=='vlan'):
             lines+=render_vlan(service.parameters)
         for item in plan.addresses:
             if item.device==device.id: lines+=view(f'interface {item.interface}',[address(item.cidr)])
+        for host in plan.host_settings:
+            if host.device == device.id:
+                commands = []
+                if host.ipv4 == 'dhcp': commands.append('ip address dhcp-alloc')
+                if host.ipv6 == 'slaac': commands.append('ipv6 address auto')
+                if commands: lines += view(f'interface {host.interface}', commands)
+        for ra in plan.ipv6_ra:
+            if ra.device == device.id:
+                lines += view(f'interface {ra.interface}', ['undo ipv6 nd ra halt'])
         for route in plan.routes:
             if route.device==device.id:
                 network=ip_network(route.network)
-                lines.append(f'ip route-static {network.network_address} {network.netmask} {route.next_hop}' if network.version==4 else
-                             f'ipv6 route-static {network} {route.next_hop}')
+                command = (f'ip route-static {network.network_address} {network.netmask} {route.next_hop}' if network.version==4 else
+                           f'ipv6 route-static {network} {route.next_hop}')
+                if route.preference != 60: command += f' preference {route.preference}'
+                lines.append(command)
         for service in sorted((s for s in plan.services if s.device==device.id and s.feature!='vlan'),key=lambda s:SERVICE_ORDER[s.feature]):
             lines+=RENDERERS[service.feature](service.parameters)
         lines.append('return');configs[device.id]='\n'.join(lines)+'\n'

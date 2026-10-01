@@ -57,6 +57,7 @@ class StaticRoute(StrictModel):
     device: str
     network: str
     next_hop: str
+    preference: int = Field(default=60, ge=1, le=255)
 
     @field_validator('network')
     @classmethod
@@ -75,6 +76,35 @@ class Annotation(StrictModel):
     y: float = 0
 
 
+class HostSetting(StrictModel):
+    device: str
+    interface: str
+    ipv4: Literal['static', 'dhcp', 'none'] = 'none'
+    ipv6: Literal['static', 'slaac', 'none'] = 'none'
+
+
+class InterfaceRef(StrictModel):
+    device: str
+    interface: str
+
+
+class Subinterface(StrictModel):
+    device: str
+    parent: str
+    vlan: int = Field(ge=1, le=4094)
+
+    @property
+    def interface(self):
+        return f'{self.parent}.{self.vlan}'
+
+
+class WirelessAssociation(StrictModel):
+    device: str
+    interface: str
+    ap: str
+    ssid: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,32}$')
+
+
 class TopologyPlan(StrictModel):
     schema_version: Literal[1] = 1
     name: str = Field(min_length=1, max_length=64)
@@ -84,6 +114,10 @@ class TopologyPlan(StrictModel):
     routes: list[StaticRoute] = Field(default_factory=list, max_length=4096)
     services: list[ServiceIntent] = Field(default_factory=list, max_length=4096)
     annotations: list[Annotation] = Field(default_factory=list, max_length=1024)
+    host_settings: list[HostSetting] = Field(default_factory=list, max_length=256)
+    subinterfaces: list[Subinterface] = Field(default_factory=list, max_length=256)
+    ipv6_ra: list[InterfaceRef] = Field(default_factory=list, max_length=256)
+    wireless_associations: list[WirelessAssociation] = Field(default_factory=list, max_length=256)
 
 
 def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
@@ -120,7 +154,7 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             error('unknown_model', device.model)
     result['evidence'] = [models[model]['evidence'] for model in sorted({d.model for d in plan.devices}) if model in models]
 
-    def check_endpoint(device_id: str, interface: str) -> bool:
+    def check_endpoint(device_id: str, interface: str, *, physical_only=False) -> bool:
         device = devices.get(device_id)
         if device is None:
             error('unknown_device', device_id)
@@ -130,6 +164,9 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             return False
         logical = {f'Vlan-interface{svi.vlan}' for service in plan.services if service.device == device_id and service.feature == 'vlan'
                    for svi in service.parameters.svis}
+        logical |= {s.interface for s in plan.subinterfaces if s.device == device_id}
+        if physical_only:
+            logical = set()
         if interface not in set(model['default_interfaces']) | logical or interface == 'NULL0':
             error('unknown_physical_interface', f'{device_id}/{interface}')
             return False
@@ -140,7 +177,7 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         if link.a.device == link.b.device:
             error('self_link', link.a.device)
         for endpoint in (link.a, link.b):
-            check_endpoint(endpoint.device, endpoint.interface)
+            check_endpoint(endpoint.device, endpoint.interface, physical_only=True)
             key = (endpoint.device, endpoint.interface)
             if key in used:
                 error('duplicate_port', '/'.join(key))
@@ -169,6 +206,46 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             error('unknown_device', route.device)
         if ip_network(route.network).version != ip_address(route.next_hop).version:
             error('route_address_family_mismatch', route.network)
+    subkeys = set()
+    for sub in plan.subinterfaces:
+        check_endpoint(sub.device, sub.parent, physical_only=True)
+        key = (sub.device, sub.interface)
+        if key in subkeys:
+            error('duplicate_subinterface', str(key))
+        subkeys.add(key)
+        if sub.parent.startswith('Serial') or '.' in sub.parent:
+            error('invalid_subinterface_parent', sub.parent)
+    hostkeys = set()
+    for host in plan.host_settings:
+        check_endpoint(host.device, host.interface, physical_only=True)
+        key = (host.device, host.interface)
+        if key in hostkeys:
+            error('duplicate_host_setting', str(key))
+        hostkeys.add(key)
+        for family, mode in ((4, host.ipv4), (6, host.ipv6)):
+            present = (host.device, host.interface, family) in assigned
+            if (mode in {'dhcp', 'slaac', 'none'} and present) or (mode == 'static' and not present):
+                error('host_address_mode_conflict', f'{host.device}/{host.interface}/IPv{family}')
+    for ra in plan.ipv6_ra:
+        check_endpoint(ra.device, ra.interface)
+        if (ra.device, ra.interface, 6) not in assigned:
+            error('ra_without_ipv6_address', f'{ra.device}/{ra.interface}')
+    for association in plan.wireless_associations:
+        check_endpoint(association.device, association.interface, physical_only=True)
+        if association.ap not in devices:
+            error('unknown_wireless_ap', association.ap)
+        elif not any(service.feature == 'wireless' and service.parameters.ap_device == association.ap and
+                     service.parameters.ssid == association.ssid for service in plan.services
+                     if service.feature == 'wireless' and service.parameters.mode == 'ac'):
+            error('wireless_ssid_dependency', association.ssid)
+    for service in plan.services:
+        if service.feature == 'dhcp' and service.parameters.mode == 'server':
+            pool = ip_network(service.parameters.network)
+            excluded = [(ip_address(r.start), ip_address(r.end)) for r in service.parameters.excluded]
+            for address in plan.addresses:
+                ip = ip_interface(address.cidr).ip
+                if ip.version == 4 and ip in pool and not any(start <= ip <= end for start, end in excluded):
+                    error('static_address_in_dhcp_pool', f'{address.device}/{ip}')
     for service in plan.services:
         if service.device not in devices:
             error('unknown_device', service.device)

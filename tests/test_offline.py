@@ -81,7 +81,7 @@ class PlanningTests(unittest.TestCase):
     def test_planning_estimates_and_export_roundtrip_for_all_templates(self):
         with tempfile.TemporaryDirectory() as temporary:
             catalog=installation(Path(temporary)/'install')
-            for template,routers in [('single_lan',1),('multi_lan',2),('star',3),('hub_spoke',3),('three_router_triangle',3)]:
+            for template,routers in [('single_lan',1),('multi_lan',2),('star',1),('hub_spoke',3),('three_router_triangle',3)]:
                 request={'template':template,'routers':routers,'pcs_per_lan':1}
                 result=plan_topology(request,catalog)
                 self.assertTrue(result['valid'],result.get('errors'))
@@ -116,7 +116,7 @@ class OfflineStdioTests(unittest.IsolatedAsyncioTestCase):
             paths=build_fixture(Path(temporary))
             async with mcp_session(paths) as session:
                 tools={t.name:t for t in (await session.list_tools()).tools}
-                self.assertEqual(len(tools),29)
+                self.assertEqual(len(tools),39)
                 schema=tools['hcl_generate_configs'].inputSchema
                 self.assertFalse(schema['additionalProperties'])
                 self.assertIn('discriminator',schema['properties']['plan']['properties']['services']['items'])

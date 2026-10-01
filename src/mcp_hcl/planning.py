@@ -1,128 +1,224 @@
-"""Deterministic offline planning, estimation, explanation and conservative repair."""
+"""Deterministic HCL planner aligned with the pinned upstream template intent."""
 from __future__ import annotations
 from collections import deque
 from copy import deepcopy
-from ipaddress import IPv4Network
+from ipaddress import IPv4Network, IPv6Network
 from typing import Literal
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 from mcp_hcl.models import StrictModel
 from mcp_hcl.templates import TEMPLATES
 from mcp_hcl.topology import TopologyPlan, validate_plan
 from mcp_hcl.contracts import validation_errors
 
 
+class WirelessSettings(StrictModel):
+    ssid: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,32}$')
+    psk: str = Field(pattern=r'^[A-Za-z0-9_.@:+/!=-]{8,63}$')
+    hardware_model: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,63}$')
+    serial_ids: list[str] = Field(min_length=1, max_length=20)
+    vlan: int = Field(default=10, ge=1, le=4094)
+
+
 class TopologyRequest(StrictModel):
     schema_version: Literal[1] = 1
     name: str = Field(default='HCL Lab', min_length=1, max_length=64)
-    template: Literal['single_lan','multi_lan','star','hub_spoke','three_router_triangle'] = 'multi_lan'
-    routers: int = Field(default=2, ge=1, le=20)
-    switches_per_router: int = Field(default=1, ge=0, le=4)
+    template: Literal['single_lan','multi_lan','multi_lan_wan','star','hub_spoke','branch_office','router_on_a_stick','three_router_triangle','custom'] = 'multi_lan'
+    routers: int | None = Field(default=None, ge=1, le=20)
+    switches_per_router: int | None = Field(default=None, ge=0, le=4)
     pcs_per_lan: int = Field(default=0, ge=0, le=64)
+    laptops_per_lan: int = Field(default=0, ge=0, le=64)
+    servers: int = Field(default=0, ge=0, le=32)
+    access_points: int = Field(default=0, ge=0, le=20)
+    has_wan: bool = False
     router_model: str = 'MSR36-20'
     switch_model: str = 'S5820V2-54QS-GE'
     host_model: str = 'PC'
+    laptop_model: str | None = None
+    server_model: str | None = None
+    wan_model: str | None = None
+    ap_model: str | None = None
+    ac_model: str | None = None
+    wireless_laptops: bool = False
+    wireless_settings: WirelessSettings | None = None
     lan_pool: str = '10.0.0.0/16'
     transit_pool: str = '172.16.0.0/16'
     routing: Literal['static','ospf','rip','none'] = 'static'
+    ospf_process_id: int = Field(default=1, ge=1, le=65535)
+    floating_routes: bool = False
     dhcp: bool = False
+    dual_stack: bool = False
+    ipv6_base: str = '2001:db8::/32'
+    vlans: int = Field(default=2, ge=1, le=64)
+    custom_plan: dict | None = None
+
     @field_validator('lan_pool','transit_pool')
     @classmethod
-    def network(cls,value):
-        return str(IPv4Network(value,strict=True))
+    def network(cls,value): return str(IPv4Network(value,strict=True))
+
+    @field_validator('ipv6_base')
+    @classmethod
+    def ipv6_network(cls,value):
+        network = IPv6Network(value, strict=True)
+        if network.prefixlen > 64: raise ValueError('IPv6 base must allocate /64 subnets')
+        return str(network)
+
+    @model_validator(mode='after')
+    def relationships(self):
+        if self.template == 'custom':
+            if self.custom_plan is None: raise ValueError('custom requires custom_plan')
+            if self.model_fields_set - {'schema_version','name','template','custom_plan'}:
+                raise ValueError('custom accepts only its explicit plan, not automatic planning parameters')
+        elif self.custom_plan is not None: raise ValueError('custom_plan belongs to the custom template')
+        if self.floating_routes and (self.routing != 'static' or self.template != 'three_router_triangle'):
+            raise ValueError('Floating routes require static routing and the redundant triangle template')
+        if self.wireless_laptops and (not self.laptops_per_lan or not self.access_points):
+            raise ValueError('Wireless laptops require laptops and access points')
+        if self.access_points and (not self.ap_model or not self.ac_model or not self.wireless_settings):
+            raise ValueError('Wireless requires explicit AC/AP models, SSID/PSK and observed AP serial IDs')
+        if self.wireless_settings and len(self.wireless_settings.serial_ids) != self.access_points:
+            raise ValueError('Each AP needs its own serial ID')
+        return self
 
 
-def rejection(code, message):
+def rejection(code,message):
     return {'status':'rejected','valid':False,'errors':[{'code':code,'message':message}],
             'runtime_verified':False,'full_live_gate_passed':False}
 
 
-def plan_topology(data, catalog):
-    try:
-        request=TopologyRequest.model_validate(data)
-    except ValidationError as exc:
-        return {'status':'rejected','valid':False,'errors':validation_errors(exc)}
-    template=next(t for t in TEMPLATES if t['key']==request.template)
-    if not template['min_routers']<=request.routers<=template['max_routers']:
-        return rejection('template_router_count','Router count is incompatible with this template')
-    lan=IPv4Network(request.lan_pool); transit=IPv4Network(request.transit_pool)
-    if lan.overlaps(transit) or lan.prefixlen>24 or transit.prefixlen>30:
-        return rejection('invalid_address_pools','Pools overlap or cannot allocate /24 LAN and /30 transit networks')
+def plan_topology(data,catalog):
+    try: request=TopologyRequest.model_validate(data)
+    except ValidationError as exc: return {'status':'rejected','valid':False,'errors':validation_errors(exc)}
+    if request.template == 'custom': return validate_plan(deepcopy(request.custom_plan),catalog)
+    defaults={'single_lan':1,'star':1,'router_on_a_stick':1,'three_router_triangle':3,'hub_spoke':4,'branch_office':3,'multi_lan_wan':3}
+    nrouters=request.routers if request.routers is not None else defaults.get(request.template,2)
+    nswitches=request.switches_per_router if request.switches_per_router is not None else (3 if request.template=='star' else 1)
+    spec=next(t for t in TEMPLATES if t['key']==request.template)
+    if not spec['min_routers']<=nrouters<=spec['max_routers']: return rejection('template_router_count','Router count is incompatible with template')
+    if request.template=='router_on_a_stick' and nswitches!=1: return rejection('template_switch_count','Single-arm routing requires exactly one switch')
+    wan=request.has_wan or request.template in {'branch_office','multi_lan_wan'}
+    for required,model,category in [(wan,request.wan_model,'WAN provider'),(request.servers,request.server_model,'server'),
+                                    (request.laptops_per_lan,request.laptop_model,'laptop')]:
+        if required and not model: return rejection('explicit_model_required',f'{category} requires a documented HCL model; no substitution is made')
+    if (request.pcs_per_lan or request.laptops_per_lan or request.servers or request.access_points) and not nswitches:
+        return rejection('missing_access_switch','Endpoints require an access switch')
     models={m['model']:m for m in catalog.devices()['devices']}
-    count=request.routers*(1+request.switches_per_router*(1+request.pcs_per_lan))
-    if count>256:
-        return rejection('device_limit','The request exceeds the 256 device plan limit')
-    if request.pcs_per_lan and not request.switches_per_router:
-        return rejection('missing_access_switch','pcs_per_lan requires an access switch')
-    devices=[]; links=[]; addresses=[]; routes=[]; services=[]; ports={}
+    if request.access_points:
+        for model in (request.ap_model,request.ac_model,request.laptop_model if request.wireless_laptops else request.ap_model):
+            if model not in models or not models[model]['default_interfaces']:
+                return rejection('wireless_evidence_missing','Wireless model CLI defaults are missing; collect real model profiles before accepting this plan')
+    count=nrouters*(1+nswitches*(1+request.pcs_per_lan+request.laptops_per_lan))+request.servers+request.access_points+(1 if request.access_points else 0)+(1 if wan else 0)
+    if count>256: return rejection('device_limit','Plan exceeds 256 devices')
+    if request.access_points>nrouters*nswitches: return rejection('ap_count','At most one AP is allocated per LAN')
+    lan=IPv4Network(request.lan_pool);transit=IPv4Network(request.transit_pool)
+    if lan.overlaps(transit) or lan.prefixlen>24 or transit.prefixlen>30: return rejection('invalid_address_pools','Pools overlap or cannot allocate LAN/transit subnets')
+    plan={'schema_version':1,'name':request.name,'devices':[],'links':[],'addresses':[],'routes':[],'services':[],
+          'annotations':[],'host_settings':[],'subinterfaces':[],'ipv6_ra':[]}
+    ports={};graph={};lans=[];lan_ranges=iter(lan.subnets(new_prefix=24));transit_ranges=iter(transit.subnets(new_prefix=30))
+    ipv6_ranges=iter(IPv6Network(request.ipv6_base).subnets(new_prefix=64))
+    wireless_index=0
+
     def add(identifier,model,x,y):
         if model not in models: raise ValueError(f'Unknown installed model: {model}')
-        interfaces=[i for i in models[model]['default_interfaces'] if i.startswith('GigabitEthernet')]
+        interfaces=[i for i in models[model]['default_interfaces'] if i.startswith(('GigabitEthernet','Ten-GigabitEthernet'))]
         if not interfaces: raise ValueError(f'No evidence-backed Ethernet interfaces for {model}')
-        devices.append({'id':identifier,'name':identifier,'model':model,'x':float(x),'y':float(y)})
+        plan['devices'].append({'id':identifier,'name':identifier,'model':model,'x':float(x),'y':float(y)})
         ports[identifier]=deque(interfaces)
-    def link(a,b):
+
+    def connect(a,b):
         if not ports[a] or not ports[b]: raise ValueError(f'Insufficient free ports: {a}/{b}')
         pa,pb=ports[a].popleft(),ports[b].popleft()
-        links.append({'a':{'device':a,'interface':pa},'b':{'device':b,'interface':pb},'medium':'ethernet'})
+        plan['links'].append({'a':{'device':a,'interface':pa},'b':{'device':b,'interface':pb},'medium':'ethernet'})
         return pa,pb
-    lan_networks=iter(lan.subnets(new_prefix=24)); transit_networks=iter(transit.subnets(new_prefix=30))
-    graph={f'r{i+1}':{} for i in range(request.routers)}; lans=[]
+
+    def assign(device,interface,ip,prefix): plan['addresses'].append({'device':device,'interface':interface,'cidr':f'{ip}/{prefix}'})
+
+    def transit_link(a,b):
+        pa,pb=connect(a,b);network=next(transit_ranges);ia,ib=str(network.network_address+1),str(network.network_address+2)
+        assign(a,pa,ia,30);assign(b,pb,ib,30);graph.setdefault(a,{})[b]=ib;graph.setdefault(b,{})[a]=ia
+        if request.dual_stack:
+            v6=next(ipv6_ranges);assign(a,pa,v6.network_address+1,64);assign(b,pb,v6.network_address+2,64)
+
+    def client(identifier,model,switch,network,gateway,v6,index,x,y,wireless=False):
+        add(identifier,model,x,y)
+        if wireless:
+            radio=[i for i in models[model]['default_interfaces'] if i.startswith(('WLAN','Wireless'))]
+            if not radio: raise ValueError('Wireless client has no observed radio interface')
+            interface=radio[0]
+            plan.setdefault('wireless_associations',[]).append({'device':identifier,'interface':interface,'ssid':request.wireless_settings.ssid,'ap':f'ap{wireless_index}'})
+        else: _,interface=connect(switch,identifier)
+        setting={'device':identifier,'interface':interface,'ipv4':'dhcp' if request.dhcp else 'static','ipv6':'slaac' if v6 else 'none'}
+        if not request.dhcp:
+            assign(identifier,interface,network.network_address+index,24)
+            plan['routes'].append({'device':identifier,'network':'0.0.0.0/0','next_hop':gateway})
+        plan['host_settings'].append(setting)
+
     try:
-        for i in range(request.routers): add(f'r{i+1}',request.router_model,i*350,0)
-        if request.template in {'star','hub_spoke'}: edges=[(0,i) for i in range(1,request.routers)]
+        for i in range(nrouters): add(f'r{i+1}',request.router_model,i*350,0);graph[f'r{i+1}']={}
+        if request.template in {'hub_spoke','branch_office'}: edges=[(0,i) for i in range(1,nrouters)]
         elif request.template=='three_router_triangle': edges=[(0,1),(1,2),(2,0)]
-        else: edges=[(i,i+1) for i in range(request.routers-1)]
-        for a,b in edges:
-            a,b=f'r{a+1}',f'r{b+1}'; pa,pb=link(a,b); network=next(transit_networks)
-            ia,ib=str(network.network_address+1),str(network.network_address+2)
-            addresses.extend([{'device':a,'interface':pa,'cidr':ia+'/30'}, {'device':b,'interface':pb,'cidr':ib+'/30'}])
-            graph[a][b]=ib;graph[b][a]=ia
-        for i in range(request.routers):
+        else: edges=[(i,i+1) for i in range(nrouters-1)]
+        if request.template!='branch_office':
+            for a,b in edges: transit_link(f'r{a+1}',f'r{b+1}')
+        if wan:
+            add('wan',request.wan_model,0,-180);graph['wan']={}
+            for router in (list(graph)[:-1] if request.template=='branch_office' else ['r1']): transit_link(router,'wan')
+        if request.access_points: add('ac1',request.ac_model,0,500)
+        for i in range(nrouters):
             router=f'r{i+1}'
-            for j in range(request.switches_per_router):
+            for j in range(nswitches):
                 switch=f's{i+1}_{j+1}';add(switch,request.switch_model,i*350+j*80,180)
-                interface,_=link(router,switch); network=next(lan_networks);gateway=str(network.network_address+1)
-                addresses.append({'device':router,'interface':interface,'cidr':gateway+'/24'})
-                lans.append((router,str(network)))
-                if request.dhcp:
-                    services.append({'device':router,'feature':'dhcp','parameters':{'mode':'server','interface':interface,
-                                     'pool':switch,'network':str(network),'gateway':gateway,'excluded':[{'start':gateway,'end':gateway}]}})
-                for k in range(request.pcs_per_lan):
-                    host=f'h{i+1}_{j+1}_{k+1}'; add(host,request.host_model,i*350+k*55,350+j*120)
-                    _,port=link(switch,host)
-                    addresses.append({'device':host,'interface':port,'cidr':str(network.network_address+k+2)+'/24'})
-                    routes.append({'device':host,'network':'0.0.0.0/0','next_hop':gateway})
-        if request.routing=='static':
-            for origin in graph:
+                physical,switch_uplink=connect(router,switch)
+                groups=request.vlans if request.template=='router_on_a_stick' else 1
+                vlan_ids=list(range(10,10+groups))
+                if request.template=='router_on_a_stick':
+                    plan['services'].append({'device':switch,'feature':'vlan','parameters':{'vlans':vlan_ids,'ports':[{'interface':switch_uplink,'mode':'trunk','allowed_vlans':vlan_ids}]}})
+                for group in range(groups):
+                    network=next(lan_ranges);gateway=str(network.network_address+1);interface=physical
+                    if groups>1 or request.template=='router_on_a_stick':
+                        plan['subinterfaces'].append({'device':router,'parent':physical,'vlan':vlan_ids[group]});interface=f'{physical}.{vlan_ids[group]}'
+                    assign(router,interface,gateway,24);lans.append((router,str(network)))
+                    v6=next(ipv6_ranges) if request.dual_stack else None
+                    if v6: assign(router,interface,v6.network_address+1,64);plan['ipv6_ra'].append({'device':router,'interface':interface})
+                    if request.dhcp: plan['services'].append({'device':router,'feature':'dhcp','parameters':{'mode':'server','interface':interface,'pool':f'{switch}_{group}','network':str(network),'gateway':gateway,'excluded':[{'start':gateway,'end':gateway}]}})
+                    members=[('h',request.host_model,k) for k in range(request.pcs_per_lan) if k%groups==group]
+                    members += [('l',request.laptop_model,k) for k in range(request.laptops_per_lan) if k%groups==group]
+                    if i==0 and j==0: members += [('srv',request.server_model,k) for k in range(request.servers) if k%groups==group]
+                    if request.access_points and wireless_index<request.access_points and group==0:
+                        wireless_index+=1;ap=f'ap{wireless_index}';add(ap,request.ap_model,i*350,450);connect(switch,ap)
+                        if wireless_index==1: connect(switch,'ac1')
+                        settings=request.wireless_settings
+                        plan['services'].append({'device':'ac1','feature':'wireless','parameters':{'mode':'ac','template':f'wifi{wireless_index}','ssid':settings.ssid,'vlan':settings.vlan,'psk':settings.psk,'ap_device':ap,'ap_name':ap,'ap_model':settings.hardware_model,'serial_id':settings.serial_ids[wireless_index-1],'radio':1}})
+                    for index,(kind,model,k) in enumerate(members,2):
+                        identifier=f'{kind}{i+1}_{j+1}_{k+1}';client(identifier,model,switch,network,gateway,v6,index,i*350+k*55,350+j*120,kind=='l' and request.wireless_laptops)
+                        if request.template=='router_on_a_stick':
+                            port=plan['links'][-1]['a']['interface']
+                            next(s for s in plan['services'] if s['device']==switch and s['feature']=='vlan')['parameters']['ports'].append({'interface':port,'mode':'access','vlan':vlan_ids[group]})
+        if request.access_points: plan['services'].append({'device':'ac1','feature':'vlan','parameters':{'vlans':[request.wireless_settings.vlan]}})
+        for origin in graph:
+            if request.routing=='static':
                 for target,network in lans:
                     if origin==target: continue
-                    queue=deque([(origin,None)]);visited={origin};hop=None
-                    while queue:
-                        node,first=queue.popleft()
-                        if node==target: hop=first;break
-                        for neighbor in graph[node]:
-                            if neighbor not in visited:
-                                visited.add(neighbor);queue.append((neighbor,first or neighbor))
-                    if hop: routes.append({'device':origin,'network':network,'next_hop':graph[origin][hop]})
-        elif request.routing in {'ospf','rip'}:
-            for router in graph:
-                if request.routing=='ospf':
-                    networks=sorted({str(IPv4Network(a['cidr'],strict=False)) for a in addresses if a['device']==router})
-                    parameters={'process_id':1,'router_id':f'192.0.2.{int(router[1:])}', 'networks':[{'network':n,'area':0} for n in networks]}
-                else:
-                    networks=sorted({str(IPv4Network(a['cidr'].split('/')[0]+'/'+
-                              str(8 if int(a['cidr'].split('.')[0])<128 else 16 if int(a['cidr'].split('.')[0])<192 else 24),strict=False))
-                                     for a in addresses if a['device']==router})
-                    parameters={'version':2,'networks':networks}
-                services.append({'device':router,'feature':request.routing,'parameters':parameters})
-    except (ValueError,StopIteration) as exc:
-        return rejection('planning_failed',str(exc) or 'Address pool exhausted')
-    plan={'schema_version':1,'name':request.name,'devices':devices,'links':links,'addresses':addresses,
-          'routes':routes,'services':services,'annotations':[]}
-    result=validate_plan(plan,catalog)
-    result['request']=request.model_dump(mode='json')
-    return result
-
+                    for banned,preference in [(None,60)]+([(None,254)] if request.floating_routes else []):
+                        queue=deque([(origin,None)]);visited={origin};hop=None
+                        if preference==254:
+                            first=next((r for r in plan['routes'] if r['device']==origin and r['network']==network and r.get('preference',60)==60),None)
+                            blocked=next((n for n,ip in graph[origin].items() if first and ip==first['next_hop']),None)
+                        else: blocked=None
+                        while queue:
+                            node,first_hop=queue.popleft()
+                            if node==target: hop=first_hop;break
+                            for neighbor in graph[node]:
+                                if node==origin and neighbor==blocked: continue
+                                if neighbor not in visited: visited.add(neighbor);queue.append((neighbor,first_hop or neighbor))
+                        if hop: plan['routes'].append({'device':origin,'network':network,'next_hop':graph[origin][hop],'preference':preference})
+            elif request.routing in {'ospf','rip'}:
+                addresses=[a for a in plan['addresses'] if a['device']==origin and ':' not in a['cidr']]
+                if not addresses: continue
+                if request.routing=='ospf': parameters={'process_id':request.ospf_process_id,'router_id':f'192.0.2.{list(graph).index(origin)+1}','networks':[{'network':n,'area':0} for n in sorted({str(IPv4Network(a['cidr'],strict=False)) for a in addresses})]}
+                else: parameters={'version':2,'networks':sorted({str(IPv4Network(a['cidr'].split('/')[0]+'/'+str(8 if int(a['cidr'].split('.')[0])<128 else 16 if int(a['cidr'].split('.')[0])<192 else 24),strict=False)) for a in addresses})}
+                plan['services'].append({'device':origin,'feature':request.routing,'parameters':parameters})
+    except (ValueError,StopIteration) as exc: return rejection('planning_failed',str(exc) or 'Address pool exhausted')
+    result=validate_plan(plan,catalog);result['request']=request.model_dump(mode='json');return result
 
 def estimate_plan(request,catalog):
     result=plan_topology(request,catalog)

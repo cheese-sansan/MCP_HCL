@@ -740,6 +740,111 @@
           "sha256": "b1f8f69f1cc490bd819f00f633ac2de205cda6695f9b120f9f19bbab3ae91dd3"
         }
       ]
+    },
+    "deployment_and_dynamic_hosts": {
+      "command_names": [
+        "configuration replace file",
+        "ip address",
+        "ip address (SSL VPN gateway view)",
+        "ip address bootp-alloc",
+        "ip address cellular-alloc",
+        "ip address dhcp-alloc",
+        "ip address ppp-negotiate",
+        "ip address trusted authenticate",
+        "ip address trusted list",
+        "ip address unnumbered",
+        "ipv6 address",
+        "ipv6 address anycast",
+        "ipv6 address auto",
+        "ipv6 address auto link-local",
+        "ipv6 address dhcp-alloc",
+        "ipv6 address eui-64",
+        "ipv6 address link-local",
+        "ipv6 nd ra halt",
+        "more",
+        "ping",
+        "ping ipv6",
+        "ping mpls ipv4",
+        "ping mpls pw",
+        "ping mpls te",
+        "save",
+        "screen-length",
+        "screen-length disable",
+        "vlan-type dot1q default",
+        "vlan-type dot1q untagged",
+        "vlan-type dot1q vid",
+        "vlan-type dot1q vid second-dot1q"
+      ],
+      "sources": [
+        {
+          "relative_path": "CMD-help/-1069272936/-290302524/126389396.htm",
+          "sha256": "39d70f6eb1901c592a6a3bec3f6201acb32553504b67f597ccbb11df727bff08"
+        },
+        {
+          "relative_path": "CMD-help/-129396861/-1354121460/603015686.htm",
+          "sha256": "7057ea11aa92f018fff306b5b3d2720e9299475eba535651606229a5fb3279da"
+        },
+        {
+          "relative_path": "CMD-help/-129396861/-578369585/-768115199.htm",
+          "sha256": "f6a04470ac15a586fb9568417bd4b49f4c8767d350c89cfc49770b6a06d2d915"
+        },
+        {
+          "relative_path": "CMD-help/-129396861/1324839659/-1051814356.htm",
+          "sha256": "52ca8680ee23a329a737f7ea2b49f5c8ad9ce9f004bb6702c0c93d3cbcddd218"
+        },
+        {
+          "relative_path": "CMD-help/-129396861/1480019106/1329872292.htm",
+          "sha256": "f6101e92203c9fbe6c194a418d5a7dbb7cbf746d8ba5d7167a643ff4263bb0c4"
+        },
+        {
+          "relative_path": "CMD-help/-129396861/284002567/-1608857446.htm",
+          "sha256": "fb07437701d9cf91267ac5edc13152fca1f578ab2fad4a90224c877865283865"
+        },
+        {
+          "relative_path": "CMD-help/-1585449824/-1096858363/-1838399966.htm",
+          "sha256": "da76ea648e7e71d678b25c70e33fdae8ad6a9a068a325b232e60e52fbbcbd93c"
+        },
+        {
+          "relative_path": "CMD-help/-779967147/71048816/-1864325587.htm",
+          "sha256": "479817c01095706b2406487bb307bc4d2825085d9b72ca214bb3ce3432606d22"
+        },
+        {
+          "relative_path": "CMD-help/1116796209/622826175/-1748753919.htm",
+          "sha256": "30c1c11696570e898b8a2a865fb429f61a4a8eae5ab979de1ae068f69e853685"
+        },
+        {
+          "relative_path": "CMD-help/1664319405/-613487970/-1595414925.htm",
+          "sha256": "ceff0a8df66a610bdaf179229174fdc7eabaad8d76f30f4094dd450900f1698a"
+        },
+        {
+          "relative_path": "CMD-help/293285528/-1117863285/-1421394151.htm",
+          "sha256": "3536568807e478ea59a5721931e9a75117d06f443c7bbac7d7fefc1d022330e5"
+        },
+        {
+          "relative_path": "CMD-help/298524765/-1108661522/1684712488.htm",
+          "sha256": "059547ce9673a703f6ec570d2105b7d4bb46caf00424561049dc04588af6da55"
+        },
+        {
+          "relative_path": "CMD-help/298524765/8784630/-1729289828.htm",
+          "sha256": "9e9d36e147b436260fa250cebb16420121bd57950a01e4000c61e1f0171c31b2"
+        },
+        {
+          "relative_path": "CMD-help/896185720/-1362432119/-505432776.htm",
+          "sha256": "74e3f2875e8e5da976f6cb919b53def53e8538afb2215d6bb1b466f039568cd3"
+        },
+        {
+          "relative_path": "CMD-help/896185720/1748081527/-1100069344.htm",
+          "sha256": "9db97598a1b8cf14ab7e9ca8e066e05680456326a059a1b87b114dd012c8ea20"
+        },
+        {
+          "relative_path": "CMD-help/896185720/2132195390/619752626.htm",
+          "sha256": "54147d4f02e17eeb1fb5616eb0d54febf7dd0c4ebeab0b8ad27d14cc1153fd5d"
+        },
+        {
+          "relative_path": "CMD-help/896185720/381434506/1719044716.htm",
+          "sha256": "b1f8f69f1cc490bd819f00f633ac2de205cda6695f9b120f9f19bbab3ae91dd3"
+        }
+      ]
     }
   }
 }

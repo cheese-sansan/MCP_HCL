@@ -23,6 +23,8 @@ from mcp_hcl.topology import validate_plan
 from mcp_hcl.offline_tools import register_offline
 from mcp_hcl.gui_relay import HclGuiRelay, register_gui_tools
 from mcp_hcl.build_pipeline import register_build_tool
+from mcp_hcl.project_edit import register_edit_tools
+from mcp_hcl.deployment import Deployment, register_deployment_tools
 
 
 def live_writes_enabled() -> bool:
@@ -406,6 +408,8 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     relay = HclGuiRelay(store, writes_enabled=writes)
     register_gui_tools(mcp, relay)
     register_build_tool(mcp, store, catalog, relay)
+    register_edit_tools(mcp, store, catalog)
+    register_deployment_tools(mcp, Deployment(store, catalog=catalog, writes_enabled=writes))
     return mcp
 
 

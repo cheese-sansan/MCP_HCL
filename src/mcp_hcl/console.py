@@ -75,6 +75,8 @@ def _validate_command(command: str) -> str:
         raise ConsoleError("command must not contain CR, LF or NUL")
     if len(command) > 512:
         raise ConsoleError("command is longer than 512 characters")
+    if not command.isascii():
+        raise ConsoleError('Console commands require verified ASCII encoding')
     return command.strip()
 
 
@@ -117,6 +119,8 @@ class ConsoleSession:
         deadline = time.monotonic() + timeout
         last_data = time.monotonic()
         while True:
+            if time.monotonic() >= deadline:
+                break
             chunk = self._read_available()
             if chunk:
                 collected.extend(chunk)
@@ -134,10 +138,19 @@ class ConsoleSession:
 
     def send(self, command: str) -> None:
         payload = (_validate_command(command) + "\r\n").encode("ascii", errors="strict")
-        try:
-            os.write(self._write_fd, payload)
-        except OSError as exc:
-            raise ConsoleError(f"Console write failed: {exc.__class__.__name__}") from exc
+        deadline = time.monotonic() + 4.0
+        offset = 0
+        while offset < len(payload):
+            if time.monotonic() >= deadline:
+                raise ConsoleError('Console partial write timed out')
+            try:
+                sent = os.write(self._write_fd, payload[offset:])
+                if sent == 0: raise ConsoleError('Console channel closed during write')
+                offset += sent
+            except BlockingIOError:
+                time.sleep(_POLL_SECONDS)
+            except OSError as exc:
+                raise ConsoleError(f"Console write failed: {exc.__class__.__name__}") from exc
 
     def close(self) -> None:
         if self._closed:

@@ -40,6 +40,9 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                             "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
                             "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
                             "hcl_export_artifacts", "hcl_load_plan", "hcl_stage_plan", "hcl_open_project", "hcl_save_project", "hcl_full_build",
+                            "hcl_stage_rename_device", "hcl_stage_move_device", "hcl_stage_delete_device",
+                            "hcl_stage_unlink", "hcl_stage_add_note", "hcl_stage_clear_annotations",
+                            "hcl_backup_config", "hcl_restore_config", "hcl_live_deploy", "hcl_verify_connectivity",
                         },
                     )
                     result = await asyncio.wait_for(session.call_tool("hcl_capabilities", {}), timeout=10)
@@ -58,7 +61,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(len(report["resources"]), 5)
                     self.assertEqual(set(report["registered_tools"]), {tool.name for tool in listed.tools})
                     self.assertEqual(report["completion"], "incomplete")
-                    self.assertNotIn("hcl_live_deploy", {tool.name for tool in listed.tools})
+                    self.assertIn("hcl_live_deploy", {tool.name for tool in listed.tools})
 
 
 if __name__ == "__main__":

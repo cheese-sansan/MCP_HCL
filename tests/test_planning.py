@@ -22,12 +22,12 @@ class PlanCoreTests(unittest.TestCase):
     def test_request_capacities_and_strict_nested_types(self):
         with tempfile.TemporaryDirectory() as temporary:
             paths=build_fixture(Path(temporary));catalog=HclCatalog(paths['install'])
-            for request in ({'routers':'2'},{'schema_version':True},{'routers':3,'template':'star'},
+            for request in ({'routers':'2'},{'schema_version':True},{'routers':1,'template':'star','switches_per_router':2},
                             {'routing':'eigrp'},{'unexpected':1}):
                 # A 3-router hub uses all three router ports and remains valid.
-                expected='verified' if request=={'routers':3,'template':'star'} else 'rejected'
+                expected='verified' if request=={'routers':1,'template':'star','switches_per_router':2} else 'rejected'
                 self.assertEqual(plan_topology(request,catalog)['status'],expected)
-            self.assertEqual(plan_topology({'routers':4,'template':'star'},catalog)['status'],'rejected')
+            self.assertEqual(plan_topology({'routers':2,'template':'star'},catalog)['status'],'rejected')
 
     def test_port_repair_preserves_user_ip_intent(self):
         with tempfile.TemporaryDirectory() as temporary:

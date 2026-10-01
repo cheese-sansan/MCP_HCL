@@ -47,6 +47,9 @@ EXPECTED_TOOLS = {
     "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
     "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
     "hcl_export_artifacts", "hcl_load_plan", "hcl_stage_plan", "hcl_open_project", "hcl_save_project", "hcl_full_build",
+    "hcl_stage_rename_device", "hcl_stage_move_device", "hcl_stage_delete_device",
+    "hcl_stage_unlink", "hcl_stage_add_note", "hcl_stage_clear_annotations",
+    "hcl_backup_config", "hcl_restore_config", "hcl_live_deploy", "hcl_verify_connectivity",
 }
 EXPECTED_RESOURCES = {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports",
                       "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"}
@@ -315,7 +318,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         async with mcp_session(self.paths) as session:
             listed = await session.list_tools()
             suspects = sorted(tool.name for tool in listed.tools if LIVE_TOOL_NAME.search(tool.name))
-            self.assertEqual(suspects, ["hcl_console_exec", "hcl_device_power"],
+            self.assertEqual(suspects, ["hcl_console_exec", "hcl_device_power", "hcl_live_deploy"],
                              "the only live-looking tools are the two gated control-plane ones")
 
             _, capabilities = await call(session, "hcl_capabilities", {})
@@ -681,7 +684,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(result.isError)
             self.assertEqual(body["status"], "ok")
 
-            result, _ = await call(session, "hcl_live_deploy", {})
+            result, _ = await call(session, "hcl_unknown_future_tool", {})
             self.assertTrue(result.isError)
             self.assertEqual(json.loads(result.content[0].text)["errors"][0]["code"], "unknown_tool")
 

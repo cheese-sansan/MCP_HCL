@@ -6,7 +6,7 @@ from pydantic import Field, create_model, field_validator, model_validator
 from mcp_hcl.models import StrictModel
 
 Token = Annotated[str, Field(pattern=r'^[A-Za-z0-9_][A-Za-z0-9_.@:+/!=-]{0,62}$')]
-InterfaceName = Annotated[str, Field(pattern=r'^[A-Za-z][A-Za-z0-9-]*\d+(?:/\d+)*$')]
+InterfaceName = Annotated[str, Field(pattern=r'^[A-Za-z][A-Za-z0-9-]*\d+(?:/\d+)*(?:\.\d+)?$')]
 VlanId = Annotated[int, Field(ge=1, le=4094)]
 PortNumber = Annotated[int, Field(ge=1, le=65535)]
 AclId = Annotated[int, Field(ge=2000, le=3999)]
@@ -279,6 +279,7 @@ def service_errors(plan: Any, models: dict) -> list[dict]:
             interfaces.extend(v.interface for v in getattr(p,collection,[]))
         model=models.get(devices[s.device].model,{})
         known=set(model.get('default_interfaces',[]))|{f'Vlan-interface{v}' for v in vlans.get(s.device,set())}
+        known |= {sub.interface for sub in plan.subinterfaces if sub.device == s.device}
         for interface in interfaces:
             if interface not in known or interface=='NULL0': error('unknown_service_interface',f'{s.device}/{interface}')
         refs=[]
