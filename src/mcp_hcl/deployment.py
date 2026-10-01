@@ -169,6 +169,7 @@ class Deployment:
                 for device,channel in channels.items():
                     (directory/(device+'-transcript.json')).write_text(json.dumps(getattr(channel,'history',[]),ensure_ascii=False,indent=2),encoding='utf-8')
         result={'status':'verified' if complete else 'partial','operation_id':operation,'target_project':str(doc.net_path),
+                'native_channels': bool(channels) and all(getattr(c,'native_channel',False) for c in channels.values()),
                 'verified_scope':'running_configuration_readback_only' if complete else 'deployment_and_recovery_receipts_only',
                 'configuration_verified':complete,'connectivity_verified':False,'guest_boot_verified':False,'full_live_gate_passed':False,
                 'steps':steps,'backups':list(backups.values()),'rollback':rollback,'receipt_directory':str(directory),

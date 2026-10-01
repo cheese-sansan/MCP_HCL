@@ -165,7 +165,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Bound staged-device native save/readback/restore-preflight adapter registered. Actual firmware backup and restore acceptance remains unverified."
     },
     {
       "upstream_tool": "pt_bridge_status",
@@ -417,7 +417,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Persistent leased staged-console deployment and automatic native recovery are implemented. Real GUI/guest/config/network acceptance remains unverified."
     },
     {
       "upstream_tool": "pt_load_project",
@@ -458,7 +458,7 @@
       ],
       "state": "planned",
       "live_required": false,
-      "note": "Registered deterministic HCL-native planner supports five graph templates, static/OSPF/RIP routing and DHCP. Full upstream request coverage remains planned."
+      "note": "Nine template keys, dynamic host settings, dual stack, strict subinterfaces and explicit role models are registered. Wireless evidence and client association commands remain incomplete; full parity stays planned."
     },
     {
       "upstream_tool": "pt_project_metadata",
@@ -631,7 +631,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Bound console ping parser requires transmitted/received/loss statistics. No real network gate has been executed."
     },
     {
       "upstream_tool": "pt_workspace_options",
