@@ -102,7 +102,7 @@ def render_wireless(p):
                f'preshared-key pass-phrase simple {p.psk}','service-template enable'])
     if p.mode=='ac':
         lines+=view(f'wlan ap {p.ap_name} model {p.ap_model}',
-                    [f'serial-id {p.serial_id}', *view(f'radio {p.radio}',[f'service-template {p.template}'])])
+                    [f'serial-id {p.serial_id}', *view(f'radio {p.radio}',['radio enable',f'service-template {p.template}'])])
     else: lines+=view(f'interface {p.radio_interface}',[f'service-template {p.template}'])
     return lines
 

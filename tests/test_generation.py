@@ -23,7 +23,7 @@ class ServiceGenerationTests(unittest.TestCase):
             'security':'local-user operator class manage\npassword simple test-only-123\nservice-type ssh\nauthorization-attribute user-role level-15',
             'qos':'qos policy edge\nclassifier web behavior mark\nquit',
             'netstream':'ip netstream export version 9\nip netstream export host 192.0.2.50 2055',
-            'wireless':'wlan ap ap1 model WA4620i-AGN\nserial-id TEST123\nradio 1\nservice-template corp\nquit\nquit'}
+            'wireless':'wlan ap ap1 model WA4620i-AGN\nserial-id TEST123\nradio 1\nradio enable\nservice-template corp\nquit\nquit'}
         for feature,text in expected.items():
             with self.subTest(feature=feature): self.assertIn(text,controller if feature=='wireless' else router)
         self.assertIn('interface Vlan-interface20\nip address 10.20.0.1 255.255.255.0',router)
