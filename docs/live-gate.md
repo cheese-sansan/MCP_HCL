@@ -24,13 +24,27 @@
 
 [H3C 5.10.3 官方安装说明](https://www.h3c.com/cn/d_202404/2116237_30005_0.htm)建议 Windows 10、附带的 VirtualBox 6.0.14，并要求关闭 Hyper-V 相关功能和内存完整性。目前的失败与 Hypervisor/VBS 状态符合这一兼容阻碍，但重启后的真实启动验收才能确认修复效果。
 
-`scripts/hcl_lab_boot.ps1` 已准备为当前 Windows 创建独立的 `MCP_HCL Lab (Hypervisor and VSM off)` 启动项。脚本先导出 BCD 备份，只在副本上设置 `hypervisorlaunchtype=Off`、`vsmlaunchtype=Off`，添加到启动菜单并回读；不会自动重启、修改日常启动项或更换 VirtualBox。选择实验项时该会话的 Hypervisor/VSM 防护和依赖功能将不可用。修改启动与安全配置必须取得专项确认；目前尚未执行。
+`scripts/hcl_lab_boot.ps1` 为当前 Windows 创建独立的 `MCP_HCL Lab (Hypervisor and VSM off)` 启动项。脚本先导出 BCD 备份，只在副本上设置 `hypervisorlaunchtype=Off`、`vsmlaunchtype=Off`，添加到启动菜单并回读；不会自动重启、修改日常启动项或更换 VirtualBox。选择实验项时该会话的 Hypervisor/VSM 防护和依赖功能将不可用。
 
-经确认后可在管理员 PowerShell 执行：
+**2026-10-01 更新：已执行成功。** 使用者启用 Windows 11 内置 `sudo` 并授权后，以提权方式执行：
 
 ```powershell
-& 'E:\MCP_HCL\scripts\hcl_lab_boot.ps1' -Action Create `
-  -ReceiptDirectory 'E:\MCP_HCL\work\feasibility\lab_boot_20261001'
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Create `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+```
+
+结果（回执 `work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`，`status=verified`）：新项 `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`，回读 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 备份 SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A`；`{current}` 与默认启动项均未变；未重启。
+
+**剩余动作由使用者完成：手动重启并选择该实验项**，随后运行只读的 `scripts/hcl_lab_environment.ps1` 判定会话状态。注意本机 `sudo` 处于强制新建窗口模式，提权进程的输出不会回到调用终端，因此一律以文件回执为准。详见 [控制平面实现与交接](control-plane.md) §10。
+
+回退（必须先在普通 Windows 项下运行）：
+
+```powershell
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Remove `
+  -EntryId '{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
 创建回执会包含新 GUID、备份路径、命令退出码和回读。使用者手动重启并选择实验项后，只执行一次剩余电源门槛；不要重跑已经通过的拓扑步骤。恢复普通启动后，可用同一脚本的 `-Action Remove -EntryId '{回执中的GUID}'` 删除实验项，删除保护会拒绝当前或默认的实验启动项。

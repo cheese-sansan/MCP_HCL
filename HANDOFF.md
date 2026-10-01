@@ -44,9 +44,13 @@
 
 ## 待确认的修复
 
-`scripts/hcl_lab_boot.ps1`：在批准后创建独立的 `MCP_HCL Lab (Hypervisor and VSM off)` 启动项，先备份 BCD，仅副本 launchtype Off，日常 Windows 仍默认，不自动重启。选择实验项时该会话的 Hypervisor/VSM 功能和防护停用。确认后才能执行；用户自行重启选择实验项，重新读环境并执行剩余电源/CLI 门槛。修复结果当前未验证。
+**状态更新（2026-10-01）**：`scripts/hcl_lab_boot.ps1 -Action Create` **已执行成功**。实验启动项 `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`（`MCP_HCL Lab (Hypervisor and VSM off)`）已创建并回读验证 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 已先备份；`{current}` 与默认启动项均未改动；脚本未重启。
 
-详细命令、回执与恢复说明见 `docs/live-gate.md`。若创建实际成功，必须更新本文件及说明的“尚未执行”，记录 GUID；失败回执保留。
+剩余唯一动作：**使用者手动重启并选择该实验项**，然后跑 `scripts/hcl_lab_environment.ps1` 判定会话状态（只读）。回退命令与完整回执见 [控制平面实现与交接](docs/control-plane.md) §10。
+
+本机 `sudo` 处于**强制新建窗口模式**，`--inline` 会被拒绝；提权动作一律用"写文件回执"取结果，不要依赖管道输出。
+
+详细命令、回执与恢复说明见 [docs/live-gate.md](docs/live-gate.md) 与 [docs/control-plane.md](docs/control-plane.md) §10。
 
 ## 验证策略与运行
 

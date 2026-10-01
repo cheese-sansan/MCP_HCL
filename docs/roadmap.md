@@ -192,8 +192,13 @@
 
 **验收**：启动一台设备后，`create_udp` 拿到的管道能读到 Comware 提示符；不追加任何长测试，只跑剩余必需门槛。
 
-> **进展（2026-10-01）**：已尝试执行并**被权限阻断**——当前会话未提权（`IsInRole(Administrator)=False`），脚本在创建任何回执前即拒绝（`An elevated PowerShell is required.`），**BCD 完全未被改动**。回执：`work/feasibility/lab_boot_20261001/elevation-blocked-20261001.json`。
-> 精确的提权命令与回退命令见 [控制平面实现与交接](control-plane.md) §10。用户已授权更激进的 P4 执行，但**提权本身必须在管理员会话中完成**。
+> **进展（2026-10-01）**：使用者启用 Windows 11 内置 `sudo` 并作为设备所有者授权后，实验启动项**已创建并回读验证**。
+> 新项 GUID `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`，描述 `MCP_HCL Lab (Hypervisor and VSM off)`，回读 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 已先备份（SHA256 `2D849DC8…FB4A`）；
+> `{current}` 与 `{bootmgr}` 的 default **均未改变**，新项只追加在 `displayorder` 末尾；脚本未重启。
+> 回执：`work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`（`status=verified`）。
+>
+> **剩下的唯一动作是使用者手动重启并选择该启动项**，然后跑 `scripts/hcl_lab_environment.ps1` 判定会话状态。
+> 注意：**"启动项已设置正确"不等于"guest 现在一定能起来"**，因果确认要等真正启动一台设备之后。详见 [控制平面实现与交接](control-plane.md) §10。
 
 ### P5 — D2 的 24 项 CLI 家族
 

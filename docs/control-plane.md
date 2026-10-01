@@ -362,34 +362,69 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 ---
 
-## 10. P4 的真实状态：被权限阻断，不是被代码阻断
+## 10. P4 状态：启动项**已创建并回读验证**，剩下的是使用者重启
 
-**当前会话没有提权**（`KURZNET\w8p1p`，`IsInRole(Administrator) = False`），而 `bcdedit` 与 `scripts/hcl_lab_boot.ps1` 都要求管理员。实测：
+### 10.1 已完成的动作（2026-10-01）
 
-```json
-{ "elevated": false, "exit_code": 1,
-  "error_output": "An elevated PowerShell is required.",
-  "receipt_written": 0 }
-```
-
-脚本在**创建任何回执之前**就拒绝了（守卫在第 10 行），所以没有产生半成品状态；BCD **完全没有被改动**。
-
-需要在**管理员 PowerShell** 中执行（脚本自身会先导出 BCD 备份、只改副本启动项、回读校验、不做默认项变更、不自动重启）：
+使用者启用 Windows 11 内置 `sudo` 并作为设备所有者授权后执行：
 
 ```powershell
-& 'E:\MCP_HCL\scripts\hcl_lab_boot.ps1' -Action Create `
-  -ReceiptDirectory 'E:\MCP_HCL\work\feasibility\lab_boot_20261001'
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Create `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-之后由使用者手动重启并选择 `MCP_HCL Lab (Hypervisor and VSM off)`，回来只跑剩余必需门槛（启动一台设备 → 读控制台）。回退：
+> 本机 sudo 处于**强制新建窗口模式**（`sudo config` 如此报告），因此 `--inline` 会被拒绝，提权进程的 stdout 不回到调用终端。**凡是提权动作都要用"写文件回执"的方式取结果**，不要依赖管道输出。
+
+回执：`work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`，`status = "verified"`，`verified_scope = "lab_boot_entry_created_and_read_back_only"`。
+
+| 项 | 值 |
+| --- | --- |
+| 新启动项 GUID | `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}` |
+| 描述 | `MCP_HCL Lab (Hypervisor and VSM off)` |
+| 回读 | `hypervisorlaunchtype Off`、`vsmlaunchtype Off` |
+| BCD 备份 | `...\2704c0bf...\bcd-before.bak`，SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A` |
+| `{current}` | **未变**，仍为 `Windows 11` / `hypervisorlaunchtype Auto` |
+| `{bootmgr}` default | **未变**，仍为 `{current}` |
+| `displayorder` | 新项**追加在最后** |
+| `reboot_performed` | `false`（脚本不重启） |
+
+提权本身也单独验证过（`probe-elevation.ps1`）：`elevated=true`、`can_read_bcd=true`。
+
+> **备份是机器本地的。** `bcd-before.bak` 位于 `work/` 下，而 `work/` 被 Git 忽略，因此不会随仓库传播，清理 `work/` 会丢失它。它只用于灾难恢复；日常回退用 `-Action Remove`（见 §10.3）即可，不需要该文件。若要长期保留，请自行复制到 `work/` 之外。
+
+### 10.2 使用者需要做的唯一动作
+
+**手动重启，在启动菜单选择 `MCP_HCL Lab (Hypervisor and VSM off)`。**
+
+该会话的 Hypervisor/VBS 防护与依赖功能不可用——这是一次性的显式选择，不是静默关闭全局安全功能；日常启动项未受影响。
+
+重启后运行（只读，不改任何设置）：
 
 ```powershell
-& 'E:\MCP_HCL\scripts\hcl_lab_boot.ps1' -Action Remove `
-  -EntryId '{回执中的 GUID}' `
-  -ReceiptDirectory 'E:\MCP_HCL\work\feasibility\lab_boot_20261001'
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_environment.ps1 `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-**提醒**：选择该实验启动项时，该会话的 Hypervisor/VBS 防护与依赖功能不可用。这是使用者的一次性选择，不是静默关闭。
+它会判定三件事并给出 `verdict`：是否真的启动进了实验项（`bcdedit {current}` 是否显示该描述且 `hypervisorlaunchtype Off`）、本会话是否仍有 Hypervisor、VirtualBox 是否可读。`verdict=lab_entry_active_and_no_hypervisor` 时才继续跑剩余电源门槛。
+
+### 10.3 回退
+
+```powershell
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Remove `
+  -EntryId '{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+```
+
+脚本的删除保护会拒绝删除"当前正在运行的项"或"已被设为默认的项"，因此**必须先在普通 Windows 项下运行**。
+
+### 10.4 仍未完成
+
+- 重启本身（使用者操作）。
+- 启动一台隔离设备并读到 Comware 提示符——这是 P4 的真正验收，也是 P5（24 项 CLI 家族）的前置。
+- 修复效果的**因果确认**：目前只能说"启动项已按要求设置且回读正确"，不能说"guest 现在一定能起来"。
 
 ---
 
