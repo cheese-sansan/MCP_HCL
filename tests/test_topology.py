@@ -58,5 +58,5 @@ class TopologyValidationTests(unittest.TestCase):
         plan['devices'][0]['x'] = 0
         plan['services'] = [{'device': 'r1', 'feature': 'netstream'}]
         result = validate_plan(plan, self.catalog)
-        self.assertTrue(result['valid'])
-        self.assertEqual(result['warnings'][0]['code'], 'feature_runtime_unverified')
+        self.assertFalse(result['valid'])
+        self.assertEqual(result['status'], 'rejected')

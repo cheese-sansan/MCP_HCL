@@ -10,10 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from mcp_hcl.catalog import CatalogError, HclCatalog
 from mcp_hcl.contracts import validation_errors
-
-
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra='forbid', allow_inf_nan=False, strict=True)
+from mcp_hcl.models import StrictModel
+from mcp_hcl.services import ServiceIntent, service_errors
 
 
 class Device(StrictModel):
@@ -69,14 +67,6 @@ class StaticRoute(StrictModel):
     @classmethod
     def valid_next_hop(cls, value: str) -> str:
         return str(ip_address(value))
-
-
-class ServiceIntent(StrictModel):
-    device: str
-    feature: Literal['dhcp', 'ospf', 'rip', 'vlan', 'acl', 'nat', 'security', 'wireless', 'qos', 'netstream']
-    # Intent is preserved for planning. A generator must reject fields it does
-    # not implement rather than silently turn these parameters into commands.
-    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class Annotation(StrictModel):
@@ -138,7 +128,9 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         model = models.get(device.model)
         if model is None:
             return False
-        if interface not in model['default_interfaces'] or interface == 'NULL0':
+        logical = {f'Vlan-interface{svi.vlan}' for service in plan.services if service.device == device_id and service.feature == 'vlan'
+                   for svi in service.parameters.svis}
+        if interface not in set(model['default_interfaces']) | logical or interface == 'NULL0':
             error('unknown_physical_interface', f'{device_id}/{interface}')
             return False
         return True
@@ -182,6 +174,7 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             error('unknown_device', service.device)
         result['warnings'].append({'code': 'feature_runtime_unverified', 'device': service.device,
                                    'feature': service.feature})
+    result['errors'].extend(service_errors(plan, models))
     result.update(status='verified' if not result['errors'] else 'rejected', valid=not result['errors'],
                   verified_scope='plan_structure_and_installed_default_interfaces_only',
                   plan=plan.model_dump(mode='json'))
