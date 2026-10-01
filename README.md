@@ -11,6 +11,20 @@
 | `hcl_inspect_project` | 只读解析设备、坐标和链路 |
 | `hcl_stage_add_device` | 从工程已有的同型号设备复制模型字段，生成一个**独立工程副本**；可同时加入一条链路 |
 | `hcl_stage_link` | 在独立工程副本中为两个空闲端口加入双端链路 |
+| `hcl_stage_copy` | 生成保持设备、链路、配置和注释的独立工程副本，用于实时控制验收 |
+| `hcl_parity_report` | 返回固定上游版本的 61 项工具、5 项资源对照清单及真实实现状态 |
+| `hcl_bridge_status` | 只读查询本机 HCL 后端版本与内存，绑定请求 ID 回读；不代表画布或 CLI 控制已验证 |
+| `hcl_list_devices` | 从本机 HCL 默认配置生成型号和默认接口目录，附来源及 SHA-256 |
+| `hcl_get_device_details` | 读取一个已安装型号的默认固件字符串和接口；运行态能力仍待探测 |
+| `hcl_validate_plan` | 校验版本化计划、设备引用、端口占用、地址冲突和路由地址族；服务固件支持保留警告 |
+
+另提供只读资源 `hcl://capabilities`、`hcl://catalog/devices`、`hcl://catalog/ports`。目录读取本地安装资料，不包含或分发厂商配置、程序和镜像。`MCP_HCL_INSTALL_ROOT` 默认 `D:\HCL`，可设为实际安装目录。
+
+完整 HCL 等价功能移植尚未完成。当前注册 **11 个工具、3 个资源**；计划中的目标名称不代表已实现。
+
+**先读 [路线图](docs/roadmap.md)**：它把 61 项上游工具按"需要什么才能做"重新分成四类——**14 项完全不依赖实时能力**（其中 11 项仍待实现）、19 项只需后端控制平面、24 项才需要已启动的 guest、3 项无原生等价证据。设备启动确实被本机 VirtualBox/Hypervisor 兼容问题阻塞，但该阻塞只影响第三类。控制平面的选择见 [ADR-0001](docs/adr/0001-live-control-transport.md)，HCL 自带后端协议的观察记录见 [后端协议](docs/hcl-backend-protocol.md)。
+
+其他文档：[实时验收说明](docs/live-gate.md)、[上游功能对照表](docs/upstream-parity.md)、[Agent 使用指南](docs/agent-guide.md)、[单模态交接（已归档）](docs/handoff-single-modal.md)。
 
 `status: staged` 表示新工程文件已生成，**不表示当前 HCL 画布已改变**。调用方必须打开结果中的 `project_file`，再观察 HCL 画布与运行日志。当前不提供自动打开工程、设备启动、Console CLI、连通性测试或直接控制当前画布的工具。
 
@@ -36,6 +50,8 @@ $env:MCP_HCL_OUTPUT_ROOT = 'E:\YOUR_WORKSPACE\MCP_HCL\work\staged'
 ```
 
 `MCP_HCL_PROJECT_ROOTS` 可用分号隔开多个绝对目录。若未设置，默认读取当前用户的 `HCL\Projects`；`MCP_HCL_OUTPUT_ROOT` 默认是启动时工作目录下的 `work\staged`。将同一命令和环境变量配置到任意支持 stdio MCP 的客户端即可，不需要特定 Agent 的推理代码。
+
+`hcl_bridge_status` 默认连接本机 `127.0.0.1:16600`，可以通过 `MCP_HCL_BACKEND_PORT` 修改端口。它只发送 HCL 5.10.3 已观察到的版本与内存查询；`status: verified` 的范围由 `verified_scope` 限定为后端协议回读。
 
 ## 使用顺序
 
