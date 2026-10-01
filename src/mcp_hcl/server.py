@@ -6,7 +6,7 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from mcp.server.fastmcp import FastMCP
@@ -20,6 +20,7 @@ from mcp_hcl.catalog import CatalogError, HclCatalog
 from mcp_hcl.project import ProjectError, ProjectStore
 from mcp_hcl.parity import REGISTERED_RESOURCES, REGISTERED_TOOLS, parity_report
 from mcp_hcl.topology import validate_plan
+from mcp_hcl.offline_tools import register_offline
 
 
 def live_writes_enabled() -> bool:
@@ -83,6 +84,9 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                 "state-changing action is disabled unless MCP_HCL_ALLOW_LIVE_WRITE=1"
             ),
             "catalog": "local model defaults and port families; runtime firmware unverified",
+            "offline_layer": {"typed_service_generators": ["dhcp", "ospf", "rip", "vlan", "acl", "nat", "security", "wireless", "qos", "netstream"],
+                              "operation_manifests_executable": False,
+                              "full_p1_acceptance": "incomplete: AC/AP default CLI mappings and per-model NIC mode compatibility are unverified"},
         }
 
     @mcp.resource("hcl://capabilities")
@@ -242,7 +246,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
 
     @mcp.tool()
     def hcl_backend_topology(
-        action: str,
+        action: Literal['open', 'close', 'status'],
         topology: str | None = None,
         working_directory: str | None = None,
         project_name: str | None = None,
@@ -322,6 +326,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                 return result
             session_state.update(session=session, topology=topology, project=str(resolved),
                                  commands=list(session.commands_sent))
+            result['target_project'] = str(resolved)
             result["session_open"] = True
             result["next_step"] = ("Topology verbs must use this session; the wrapper keys the "
                                    "topology to the connection.")
@@ -360,6 +365,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                                  "action='open' (the topology context is per connection)",
                                  "device_power")
             result = session.invoke("start", {"device": device})
+            result['target_project'] = session.project_directory
             session_state["commands"] = list(session.commands_sent)
             result["topology"] = session.topology
             return result
@@ -393,6 +399,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                 return _rejected("invalid_argument", str(exc), "console_exec")
         return console.run(pipe, command, expect=expect)
 
+    register_offline(mcp, catalog, store.output_root, catalog_read)
     return mcp
 
 

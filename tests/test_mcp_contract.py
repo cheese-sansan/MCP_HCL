@@ -44,8 +44,12 @@ EXPECTED_TOOLS = {
     # control-plane primitives: real implementations, write-gated, and not
     # upstream parity claims.
     "hcl_backend_capabilities", "hcl_backend_topology", "hcl_device_power", "hcl_console_exec",
+    "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
+    "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
+    "hcl_export_artifacts", "hcl_load_plan",
 }
-EXPECTED_RESOURCES = {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports"}
+EXPECTED_RESOURCES = {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports",
+                      "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"}
 
 # Any tool whose name suggests live canvas, power, console or capture control.
 LIVE_TOOL_NAME = re.compile(r"deploy|start|stop|power|cli|console|ping|capture|canvas|packet",
@@ -300,7 +304,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(report["tools"]), 61)
             self.assertEqual(len(report["resources"]), 5)
             self.assertEqual(report["tool_state_counts"],
-                             {"implemented": 4, "planned": 54, "unverified": 3})
+                             {"implemented": 12, "planned": 46, "unverified": 3})
             self.assertEqual(report["completion"], "incomplete")
             self.assertFalse(report["full_live_gate_passed"])
             self.assertEqual(set(report["registered_tools"]), names)

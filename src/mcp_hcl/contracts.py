@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -25,10 +27,15 @@ def envelope(body: dict[str, Any], *, request_id: Any = None,
     result.setdefault("operation_id", uuid4().hex)
     result.update(request_id=request_id, contract_version=2)
     result.setdefault("operation", operation)
-    result.setdefault("target", result.get("target_project", target))
+    result.setdefault("target", result.get("target_project") or result.get("project_file") or target)
     result.setdefault("verified_scope", "offline_result_only" if result["status"] in
                       {"ok", "verified", "staged"} else "none")
     result.setdefault("evidence", [])
+    if result['status'] == 'staged' and result.get('project_file'):
+        result['verified_scope'] = 'isolated_saved_project_only'
+        if not result['evidence']:
+            path = Path(result['project_file'])
+            result['evidence'] = [{'source': str(path), 'layer': 'saved_project', 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}]
     result.setdefault("errors", [{"code": "operation_failed", "message": result["error"]}]
                       if result.get("error") else [])
     result.setdefault("warnings", [])
@@ -54,6 +61,14 @@ class StrictFastMCP(FastMCP):
             model = create_model(tool.name + "Arguments", __base__=tool.fn_metadata.arg_model,
                                  __config__=ConfigDict(strict=True, extra="forbid", allow_inf_nan=False))
             tool.parameters = model.model_json_schema()
+            if 'plan' in model.model_fields:
+                from mcp_hcl.topology import TopologyPlan
+                schema = TopologyPlan.model_json_schema()
+                tool.parameters.setdefault('$defs', {}).update(schema.pop('$defs', {}))
+                tool.parameters['properties']['plan'] = schema
+            if 'request' in model.model_fields:
+                from mcp_hcl.planning import TopologyRequest
+                tool.parameters['properties']['request'] = TopologyRequest.model_json_schema()
             self._strict_models[tool.name] = model
         return self._strict_models[tool.name]
 
@@ -65,7 +80,7 @@ class StrictFastMCP(FastMCP):
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> CallToolResult:
         context = self.get_context()
         try:
-            request_id = context.request_id
+            request_id = context.request_context.request_id
         except (ValueError, LookupError):
             request_id = None
         tool = self._tool_manager.get_tool(name)
@@ -82,16 +97,20 @@ class StrictFastMCP(FastMCP):
                 is_error = True
             else:
                 try:
-                    if self.artifact_retries and name.startswith("hcl_stage_"):
+                    if name == 'hcl_backend_topology' and arguments.get('action') in {'close','status'} and set(arguments) != {'action'}:
+                        body = {'status':'rejected','errors':[{'code':'invalid_arguments','message':'close/status accept only action'}]}
+                    elif self.artifact_retries and name.startswith("hcl_stage_"):
                         body = self.artifact_retries.run(
                             name, validated, lambda: tool.fn(**validated),
                             source=validated.get("project_path"))
                     else:
-                        body = await tool.run(validated, context=context, convert_result=False)
+                        body = await tool.fn_metadata.call_fn_with_arg_validation(
+                            tool.fn, tool.is_async, validated,
+                            {tool.context_kwarg: context} if tool.context_kwarg else None)
                 except (ValueError, OSError) as exc:
                     body = {"status": "rejected", "error": str(exc),
                             "errors": [{"code": "invalid_operation", "message": str(exc)}]}
-                except ToolError:
+                except Exception:
                     body = {"status": "unverified", "errors": [{"code": "internal_error", "message": "The operation failed without a verified result"}]}
                     is_error = True
         body = envelope(body, request_id=request_id, operation=name, target=target)

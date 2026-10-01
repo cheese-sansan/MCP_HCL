@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+import json
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -158,9 +160,12 @@ class HclCatalog:
             models = [row for row in models if row['model'] == model]
             if not models:
                 raise CatalogError('Unknown installed model')
-        return self._result('installed_fixed_port_profiles_only', modules=[],
+        reference=json.loads(files('mcp_hcl').joinpath('data/platform_reference.json').read_text(encoding='utf-8'))
+        mode={**reference['native_nic_enhancement'], 'evidence':reference['evidence'],
+              'compatibility_status':'documented_example_only' if model=='S6850' else 'unverified'}
+        return self._result('documented_native_nic_mode_and_installed_fixed_profiles_only', modules=[mode],
                             fixed_port_profiles=[{'model': row['model'], 'family': row.get('port_family'),
                                                   'ports': row.get('scene_ports', [])} for row in models],
                             expansion_modules_verified=False,
-                            warnings=[{'code': 'module_catalog_unverified', 'message': 'No evidence-backed expansion module catalog is available; fixed interfaces are not modules.'}],
-                            evidence=[row['evidence'] for row in models])
+                            warnings=[{'code': 'module_compatibility_unverified', 'message': 'The 5.10.1 guide documents NIC enhancement for some devices; 5.10.3 per-model compatibility is unverified. Fixed interfaces are not expansion modules.'}],
+                            evidence=reference['evidence']+[row['evidence'] for row in models])

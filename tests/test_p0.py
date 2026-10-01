@@ -67,6 +67,9 @@ class EnvelopeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(invalid.structuredContent['errors'][0]['code'], 'invalid_arguments')
             for key in ('status', 'operation_id', 'request_id', 'target', 'verified_scope', 'evidence', 'errors', 'warnings'):
                 self.assertIn(key, first.structuredContent)
+            for arguments in ({'action':'status','udp_port':10000}, {'action':'close','topology':None}):
+                invalid = await server.call_tool('hcl_backend_topology', arguments)
+                self.assertEqual(invalid.structuredContent['errors'][0]['code'],'invalid_arguments')
 
 
 class LabVerdictTests(unittest.TestCase):

@@ -37,6 +37,9 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                             "hcl_validate_plan",
                             "hcl_backend_capabilities", "hcl_backend_topology",
                             "hcl_device_power", "hcl_console_exec",
+                            "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
+                            "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
+                            "hcl_export_artifacts", "hcl_load_plan",
                         },
                     )
                     result = await asyncio.wait_for(session.call_tool("hcl_capabilities", {}), timeout=10)
@@ -46,7 +49,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(content["live_gate"]["full_live_gate_passed"])
                     resources = await session.list_resources()
                     self.assertEqual({str(resource.uri) for resource in resources.resources},
-                                     {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports"})
+                                     {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports", "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"})
                     resource = await session.read_resource("hcl://capabilities")
                     self.assertEqual(json.loads(resource.contents[0].text), {key: content[key] for key in json.loads(resource.contents[0].text)})
                     report_result = await session.call_tool("hcl_parity_report", {})

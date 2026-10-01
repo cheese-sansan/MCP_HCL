@@ -243,9 +243,10 @@
       "hcl_targets": [
         "hcl_estimate_plan"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Counts are derived from the same deterministic HCL planner; CPU, memory and runtime estimates are not claimed.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_explain_plan",
@@ -253,9 +254,10 @@
       "hcl_targets": [
         "hcl_explain_plan"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Explains validated offline HCL intent and documented boundaries.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_export",
@@ -263,9 +265,10 @@
       "hcl_targets": [
         "hcl_export_artifacts"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Atomically exports plan/config/operation artifacts with a hash manifest and persistent idempotency.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_export_topology",
@@ -287,9 +290,10 @@
       "hcl_targets": [
         "hcl_fix_plan"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Repairs exact aliases, free physical ports and medium only; user addresses and services are preserved.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_full_build",
@@ -307,9 +311,10 @@
       "hcl_targets": [
         "hcl_generate_configs"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Documented Comware command templates for ten strict service types; firmware acceptance and guest effects remain unverified.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_generate_script",
@@ -317,9 +322,10 @@
       "hcl_targets": [
         "hcl_generate_operations"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Generate typed HCL operations and Comware configurations; the output format differs from PT JavaScript."
+      "note": "Generates a typed declarative HCL operation manifest, executable=false; not PT JavaScript or a live adapter.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_get_device_details",
@@ -379,7 +385,7 @@
       ],
       "state": "planned",
       "live_required": false,
-      "note": "Discover HCL card/NIC capabilities by installed model and version."
+      "note": "Native NIC enhancement is documented in installed HCL 5.10.1 guide; exact 5.10.3 per-model compatibility and PT-card equivalence remain unverified. Fixed interfaces are not modules."
     },
     {
       "upstream_tool": "pt_list_projects",
@@ -397,9 +403,10 @@
       "hcl_targets": [
         "hcl_list_templates"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Implement the HCL-specific contract with offline validation."
+      "note": "Five deterministic HCL-native graph templates with source hashes.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_live_deploy",
@@ -417,9 +424,10 @@
       "hcl_targets": [
         "hcl_load_plan"
       ],
-      "state": "planned",
+      "state": "implemented",
       "live_required": false,
-      "note": "Load the saved topology plan; opening the active HCL project is a separate operation."
+      "note": "Hash-checks and reloads an exported saved plan under the output root; never opens the live HCL project.",
+      "verified_scope": "offline_hcl_contract_only"
     },
     {
       "upstream_tool": "pt_move_device",
@@ -449,7 +457,7 @@
       ],
       "state": "planned",
       "live_required": false,
-      "note": "Protocol support, including EIGRP, must be established on the selected HCL firmware."
+      "note": "Registered deterministic HCL-native planner supports five graph templates, static/OSPF/RIP routing and DHCP. Full upstream request coverage remains planned."
     },
     {
       "upstream_tool": "pt_project_metadata",
@@ -612,7 +620,7 @@
       ],
       "state": "planned",
       "live_required": false,
-      "note": "hcl_validate_plan is registered for versioned structure, installed default interfaces, occupied ports and address conflicts. Full service parameter and firmware validation remain pending; no live equivalence is claimed."
+      "note": "Strict versioned structure and all ten service parameter/dependency schemas are implemented. Per-model firmware support and AC/AP CLI mapping remain unverified, so the complete row stays planned."
     },
     {
       "upstream_tool": "pt_verify_connectivity",
@@ -644,12 +652,14 @@
     {
       "upstream_uri": "pt://catalog/aliases",
       "hcl_uri": "hcl://catalog/aliases",
-      "state": "planned"
+      "state": "implemented",
+      "verified_scope": "offline_hcl_catalog_only"
     },
     {
       "upstream_uri": "pt://catalog/cables",
       "hcl_uri": "hcl://catalog/cables",
-      "state": "planned"
+      "state": "implemented",
+      "verified_scope": "offline_hcl_catalog_only"
     },
     {
       "upstream_uri": "pt://catalog/devices",
@@ -659,7 +669,8 @@
     {
       "upstream_uri": "pt://catalog/templates",
       "hcl_uri": "hcl://catalog/templates",
-      "state": "planned"
+      "state": "implemented",
+      "verified_scope": "offline_hcl_catalog_only"
     }
   ]
 }

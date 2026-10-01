@@ -60,6 +60,8 @@ class Dhcp(IPv4Fields):
             if not self.pool or not self.network or not self.gateway or self.servers:
                 raise ValueError('Server requires pool/network/gateway and forbids relay servers')
             network = IPv4Network(self.network)
+            if network.prefixlen > 30:
+                raise ValueError('DHCP server pools require at least a /30 subnet')
             if IPv4Address(self.gateway) not in network:
                 raise ValueError('Gateway is outside the DHCP network')
             if any(IPv4Address(r.start) not in network or IPv4Address(r.end) not in network for r in self.excluded):

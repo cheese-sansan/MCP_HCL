@@ -19,8 +19,12 @@ REGISTERED_TOOLS = frozenset({
     # HCL-native control-plane primitives.  They are NOT upstream parity
     # claims: no upstream row is marked implemented by their existence.
     "hcl_backend_capabilities", "hcl_backend_topology", "hcl_device_power", "hcl_console_exec",
+    "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
+    "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
+    "hcl_export_artifacts", "hcl_load_plan",
 })
-REGISTERED_RESOURCES = frozenset({"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports"})
+REGISTERED_RESOURCES = frozenset({"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports",
+                                 "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"})
 
 
 def validate_inventory(inventory: dict[str, Any]) -> None:
