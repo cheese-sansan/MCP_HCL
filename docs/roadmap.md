@@ -163,6 +163,14 @@
 
 **授权**：使用未公开的厂商内部协议属反向工程，建议由用户明确确认（见 [ADR-0001](adr/0001-live-control-transport.md)）。
 
+> **进展（2026-10-01，已授权并完成第一层）** —— 详见 [控制平面实现与交接](control-plane.md)。
+>
+> 已完成：动词注册表（16 项，逐项标证据等级与写标记）、写总开关 `MCP_HCL_ALLOW_LIVE_WRITE`、帧解析（含两条实测规则）、**持久连接会话**（拓扑上下文绑在连接上）、命名管道控制台客户端（非阻塞、丢弃陈旧输出）、4 个新 MCP 工具、66 项测试。
+>
+> 已用真实后端验证：版本/内存读回、`create_topology` 被接受（`errorCode=100`）、同一会话内 `start` 进入 `SimwareTopo startVM`、`normal_close` 干净回收且**未留下任何虚拟机**、写开关关闭时三个工具全部 `writes_disabled`。
+>
+> 仍属 P2 未完成：`create`/`delete`/`create_udp` 的字段语义（当前**刻意不可调用**）、命名管道并发语义、GUI 是否重读后端拓扑。
+
 ### P3 — 画布与工程闭环（relay 架构）
 
 不要试图用像素自动化实现"增量编辑当前画布"，而是把已验证的链路做成闭环：
@@ -183,6 +191,9 @@
 这是唯一需要动 Windows 启动/安全配置的环节，且**已有既定方案**：`scripts/hcl_lab_boot.ps1` 创建独立实验启动项、先备份 BCD、只对副本关闭 Hypervisor/VSM、不自动重启。仍缺的是**专项确认**与用户手动重启。
 
 **验收**：启动一台设备后，`create_udp` 拿到的管道能读到 Comware 提示符；不追加任何长测试，只跑剩余必需门槛。
+
+> **进展（2026-10-01）**：已尝试执行并**被权限阻断**——当前会话未提权（`IsInRole(Administrator)=False`），脚本在创建任何回执前即拒绝（`An elevated PowerShell is required.`），**BCD 完全未被改动**。回执：`work/feasibility/lab_boot_20261001/elevation-blocked-20261001.json`。
+> 精确的提权命令与回退命令见 [控制平面实现与交接](control-plane.md) §10。用户已授权更激进的 P4 执行，但**提权本身必须在管理员会话中完成**。
 
 ### P5 — D2 的 24 项 CLI 家族
 

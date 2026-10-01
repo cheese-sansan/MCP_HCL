@@ -18,15 +18,26 @@
 | `hcl_get_device_details` | 读取一个已安装型号的默认固件字符串和接口；运行态能力仍待探测 |
 | `hcl_validate_plan` | 校验版本化计划、设备引用、端口占用、地址冲突和路由地址族；服务固件支持保留警告 |
 
+### 控制平面（新增，默认全部关闭）
+
+下列 4 个工具驱动 HCL 自带的后端协议与设备控制台命名管道。它们**不是上游等价声明**，且**任何会改变状态的动作默认被拒绝**，必须先以 `MCP_HCL_ALLOW_LIVE_WRITE=1` 启动服务端。实现与验证细节见 [控制平面实现与交接](docs/control-plane.md)。
+
+| MCP 工具 | 行为 | 默认 |
+| --- | --- | --- |
+| `hcl_backend_capabilities` | 离线列出已观察到的后端动词、证据等级与门控状态 | 只读，可用 |
+| `hcl_backend_topology` | 打开/查询/关闭一个后端拓扑会话（拓扑上下文绑定在 TCP 连接上） | 写，关闭 |
+| `hcl_device_power` | 通过已观察动词上电（**没有观察到任何停止动词**，`on=False` 报不支持） | 写，关闭 |
+| `hcl_console_exec` | 向设备控制台命名管道发送一行并回读；只接受 `\\.\pipe\<topo>-device<N>` | 写，关闭 |
+
 另提供只读资源 `hcl://capabilities`、`hcl://catalog/devices`、`hcl://catalog/ports`。目录读取本地安装资料，不包含或分发厂商配置、程序和镜像。`MCP_HCL_INSTALL_ROOT` 默认 `D:\HCL`，可设为实际安装目录。
 
-完整 HCL 等价功能移植尚未完成。当前注册 **11 个工具、3 个资源**；计划中的目标名称不代表已实现。
+完整 HCL 等价功能移植尚未完成。当前注册 **15 个工具、3 个资源**（其中 4 个是控制平面工具，默认关闭）；计划中的目标名称不代表已实现。
 
-**先读 [路线图](docs/roadmap.md)**：它把 61 项上游工具按"需要什么才能做"重新分成四类——**14 项完全不依赖实时能力**（其中 11 项仍待实现）、19 项只需后端控制平面、24 项才需要已启动的 guest、3 项无原生等价证据。设备启动确实被本机 VirtualBox/Hypervisor 兼容问题阻塞，但该阻塞只影响第三类。控制平面的选择见 [ADR-0001](docs/adr/0001-live-control-transport.md)，HCL 自带后端协议的观察记录见 [后端协议](docs/hcl-backend-protocol.md)。
+**先读 [路线图](docs/roadmap.md)**：它把 61 项上游工具按"需要什么才能做"重新分成四类——**14 项完全不依赖实时能力**（其中 11 项仍待实现）、19 项只需后端控制平面、24 项才需要已启动的 guest、3 项无原生等价证据。设备启动确实被本机 VirtualBox/Hypervisor 兼容问题阻塞，但该阻塞只影响第三类。控制平面的选择见 [ADR-0001](docs/adr/0001-live-control-transport.md)，实现与逐条回执见 [控制平面](docs/control-plane.md)，HCL 自带后端协议的观察记录见 [后端协议](docs/hcl-backend-protocol.md)。
 
 其他文档：[实时验收说明](docs/live-gate.md)、[上游功能对照表](docs/upstream-parity.md)、[Agent 使用指南](docs/agent-guide.md)、[单模态交接（已归档）](docs/handoff-single-modal.md)。
 
-`status: staged` 表示新工程文件已生成，**不表示当前 HCL 画布已改变**。调用方必须打开结果中的 `project_file`，再观察 HCL 画布与运行日志。当前不提供自动打开工程、设备启动、Console CLI、连通性测试或直接控制当前画布的工具。
+`status: staged` 表示新工程文件已生成，**不表示当前 HCL 画布已改变**。调用方必须打开结果中的 `project_file`，再观察 HCL 画布与运行日志。仍然**没有**"打开/保存当前画布"、连通性测试或直接编辑当前画布的工具；设备上电与控制台输入虽然已有工具，但默认全部关闭，且尚未在真正启动的 guest 上验证过。
 
 工具只接受配置的项目根目录内的工程。新设备使用工程中已有设备作为型号模板；端口名称会检查格式和占用情况，但**尚未核对该 HCL 型号是否实际提供指定端口**。HCL 载入工程是最后的兼容性校验。阶段名只允许 1–20 位 ASCII 字母、数字和下划线，生成目录不得已存在。
 

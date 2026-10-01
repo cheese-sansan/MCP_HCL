@@ -1,13 +1,14 @@
 # MCP_HCL 当前工作交接
 
-**先读这两个（按顺序）：**
+**先读这三个（按顺序）：**
 
 1. [docs/roadmap.md](docs/roadmap.md) —— 目标定义、差距根因、61 项按依赖重新分类、分阶段实施顺序。**当前的行动依据。**
-2. [docs/hcl-backend-protocol.md](docs/hcl-backend-protocol.md) —— HCL 自带后端协议（SimwareWrapper）的观察记录：动词、帧格式、控制台管道分配。控制平面实现的关键材料。
+2. [docs/control-plane.md](docs/control-plane.md) —— 控制平面的**实现级**交接：代码地图、工具契约、已验证事实与逐条回执、危险区、下一步与验收标准。**接手代码前必读。**
+3. [docs/hcl-backend-protocol.md](docs/hcl-backend-protocol.md) —— HCL 自带后端协议（SimwareWrapper）的观察记录：帧格式、动词、返回码、控制台管道。
 
-决策记录：[ADR-0001 实时控制通道](docs/adr/0001-live-control-transport.md)（状态 Proposed，等待确认）。
+决策记录：[ADR-0001 实时控制通道](docs/adr/0001-live-control-transport.md)（**Accepted**，第一层已实施并验证）。
 
-[docs/handoff-single-modal.md](docs/handoff-single-modal.md) 已**归档**：它包含启动配置、接口限制、纯 MCP 验收步骤、故障证据与权限边界，仍然有效，但其中的"后续推进顺序"已被路线图取代，文末附有本轮核实后的更正与补充。
+[docs/handoff-single-modal.md](docs/handoff-single-modal.md) 已**归档**：它包含启动配置、接口限制、纯 MCP 验收步骤、故障证据与权限边界，仍然有效，但其中的"后续推进顺序"已被路线图取代，文末附有核实后的更正与补充。
 
 更新：2026-10-01。本文件仅记录已确认事实；完整上游功能移植尚未完成。
 
@@ -21,9 +22,10 @@
 
 ## 当前实现
 
-- 分支 `dsh`（自 `codex/hcl-live-parity` 的 `1005ac3f` 创建），版本 0.1.1。实现与文档此前均未提交。
-- 原 5 个 MCP 接口保持兼容。共 11 工具、3 资源，无空壳实时工具。
-- 本机测试基线：**38 项全部通过**（原有 22 项 + `tests/test_mcp_contract.py` 新增 16 项；1 项因无 symlink 权限 skip）。
+- 分支 `dsh`（自 `codex/hcl-live-parity` 的 `1005ac3f` 创建），版本 0.1.1。
+- 原 5 个 MCP 接口保持兼容。共 **15 工具、3 资源**：11 个原有 + 4 个控制平面工具（`hcl_backend_capabilities`、`hcl_backend_topology`、`hcl_device_power`、`hcl_console_exec`），后者**默认全部关闭**，需 `MCP_HCL_ALLOW_LIVE_WRITE=1`。
+- 控制平面已实现并**用真实后端验证**（动词注册表、写总开关、持久连接会话、命名管道控制台）。未在启动的 guest 上验证过。
+- 本机测试基线：**66 项通过**（1 项因账号无 symlink 权限 skip）。
 - `.net` 安全副本、只读后端协议回读、固定上游对照表、局部画布几何、打开/保存 PowerShell 探针。
 - 本机型号/端口目录：8 个默认配置型号、11 个端口族，来源及 SHA-256 可读；不是当前固件能力证明。
 - `TopologyPlan` v1 包含设备、链接、地址、静态路由、服务意图、注释。`hcl_validate_plan` 已实现结构、默认接口、端口占用及地址冲突检查；完整服务参数校验、生成与部署尚待完成。
