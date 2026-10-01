@@ -240,11 +240,18 @@ class ProjectStore:
             shutil.copy2(doc.net_path, temp_project / doc.net_path.name)
             for dirname in ("ConfigDisk", "DeviceConfig"):
                 source = doc.directory / dirname
-                if not source.is_dir():
+                if not source.is_dir() or source.is_symlink() or getattr(source, "is_junction", lambda: False)():
                     raise ProjectError(f"Missing project directory: {dirname}")
-                if any(path.is_symlink() for path in source.rglob("*")):
+                if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in source.rglob("*")):
                     raise ProjectError(f"Linked files are not accepted in {dirname}")
                 shutil.copytree(source, temp_project / dirname)
+            serial = doc.directory / "SerialFile"
+            if serial.exists():
+                if not serial.is_dir() or serial.is_symlink() or getattr(serial, "is_junction", lambda: False)():
+                    raise ProjectError("Linked or invalid SerialFile directory")
+                if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in serial.rglob("*")):
+                    raise ProjectError("Linked files are not accepted in SerialFile")
+                shutil.copytree(serial, temp_project / "SerialFile")
             return temp_root, final_root
         except Exception:
             shutil.rmtree(temp_root)
@@ -290,6 +297,11 @@ class ProjectStore:
             if temp_root.exists():
                 shutil.rmtree(temp_root)
             raise
+
+    def stage_copy(self, project_path: str, stage_name: str) -> dict[str, Any]:
+        """Create an isolated, reloadable project without adding topology changes."""
+        doc = self._open(project_path)
+        return self._commit(doc, stage_name, list(doc.lines), copy.deepcopy(doc.metadata))
 
     def stage_add_device(
         self,

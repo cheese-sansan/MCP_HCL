@@ -2,14 +2,27 @@
 
 from __future__ import annotations
 
+import json
 import os
+import threading
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from mcp.server.fastmcp import FastMCP
 
 from mcp_hcl import __version__
+from mcp_hcl import console as hcl_console
+from mcp_hcl.backend import BackendError, HclBackend
+from mcp_hcl.catalog import CatalogError, HclCatalog
 from mcp_hcl.project import ProjectError, ProjectStore
+from mcp_hcl.parity import REGISTERED_RESOURCES, REGISTERED_TOOLS, parity_report
+from mcp_hcl.topology import validate_plan
+
+
+def live_writes_enabled() -> bool:
+    """Single master switch for every action that changes HCL or device state."""
+    return os.environ.get("MCP_HCL_ALLOW_LIVE_WRITE", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def create_store() -> ProjectStore:
@@ -21,8 +34,19 @@ def create_store() -> ProjectStore:
     return ProjectStore(project_roots=project_roots, output_root=output_root)
 
 
-def create_server(store: ProjectStore | None = None) -> FastMCP:
+def create_server(store: ProjectStore | None = None, backend: HclBackend | None = None,
+                  catalog: HclCatalog | None = None, console: hcl_console.HclConsole | None = None) -> FastMCP:
     store = store or create_store()
+    writes = live_writes_enabled()
+    backend = backend or HclBackend(port=int(os.environ.get("MCP_HCL_BACKEND_PORT", "16600")),
+                                    allow_writes=writes)
+    catalog = catalog or HclCatalog(Path(os.environ.get("MCP_HCL_INSTALL_ROOT", "D:/HCL")))
+    console = console or hcl_console.HclConsole(writes_enabled=writes)
+    # The wrapper keys a topology to the TCP connection, so at most one backend
+    # session is held at a time: the one hcl_backend_topology opened.
+    session_lock = threading.Lock()
+    session_state: dict[str, Any] = {"session": None, "topology": None, "project": None,
+                                     "commands": []}
     mcp = FastMCP(
         name="mcp-hcl",
         instructions=(
@@ -31,6 +55,9 @@ def create_server(store: ProjectStore | None = None) -> FastMCP:
             "A staged result is not a live-canvas result."
         ),
     )
+    # FastMCP 1.x has no version constructor argument. Its underlying Server
+    # exposes the version used by initialize; keep the handshake project-specific.
+    mcp._mcp_server.version = __version__
 
     @mcp.tool()
     def hcl_capabilities() -> dict[str, Any]:
@@ -43,7 +70,78 @@ def create_server(store: ProjectStore | None = None) -> FastMCP:
             "live_canvas_api": "not verified and not exposed",
             "device_start_and_console": "not implemented",
             "output_root": str(store.output_root),
+            "live_gate": {"state": "not_passed", "full_live_gate_passed": False},
+            "registered_tools": sorted(REGISTERED_TOOLS),
+            "registered_resources": sorted(REGISTERED_RESOURCES),
+            "upstream_parity": "incomplete; call hcl_parity_report for the pinned 61-tool inventory",
+            "backend_probe": "read-only version and memory; does not prove live canvas control",
+            "control_plane": (
+                "observed SimwareWrapper verbs plus a named-pipe device console; every "
+                "state-changing action is disabled unless MCP_HCL_ALLOW_LIVE_WRITE=1"
+            ),
+            "catalog": "local model defaults and port families; runtime firmware unverified",
         }
+
+    @mcp.resource("hcl://capabilities")
+    def capabilities_resource() -> str:
+        """Read the same capability boundaries exposed by hcl_capabilities."""
+        return json.dumps(hcl_capabilities(), ensure_ascii=False)
+
+    def catalog_read(action: Any) -> dict[str, Any]:
+        try:
+            return action()
+        except (CatalogError, OSError, UnicodeError) as exc:
+            return {"status": "partial", "operation_id": uuid4().hex, "target_project": None,
+                    "error": str(exc), "runtime_verified": False, "evidence": []}
+
+    @mcp.tool()
+    def hcl_list_devices() -> dict[str, Any]:
+        """List installed HCL model defaults, with file evidence and firmware boundaries."""
+        return catalog_read(catalog.devices)
+
+    @mcp.tool()
+    def hcl_get_device_details(model: str) -> dict[str, Any]:
+        """Read one installed model's default interfaces; never claim guest CLI verification."""
+        return catalog_read(lambda: catalog.device_details(model))
+
+    @mcp.tool()
+    def hcl_validate_plan(plan: dict[str, Any]) -> dict[str, Any]:
+        """Validate versioned intent, occupied ports and addresses against local HCL defaults.
+
+        Use Comware interface names, not .net scene port keys. Validation does
+        not prove firmware support, deployment or network connectivity.
+        """
+        return validate_plan(plan, catalog)
+
+    @mcp.resource("hcl://catalog/devices")
+    def devices_resource() -> str:
+        return json.dumps(hcl_list_devices(), ensure_ascii=False)
+
+    @mcp.resource("hcl://catalog/ports")
+    def ports_resource() -> str:
+        return json.dumps(catalog_read(catalog.ports), ensure_ascii=False)
+
+    @mcp.tool()
+    def hcl_parity_report() -> dict[str, Any]:
+        """Read the pinned upstream mapping, with implemented and pending states."""
+        return parity_report()
+
+    @mcp.tool()
+    def hcl_bridge_status() -> dict[str, Any]:
+        """Probe the local HCL backend; never infer GUI or CLI control from it."""
+        return backend.status()
+
+    @mcp.tool()
+    def hcl_stage_copy(project_path: str, stage_name: str) -> dict[str, Any]:
+        """Create an isolated HCL project for safe live-gate verification."""
+        try:
+            result = store.stage_copy(project_path, stage_name)
+            return {**result, "operation_id": uuid4().hex, "target_project": result["project_file"],
+                    "evidence": [{"source": result["project_file"], "layer": "saved_project"}],
+                    "full_live_gate_passed": False}
+        except (ProjectError, OSError) as exc:
+            return {"status": "rejected", "error": str(exc), "operation_id": uuid4().hex,
+                    "target_project": project_path, "evidence": []}
 
     @mcp.tool()
     def hcl_list_projects() -> dict[str, Any]:
@@ -93,6 +191,192 @@ def create_server(store: ProjectStore | None = None) -> FastMCP:
             return store.stage_link(project_path, stage_name, a, a_port, b, b_port)
         except (ProjectError, OSError) as exc:
             return {"status": "rejected", "error": str(exc)}
+
+    # ---------------------------------------------------------- control plane
+    # Everything below talks to HCL's own backend or to a device console.  It is
+    # NOT upstream parity: no parity row becomes "implemented" because a tool
+    # exists here.  All state-changing actions need MCP_HCL_ALLOW_LIVE_WRITE=1.
+
+    def _rejected(code: str, message: str, operation: str) -> dict[str, Any]:
+        return {"status": "rejected", "operation": operation, "operation_id": uuid4().hex,
+                "target_project": None, "evidence": [],
+                "errors": [{"code": code, "message": message}],
+                "runtime_verified": False, "full_live_gate_passed": False}
+
+    @mcp.tool()
+    def hcl_backend_capabilities() -> dict[str, Any]:
+        """List the observed backend verbs, their evidence level and gating state.
+
+        Read-only and offline: it never opens a socket. The verb list comes from
+        HCL's own logs, not from vendor documentation.
+        """
+        verbs = backend.verbs()
+        return {
+            "status": "verified",
+            "operation": "backend_verb_registry",
+            "operation_id": uuid4().hex,
+            "target_project": None,
+            "verified_scope": "observed_verb_registry_only",
+            "evidence": [{"source": "docs/hcl-backend-protocol.md", "layer": "documentation"}],
+            "endpoint": {"host": backend.host, "port": backend.port},
+            "write_verbs_enabled": backend.allow_writes,
+            "console_exec_enabled": console.writes_enabled,
+            "topology_session_open": session_state["session"] is not None,
+            "invocable_count": sum(1 for row in verbs if row["enabled"]),
+            "verbs": verbs,
+            "runtime_verified": False,
+            "full_live_gate_passed": False,
+            "limitations": [
+                "The verb list is observed behaviour, not a vendor specification.",
+                "An accepted command proves the backend accepted it; it does not prove that a "
+                "guest booted, that a command reached a device, or that anything is reachable.",
+                "Verbs marked invocable=false were observed but are refused because their field "
+                "semantics are not understood well enough to reproduce safely.",
+            ],
+        }
+
+    @mcp.tool()
+    def hcl_backend_topology(
+        action: str,
+        topology: str | None = None,
+        working_directory: str | None = None,
+        project_name: str | None = None,
+        udp_port: int = 10000,
+    ) -> dict[str, Any]:
+        """Open, inspect or close the backend topology session (state-changing).
+
+        The wrapper keys its topology to the **connection**, so opening keeps one
+        connection alive and reuses it for ``hcl_device_power``. At most one
+        session is held at a time.
+
+        ``action`` is ``open``, ``close`` or ``status``. ``open`` needs
+        ``topology`` and a ``working_directory`` inside a configured project root.
+        """
+        with session_lock:
+            if action == "status":
+                return {"status": "verified" if session_state["session"] else "unverified",
+                        "operation": "backend_topology_status", "operation_id": uuid4().hex,
+                        "target_project": session_state["project"],
+                        "topology": session_state["topology"],
+                        "session_open": session_state["session"] is not None,
+                        "commands_sent": list(session_state.get("commands", [])),
+                        "evidence": [], "runtime_verified": False,
+                        "full_live_gate_passed": False}
+            if not backend.allow_writes:
+                # The master switch is checked before any state, so a disabled
+                # server can never look like it merely lacks a session.
+                return _rejected(
+                    "writes_disabled",
+                    "This verb changes HCL state. Start the server with "
+                    "MCP_HCL_ALLOW_LIVE_WRITE=1 after an explicit decision.",
+                    "backend_topology",
+                )
+            if action == "close":
+                session = session_state["session"]
+                if session is None:
+                    return _rejected("no_open_session", "No backend topology session is open",
+                                     "backend_topology")
+                try:
+                    result = session.close_topology()
+                finally:
+                    session.close()
+                    session_state.update(session=None, topology=None, project=None, commands=[])
+                return result
+            if action != "open":
+                return _rejected("unknown_action", "action must be 'open', 'close' or 'status'",
+                                 "backend_topology")
+            if session_state["session"] is not None:
+                return _rejected("session_already_open",
+                                 "Close the current backend topology session first",
+                                 "backend_topology")
+            if not topology or not working_directory:
+                return _rejected("missing_argument",
+                                 "action='open' needs topology and working_directory",
+                                 "backend_topology")
+            try:
+                resolved = Path(working_directory).resolve()
+            except (OSError, ValueError) as exc:
+                return _rejected("invalid_argument", f"Cannot resolve working_directory: {exc}",
+                                 "backend_topology")
+            if not any(resolved.is_relative_to(root) for root in store.project_roots):
+                return _rejected("outside_configured_roots",
+                                 "working_directory must be inside a configured project root",
+                                 "backend_topology")
+            try:
+                session = backend.connect()
+            except BackendError as exc:
+                return _rejected("backend_unreachable", str(exc), "backend_topology")
+            result = session.open_topology(topology, str(resolved),
+                                           project_name or resolved.name, udp_port)
+            if result.get("status") != "accepted":
+                session.close()
+                return result
+            session_state.update(session=session, topology=topology, project=str(resolved),
+                                 commands=list(session.commands_sent))
+            result["session_open"] = True
+            result["next_step"] = ("Topology verbs must use this session; the wrapper keys the "
+                                   "topology to the connection.")
+            return result
+
+    @mcp.tool()
+    def hcl_device_power(device: int, on: bool = True) -> dict[str, Any]:
+        """Power one device on through the observed backend verb (gated).
+
+        Requires an open session from ``hcl_backend_topology``: the wrapper keys
+        the topology to the connection, so a one-shot request is answered with
+        ``errorCode=228``. Only power-on was observed - no stop verb exists in
+        the logs, so ``on=False`` is reported as unsupported rather than guessed.
+        """
+        if on is not True:
+            return _rejected(
+                "unsupported",
+                "No power-off verb was observed in HCL's logs. Only power-on is implemented; "
+                "guessing a stop command could leave a VM in an unknown state.",
+                "device_power",
+            )
+        if not backend.allow_writes:
+            return _rejected(
+                "writes_disabled",
+                "This verb changes HCL state. Start the server with "
+                "MCP_HCL_ALLOW_LIVE_WRITE=1 after an explicit decision.",
+                "device_power",
+            )
+        with session_lock:
+            session = session_state["session"]
+            if session is None:
+                return _rejected("no_open_session",
+                                 "Open a backend topology session first: hcl_backend_topology "
+                                 "action='open' (the topology context is per connection)",
+                                 "device_power")
+            result = session.invoke("start", {"device": device})
+            session_state["commands"] = list(session.commands_sent)
+            result["topology"] = session.topology
+            return result
+
+    @mcp.tool()
+    def hcl_console_exec(
+        command: str,
+        pipe: str | None = None,
+        topology: str | None = None,
+        device: int | None = None,
+        expect: str | None = None,
+    ) -> dict[str, Any]:
+        """Send one line to a device console over its HCL named pipe (gated).
+
+        Supply either ``pipe`` (must match HCL's console pipe pattern) or
+        ``topology`` plus ``device``. Output that arrived before the command is
+        drained and reported as ``discarded_stale_bytes`` so stale console text
+        cannot be mistaken for this request's answer.
+        """
+        if pipe is None:
+            if topology is None or device is None:
+                return _rejected("missing_argument",
+                                 "Supply either pipe, or topology and device", "console_exec")
+            try:
+                pipe = hcl_console.endpoint(topology, device)
+            except hcl_console.ConsoleError as exc:
+                return _rejected("invalid_argument", str(exc), "console_exec")
+        return console.run(pipe, command, expect=expect)
 
     return mcp
 

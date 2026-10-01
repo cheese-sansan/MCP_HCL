@@ -1,0 +1,665 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "https://github.com/Mats2208/MCP-Packet-Tracer",
+    "revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+    "tool_registry_sha256": "959fe3060fec198e3e46e7b0ca1fa282356e65aef319f8048d904d3bbbaaac2b",
+    "resource_registry_sha256": "8b2847e135d9126c375d052cd04505a8f2312100b329fbca46d68e9e2bc160eb"
+  },
+  "expected_tool_count": 61,
+  "expected_resource_count": 5,
+  "tools": [
+    {
+      "upstream_tool": "pt_add_device",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_add_device"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back.",
+      "staged_alternatives": [
+        "hcl_stage_add_device"
+      ],
+      "staged_limit": "Saved-project evidence only; this is not a live equivalence claim."
+    },
+    {
+      "upstream_tool": "pt_add_link",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_add_link"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back.",
+      "staged_alternatives": [
+        "hcl_stage_link"
+      ],
+      "staged_limit": "Saved-project evidence only; this is not a live equivalence claim."
+    },
+    {
+      "upstream_tool": "pt_add_module",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_add_module"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_add_note",
+      "category": "canvas",
+      "hcl_targets": [
+        "hcl_add_note"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_acl",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_apply_acl"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_acl_object",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_apply_acl"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "The HCL equivalent is Comware ACL configuration and read-back; object-API performance is not a compatibility guarantee."
+    },
+    {
+      "upstream_tool": "pt_apply_hardening",
+      "category": "network_configuration",
+      "hcl_targets": [
+        "hcl_apply_hardening"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Use Comware security controls and audit rules for the selected firmware."
+    },
+    {
+      "upstream_tool": "pt_apply_interface_tuning",
+      "category": "network_configuration",
+      "hcl_targets": [
+        "hcl_apply_interface_tuning"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_nat",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_apply_nat"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_netflow",
+      "category": "telemetry",
+      "hcl_targets": [
+        "hcl_apply_netstream"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Probe firmware support for NetStream exporter configuration and operational read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_port_security",
+      "category": "network_configuration",
+      "hcl_targets": [
+        "hcl_apply_port_security"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_stp",
+      "category": "network_configuration",
+      "hcl_targets": [
+        "hcl_apply_stp"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_apply_vlan",
+      "category": "network_configuration",
+      "hcl_targets": [
+        "hcl_apply_vlan"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_audit_security",
+      "category": "inspection",
+      "hcl_targets": [
+        "hcl_audit_security"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Audit real Comware output; Cisco-specific password/config-register checks require explicit applicability mapping."
+    },
+    {
+      "upstream_tool": "pt_backup_config",
+      "category": "backup_workspace",
+      "hcl_targets": [
+        "hcl_backup_config"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_bridge_status",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_bridge_status"
+      ],
+      "state": "implemented",
+      "live_required": false,
+      "note": "Read-only HCL backend version and memory protocol status. Live canvas and console control remain unverified."
+    },
+    {
+      "upstream_tool": "pt_clear_annotations",
+      "category": "canvas",
+      "hcl_targets": [
+        "hcl_clear_annotations"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_delete_device",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_delete_device"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_delete_link",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_delete_link"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_deploy",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_deploy"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_device_power",
+      "category": "inspection",
+      "hcl_targets": [
+        "hcl_device_power"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_diff",
+      "category": "verification",
+      "hcl_targets": [
+        "hcl_diff"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_estimate_plan",
+      "category": "planning",
+      "hcl_targets": [
+        "hcl_estimate_plan"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_explain_plan",
+      "category": "planning",
+      "hcl_targets": [
+        "hcl_explain_plan"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_export",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_export_artifacts"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_export_topology",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_export_topology"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back.",
+      "staged_alternatives": [
+        "hcl_inspect_project"
+      ],
+      "staged_limit": "Saved-project evidence only; this is not a live equivalence claim."
+    },
+    {
+      "upstream_tool": "pt_fix_plan",
+      "category": "planning",
+      "hcl_targets": [
+        "hcl_fix_plan"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_full_build",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_full_build"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_generate_configs",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_generate_configs"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_generate_script",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_generate_operations"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Generate typed HCL operations and Comware configurations; the output format differs from PT JavaScript."
+    },
+    {
+      "upstream_tool": "pt_get_device_details",
+      "category": "catalog",
+      "hcl_targets": [
+        "hcl_get_device_details"
+      ],
+      "state": "implemented",
+      "live_required": false,
+      "note": "Reads locally installed HCL model defaults and default interfaces with source hashes; no runtime firmware claim."
+    },
+    {
+      "upstream_tool": "pt_health_check",
+      "category": "verification",
+      "hcl_targets": [
+        "hcl_health_check"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_inspect_ports",
+      "category": "inspection",
+      "hcl_targets": [
+        "hcl_inspect_ports"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_install_modules_batch",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_install_modules_batch"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_list_devices",
+      "category": "catalog",
+      "hcl_targets": [
+        "hcl_list_devices"
+      ],
+      "state": "implemented",
+      "live_required": false,
+      "note": "Reads locally installed HCL model defaults and default interfaces with source hashes; no runtime firmware claim."
+    },
+    {
+      "upstream_tool": "pt_list_modules",
+      "category": "catalog",
+      "hcl_targets": [
+        "hcl_list_modules"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Discover HCL card/NIC capabilities by installed model and version."
+    },
+    {
+      "upstream_tool": "pt_list_projects",
+      "category": "catalog",
+      "hcl_targets": [
+        "hcl_list_projects"
+      ],
+      "state": "implemented",
+      "live_required": false,
+      "note": "Implemented by ProjectStore.list_projects for saved HCL projects in configured roots."
+    },
+    {
+      "upstream_tool": "pt_list_templates",
+      "category": "catalog",
+      "hcl_targets": [
+        "hcl_list_templates"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Implement the HCL-specific contract with offline validation."
+    },
+    {
+      "upstream_tool": "pt_live_deploy",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_live_deploy"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_load_project",
+      "category": "artifacts",
+      "hcl_targets": [
+        "hcl_load_plan"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Load the saved topology plan; opening the active HCL project is a separate operation."
+    },
+    {
+      "upstream_tool": "pt_move_device",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_move_device"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_open_project",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_open_project"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_plan_topology",
+      "category": "planning",
+      "hcl_targets": [
+        "hcl_plan_topology"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "Protocol support, including EIGRP, must be established on the selected HCL firmware."
+    },
+    {
+      "upstream_tool": "pt_project_metadata",
+      "category": "backup_workspace",
+      "hcl_targets": [
+        "hcl_project_metadata"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_query_topology",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_query_topology"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back.",
+      "staged_alternatives": [
+        "hcl_inspect_project"
+      ],
+      "staged_limit": "Saved-project evidence only; this is not a live equivalence claim."
+    },
+    {
+      "upstream_tool": "pt_read_packet_trace",
+      "category": "simulation",
+      "hcl_targets": [
+        "hcl_read_capture"
+      ],
+      "state": "unverified",
+      "live_required": true,
+      "note": "Captured frames can provide packet observations; PT per-layer decision logs have no verified equivalent."
+    },
+    {
+      "upstream_tool": "pt_read_qos",
+      "category": "telemetry",
+      "hcl_targets": [
+        "hcl_read_qos"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_read_vlans",
+      "category": "inspection",
+      "hcl_targets": [
+        "hcl_read_vlans"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_remove_acl",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_remove_acl"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_remove_acl_object",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_remove_acl"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "The HCL equivalent is Comware ACL removal and read-back."
+    },
+    {
+      "upstream_tool": "pt_remove_nat",
+      "category": "policy",
+      "hcl_targets": [
+        "hcl_remove_nat"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_rename_device",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_rename_device"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_save_project",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_save_project"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_screenshot",
+      "category": "canvas",
+      "hcl_targets": [
+        "hcl_screenshot"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_send_raw",
+      "category": "live_session",
+      "hcl_targets": [
+        "hcl_exec_cli"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A device-console escape hatch is planned. Execution of PT Script Engine JavaScript has no verified HCL equivalent."
+    },
+    {
+      "upstream_tool": "pt_set_port",
+      "category": "live_editing",
+      "hcl_targets": [
+        "hcl_set_port"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_simulation_mode",
+      "category": "simulation",
+      "hcl_targets": [
+        "hcl_capture_start",
+        "hcl_capture_stop"
+      ],
+      "state": "unverified",
+      "live_required": true,
+      "note": "Packet capture is a proposed HCL workflow; it does not prove event-simulation equivalence."
+    },
+    {
+      "upstream_tool": "pt_simulation_step",
+      "category": "simulation",
+      "hcl_targets": [],
+      "state": "unverified",
+      "live_required": true,
+      "note": "No native forward/back/reset event API has been verified. No simulated success or rewind will be generated."
+    },
+    {
+      "upstream_tool": "pt_validate_plan",
+      "category": "planning",
+      "hcl_targets": [
+        "hcl_validate_plan"
+      ],
+      "state": "planned",
+      "live_required": false,
+      "note": "hcl_validate_plan is registered for versioned structure, installed default interfaces, occupied ports and address conflicts. Full service parameter and firmware validation remain pending; no live equivalence is claimed."
+    },
+    {
+      "upstream_tool": "pt_verify_connectivity",
+      "category": "verification",
+      "hcl_targets": [
+        "hcl_verify_connectivity"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_workspace_options",
+      "category": "backup_workspace",
+      "hcl_targets": [
+        "hcl_workspace_options"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    }
+  ],
+  "resources": [
+    {
+      "upstream_uri": "pt://capabilities",
+      "hcl_uri": "hcl://capabilities",
+      "state": "implemented"
+    },
+    {
+      "upstream_uri": "pt://catalog/aliases",
+      "hcl_uri": "hcl://catalog/aliases",
+      "state": "planned"
+    },
+    {
+      "upstream_uri": "pt://catalog/cables",
+      "hcl_uri": "hcl://catalog/cables",
+      "state": "planned"
+    },
+    {
+      "upstream_uri": "pt://catalog/devices",
+      "hcl_uri": "hcl://catalog/devices",
+      "state": "implemented"
+    },
+    {
+      "upstream_uri": "pt://catalog/templates",
+      "hcl_uri": "hcl://catalog/templates",
+      "state": "planned"
+    }
+  ]
+}

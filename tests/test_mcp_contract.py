@@ -41,6 +41,9 @@ EXPECTED_TOOLS = {
     "hcl_stage_add_device", "hcl_stage_link", "hcl_stage_copy",
     "hcl_parity_report", "hcl_bridge_status", "hcl_list_devices",
     "hcl_get_device_details", "hcl_validate_plan",
+    # control-plane primitives: real implementations, write-gated, and not
+    # upstream parity claims.
+    "hcl_backend_capabilities", "hcl_backend_topology", "hcl_device_power", "hcl_console_exec",
 }
 EXPECTED_RESOURCES = {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports"}
 
@@ -303,17 +306,39 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(set(report["registered_tools"]), names)
             self.assertEqual(set(report["registered_resources"]), EXPECTED_RESOURCES)
 
-    async def test_no_live_control_tool_is_registered(self) -> None:
+    async def test_control_plane_tools_are_gated_and_claim_nothing_live(self) -> None:
+        """Live-looking tools may exist, but they must be inert until opted in."""
         async with mcp_session(self.paths) as session:
             listed = await session.list_tools()
-            suspects = sorted(tool.name for tool in listed.tools
-                              if LIVE_TOOL_NAME.search(tool.name))
-            self.assertEqual(suspects, [],
-                             "a live canvas / power / console / capture tool appeared; "
-                             "the handoff's live-loop conclusion must be re-tested")
+            suspects = sorted(tool.name for tool in listed.tools if LIVE_TOOL_NAME.search(tool.name))
+            self.assertEqual(suspects, ["hcl_console_exec", "hcl_device_power"],
+                             "the only live-looking tools are the two gated control-plane ones")
+
             _, capabilities = await call(session, "hcl_capabilities", {})
             self.assertEqual(capabilities["live_canvas_api"], "not verified and not exposed")
             self.assertFalse(capabilities["live_gate"]["full_live_gate_passed"])
+            self.assertIn("MCP_HCL_ALLOW_LIVE_WRITE", capabilities["control_plane"])
+
+            _, registry = await call(session, "hcl_backend_capabilities", {})
+            self.assertFalse(registry["write_verbs_enabled"], "writes default to off")
+            self.assertFalse(registry["console_exec_enabled"], "console input defaults to off")
+            self.assertEqual(registry["status"], "verified")
+            self.assertEqual(registry["verified_scope"], "observed_verb_registry_only")
+            not_invocable = [row["verb"] for row in registry["verbs"] if not row["invocable"]]
+            self.assertIn("create", not_invocable)
+            self.assertIn("create_udp", not_invocable)
+
+            for tool, arguments in (
+                ("hcl_device_power", {"device": 1, "on": True}),
+                ("hcl_console_exec", {"command": "display version", "topology": "topo1",
+                                      "device": 1}),
+                ("hcl_backend_topology", {"action": "close", "topology": "topo1"}),
+            ):
+                with self.subTest(tool=tool):
+                    _, body = await call(session, tool, arguments)
+                    self.assertEqual(body["status"], "rejected")
+                    self.assertEqual(body["errors"][0]["code"], "writes_disabled")
+                    self.assertFalse(body["full_live_gate_passed"])
 
     # ------------------------------------------------------------------ plan
     async def test_plan_structural_errors_use_pydantic_shape_not_semantic_codes(self) -> None:
