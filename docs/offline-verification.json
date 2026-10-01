@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-01",
+  "branch": "codex/hcl-live-parity",
+  "implementation_commit": "e694ffc0669f47b513e398a260fc1ae8065a9d05",
+  "dsh_source": "1200f30165ebb72a710bd45164231ee12ce6b355",
+  "tests": {
+    "ran": 86,
+    "passed": 85,
+    "skipped": 1,
+    "duration_seconds": 24.335,
+    "receipt": "work/p0-p1-final-86.txt",
+    "sha256": "540514c2d6fddf9f6ec78a10bc3ae8aacbba947ecf1ba23f174169763e793ac1"
+  },
+  "wheel": {
+    "path": "work/wheels-final/mcp_hcl-0.2.0-py3-none-any.whl",
+    "sha256": "bf9a2ca1430437817444edbf052c4a1cccf9ed69b2411a0ce7c187ace052933c",
+    "all_package_source_bytes_match": true,
+    "vendor_programs_images_configs_absent": true,
+    "version": "0.2.0",
+    "tools": 25,
+    "resources": 6,
+    "isolated_package_import": true,
+    "ten_service_generation": true,
+    "export_reload": true,
+    "runtime_verified": false
+  },
+  "supplier_reference": {
+    "checks": 28,
+    "all_match": true,
+    "receipt": "work/command-reference-verification-final.json"
+  },
+  "upstream_tool_counts": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "registered_tools": 25,
+  "registered_resources": 6,
+  "full_p1_acceptance": "incomplete",
+  "remaining_p1": [
+    "AC/AP default CLI interface mappings",
+    "independent scene-port mapping proof",
+    "5.10.3 per-model NIC enhancement compatibility",
+    "complete upstream planning request coverage"
+  ],
+  "runtime_verified": false,
+  "full_live_gate_passed": false
+}
