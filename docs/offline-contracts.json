@@ -1,6 +1,6 @@
 {
   "contract_version": 2,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "tools": {
     "hcl_capabilities": {
       "additionalProperties": false,
@@ -139,6 +139,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -355,7 +387,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -426,7 +458,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -543,6 +575,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -560,6 +631,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -639,7 +729,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -661,7 +751,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -814,7 +904,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -1022,7 +1112,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -1153,6 +1243,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -1161,6 +1258,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -1249,7 +1372,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -1386,7 +1509,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -1405,6 +1528,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -1901,6 +2054,38 @@
               "maxItems": 1024,
               "title": "Annotations",
               "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
+              "type": "array"
             }
           },
           "required": [
@@ -2141,7 +2326,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -2212,7 +2397,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -2329,6 +2514,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -2346,6 +2570,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -2425,7 +2668,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -2447,7 +2690,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -2600,7 +2843,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -2808,7 +3051,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -2939,6 +3182,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -2947,6 +3197,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -3035,7 +3311,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -3172,7 +3448,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -3191,6 +3467,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -3248,6 +3554,52 @@
       "additionalProperties": false,
       "properties": {
         "request": {
+          "$defs": {
+            "WirelessSettings": {
+              "additionalProperties": false,
+              "properties": {
+                "ssid": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+                  "title": "Ssid",
+                  "type": "string"
+                },
+                "psk": {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "title": "Psk",
+                  "type": "string"
+                },
+                "hardware_model": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+                  "title": "Hardware Model",
+                  "type": "string"
+                },
+                "serial_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "minItems": 1,
+                  "title": "Serial Ids",
+                  "type": "array"
+                },
+                "vlan": {
+                  "default": 10,
+                  "maximum": 4094,
+                  "minimum": 1,
+                  "title": "Vlan",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "ssid",
+                "psk",
+                "hardware_model",
+                "serial_ids"
+              ],
+              "title": "WirelessSettings",
+              "type": "object"
+            }
+          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -3268,26 +3620,44 @@
               "enum": [
                 "single_lan",
                 "multi_lan",
+                "multi_lan_wan",
                 "star",
                 "hub_spoke",
-                "three_router_triangle"
+                "branch_office",
+                "router_on_a_stick",
+                "three_router_triangle",
+                "custom"
               ],
               "title": "Template",
               "type": "string"
             },
             "routers": {
-              "default": 2,
-              "maximum": 20,
-              "minimum": 1,
-              "title": "Routers",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 20,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Routers"
             },
             "switches_per_router": {
-              "default": 1,
-              "maximum": 4,
-              "minimum": 0,
-              "title": "Switches Per Router",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 4,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Switches Per Router"
             },
             "pcs_per_lan": {
               "default": 0,
@@ -3295,6 +3665,32 @@
               "minimum": 0,
               "title": "Pcs Per Lan",
               "type": "integer"
+            },
+            "laptops_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Laptops Per Lan",
+              "type": "integer"
+            },
+            "servers": {
+              "default": 0,
+              "maximum": 32,
+              "minimum": 0,
+              "title": "Servers",
+              "type": "integer"
+            },
+            "access_points": {
+              "default": 0,
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Access Points",
+              "type": "integer"
+            },
+            "has_wan": {
+              "default": false,
+              "title": "Has Wan",
+              "type": "boolean"
             },
             "router_model": {
               "default": "MSR36-20",
@@ -3310,6 +3706,82 @@
               "default": "PC",
               "title": "Host Model",
               "type": "string"
+            },
+            "laptop_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Laptop Model"
+            },
+            "server_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Server Model"
+            },
+            "wan_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wan Model"
+            },
+            "ap_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ap Model"
+            },
+            "ac_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ac Model"
+            },
+            "wireless_laptops": {
+              "default": false,
+              "title": "Wireless Laptops",
+              "type": "boolean"
+            },
+            "wireless_settings": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WirelessSettings"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "lan_pool": {
               "default": "10.0.0.0/16",
@@ -3332,10 +3804,52 @@
               "title": "Routing",
               "type": "string"
             },
+            "ospf_process_id": {
+              "default": 1,
+              "maximum": 65535,
+              "minimum": 1,
+              "title": "Ospf Process Id",
+              "type": "integer"
+            },
+            "floating_routes": {
+              "default": false,
+              "title": "Floating Routes",
+              "type": "boolean"
+            },
             "dhcp": {
               "default": false,
               "title": "Dhcp",
               "type": "boolean"
+            },
+            "dual_stack": {
+              "default": false,
+              "title": "Dual Stack",
+              "type": "boolean"
+            },
+            "ipv6_base": {
+              "default": "2001:db8::/32",
+              "title": "Ipv6 Base",
+              "type": "string"
+            },
+            "vlans": {
+              "default": 2,
+              "maximum": 64,
+              "minimum": 1,
+              "title": "Vlans",
+              "type": "integer"
+            },
+            "custom_plan": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Custom Plan"
             }
           },
           "title": "TopologyRequest",
@@ -3352,6 +3866,52 @@
       "additionalProperties": false,
       "properties": {
         "request": {
+          "$defs": {
+            "WirelessSettings": {
+              "additionalProperties": false,
+              "properties": {
+                "ssid": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+                  "title": "Ssid",
+                  "type": "string"
+                },
+                "psk": {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "title": "Psk",
+                  "type": "string"
+                },
+                "hardware_model": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+                  "title": "Hardware Model",
+                  "type": "string"
+                },
+                "serial_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "minItems": 1,
+                  "title": "Serial Ids",
+                  "type": "array"
+                },
+                "vlan": {
+                  "default": 10,
+                  "maximum": 4094,
+                  "minimum": 1,
+                  "title": "Vlan",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "ssid",
+                "psk",
+                "hardware_model",
+                "serial_ids"
+              ],
+              "title": "WirelessSettings",
+              "type": "object"
+            }
+          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -3372,26 +3932,44 @@
               "enum": [
                 "single_lan",
                 "multi_lan",
+                "multi_lan_wan",
                 "star",
                 "hub_spoke",
-                "three_router_triangle"
+                "branch_office",
+                "router_on_a_stick",
+                "three_router_triangle",
+                "custom"
               ],
               "title": "Template",
               "type": "string"
             },
             "routers": {
-              "default": 2,
-              "maximum": 20,
-              "minimum": 1,
-              "title": "Routers",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 20,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Routers"
             },
             "switches_per_router": {
-              "default": 1,
-              "maximum": 4,
-              "minimum": 0,
-              "title": "Switches Per Router",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 4,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Switches Per Router"
             },
             "pcs_per_lan": {
               "default": 0,
@@ -3399,6 +3977,32 @@
               "minimum": 0,
               "title": "Pcs Per Lan",
               "type": "integer"
+            },
+            "laptops_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Laptops Per Lan",
+              "type": "integer"
+            },
+            "servers": {
+              "default": 0,
+              "maximum": 32,
+              "minimum": 0,
+              "title": "Servers",
+              "type": "integer"
+            },
+            "access_points": {
+              "default": 0,
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Access Points",
+              "type": "integer"
+            },
+            "has_wan": {
+              "default": false,
+              "title": "Has Wan",
+              "type": "boolean"
             },
             "router_model": {
               "default": "MSR36-20",
@@ -3414,6 +4018,82 @@
               "default": "PC",
               "title": "Host Model",
               "type": "string"
+            },
+            "laptop_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Laptop Model"
+            },
+            "server_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Server Model"
+            },
+            "wan_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wan Model"
+            },
+            "ap_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ap Model"
+            },
+            "ac_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ac Model"
+            },
+            "wireless_laptops": {
+              "default": false,
+              "title": "Wireless Laptops",
+              "type": "boolean"
+            },
+            "wireless_settings": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WirelessSettings"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "lan_pool": {
               "default": "10.0.0.0/16",
@@ -3436,10 +4116,52 @@
               "title": "Routing",
               "type": "string"
             },
+            "ospf_process_id": {
+              "default": 1,
+              "maximum": 65535,
+              "minimum": 1,
+              "title": "Ospf Process Id",
+              "type": "integer"
+            },
+            "floating_routes": {
+              "default": false,
+              "title": "Floating Routes",
+              "type": "boolean"
+            },
             "dhcp": {
               "default": false,
               "title": "Dhcp",
               "type": "boolean"
+            },
+            "dual_stack": {
+              "default": false,
+              "title": "Dual Stack",
+              "type": "boolean"
+            },
+            "ipv6_base": {
+              "default": "2001:db8::/32",
+              "title": "Ipv6 Base",
+              "type": "string"
+            },
+            "vlans": {
+              "default": 2,
+              "maximum": 64,
+              "minimum": 1,
+              "title": "Vlans",
+              "type": "integer"
+            },
+            "custom_plan": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Custom Plan"
             }
           },
           "title": "TopologyRequest",
@@ -3563,6 +4285,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -3779,7 +4533,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -3850,7 +4604,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -3967,6 +4721,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -3984,6 +4777,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -4063,7 +4875,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -4085,7 +4897,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -4238,7 +5050,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -4446,7 +5258,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -4577,6 +5389,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -4585,6 +5404,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -4673,7 +5518,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -4810,7 +5655,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -4829,6 +5674,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -4968,6 +5843,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -5184,7 +6091,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -5255,7 +6162,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -5372,6 +6279,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -5389,6 +6335,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -5468,7 +6433,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -5490,7 +6455,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -5643,7 +6608,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -5851,7 +6816,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -5982,6 +6947,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -5990,6 +6962,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -6078,7 +7076,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -6215,7 +7213,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -6234,6 +7232,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -6373,6 +7401,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -6589,7 +7649,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -6660,7 +7720,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -6777,6 +7837,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -6794,6 +7893,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -6873,7 +7991,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -6895,7 +8013,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -7048,7 +8166,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -7256,7 +8374,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -7387,6 +8505,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -7395,6 +8520,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -7483,7 +8634,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -7620,7 +8771,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -7639,6 +8790,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -7778,6 +8959,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -7999,7 +9212,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -8070,7 +9283,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -8187,6 +9400,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -8204,6 +9456,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -8283,7 +9554,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -8305,7 +9576,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -8458,7 +9729,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -8666,7 +9937,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -8797,6 +10068,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -8805,6 +10083,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -8893,7 +10197,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -9030,7 +10334,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -9049,6 +10353,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -9188,6 +10522,38 @@
               },
               "maxItems": 1024,
               "title": "Annotations",
+              "type": "array"
+            },
+            "host_settings": {
+              "items": {
+                "$ref": "#/$defs/HostSetting"
+              },
+              "maxItems": 256,
+              "title": "Host Settings",
+              "type": "array"
+            },
+            "subinterfaces": {
+              "items": {
+                "$ref": "#/$defs/Subinterface"
+              },
+              "maxItems": 256,
+              "title": "Subinterfaces",
+              "type": "array"
+            },
+            "ipv6_ra": {
+              "items": {
+                "$ref": "#/$defs/InterfaceRef"
+              },
+              "maxItems": 256,
+              "title": "Ipv6 Ra",
+              "type": "array"
+            },
+            "wireless_associations": {
+              "items": {
+                "$ref": "#/$defs/WirelessAssociation"
+              },
+              "maxItems": 256,
+              "title": "Wireless Associations",
               "type": "array"
             }
           },
@@ -9421,7 +10787,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -9492,7 +10858,7 @@
               "type": "string"
             },
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -9609,6 +10975,45 @@
           "title": "Endpoint",
           "type": "object"
         },
+        "HostSetting": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ipv4": {
+              "default": "none",
+              "enum": [
+                "static",
+                "dhcp",
+                "none"
+              ],
+              "title": "Ipv4",
+              "type": "string"
+            },
+            "ipv6": {
+              "default": "none",
+              "enum": [
+                "static",
+                "slaac",
+                "none"
+              ],
+              "title": "Ipv6",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "HostSetting",
+          "type": "object"
+        },
         "IPRange": {
           "additionalProperties": false,
           "properties": {
@@ -9626,6 +11031,25 @@
             "end"
           ],
           "title": "IPRange",
+          "type": "object"
+        },
+        "InterfaceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface"
+          ],
+          "title": "InterfaceRef",
           "type": "object"
         },
         "Link": {
@@ -9705,7 +11129,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -9727,7 +11151,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -9880,7 +11304,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -10088,7 +11512,7 @@
             },
             "passive_interfaces": {
               "items": {
-                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                 "type": "string"
               },
               "maxItems": 256,
@@ -10219,6 +11643,13 @@
             "next_hop": {
               "title": "Next Hop",
               "type": "string"
+            },
+            "preference": {
+              "default": 60,
+              "maximum": 255,
+              "minimum": 1,
+              "title": "Preference",
+              "type": "integer"
             }
           },
           "required": [
@@ -10227,6 +11658,32 @@
             "next_hop"
           ],
           "title": "StaticRoute",
+          "type": "object"
+        },
+        "Subinterface": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "parent": {
+              "title": "Parent",
+              "type": "string"
+            },
+            "vlan": {
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "device",
+            "parent",
+            "vlan"
+          ],
+          "title": "Subinterface",
           "type": "object"
         },
         "Svi": {
@@ -10315,7 +11772,7 @@
           "additionalProperties": false,
           "properties": {
             "interface": {
-              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+              "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
               "title": "Interface",
               "type": "string"
             },
@@ -10452,7 +11909,7 @@
             "radio_interface": {
               "anyOf": [
                 {
-                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*$",
+                  "pattern": "^[A-Za-z][A-Za-z0-9-]*\\d+(?:/\\d+)*(?:\\.\\d+)?$",
                   "type": "string"
                 },
                 {
@@ -10471,6 +11928,36 @@
             "psk"
           ],
           "title": "Wireless",
+          "type": "object"
+        },
+        "WirelessAssociation": {
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "title": "Device",
+              "type": "string"
+            },
+            "interface": {
+              "title": "Interface",
+              "type": "string"
+            },
+            "ap": {
+              "title": "Ap",
+              "type": "string"
+            },
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            }
+          },
+          "required": [
+            "device",
+            "interface",
+            "ap",
+            "ssid"
+          ],
+          "title": "WirelessAssociation",
           "type": "object"
         },
         "WirelessIntent": {
@@ -10563,6 +12050,52 @@
           "type": "string"
         },
         "request": {
+          "$defs": {
+            "WirelessSettings": {
+              "additionalProperties": false,
+              "properties": {
+                "ssid": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+                  "title": "Ssid",
+                  "type": "string"
+                },
+                "psk": {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "title": "Psk",
+                  "type": "string"
+                },
+                "hardware_model": {
+                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+                  "title": "Hardware Model",
+                  "type": "string"
+                },
+                "serial_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "minItems": 1,
+                  "title": "Serial Ids",
+                  "type": "array"
+                },
+                "vlan": {
+                  "default": 10,
+                  "maximum": 4094,
+                  "minimum": 1,
+                  "title": "Vlan",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "ssid",
+                "psk",
+                "hardware_model",
+                "serial_ids"
+              ],
+              "title": "WirelessSettings",
+              "type": "object"
+            }
+          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -10583,26 +12116,44 @@
               "enum": [
                 "single_lan",
                 "multi_lan",
+                "multi_lan_wan",
                 "star",
                 "hub_spoke",
-                "three_router_triangle"
+                "branch_office",
+                "router_on_a_stick",
+                "three_router_triangle",
+                "custom"
               ],
               "title": "Template",
               "type": "string"
             },
             "routers": {
-              "default": 2,
-              "maximum": 20,
-              "minimum": 1,
-              "title": "Routers",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 20,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Routers"
             },
             "switches_per_router": {
-              "default": 1,
-              "maximum": 4,
-              "minimum": 0,
-              "title": "Switches Per Router",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 4,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Switches Per Router"
             },
             "pcs_per_lan": {
               "default": 0,
@@ -10610,6 +12161,32 @@
               "minimum": 0,
               "title": "Pcs Per Lan",
               "type": "integer"
+            },
+            "laptops_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Laptops Per Lan",
+              "type": "integer"
+            },
+            "servers": {
+              "default": 0,
+              "maximum": 32,
+              "minimum": 0,
+              "title": "Servers",
+              "type": "integer"
+            },
+            "access_points": {
+              "default": 0,
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Access Points",
+              "type": "integer"
+            },
+            "has_wan": {
+              "default": false,
+              "title": "Has Wan",
+              "type": "boolean"
             },
             "router_model": {
               "default": "MSR36-20",
@@ -10625,6 +12202,82 @@
               "default": "PC",
               "title": "Host Model",
               "type": "string"
+            },
+            "laptop_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Laptop Model"
+            },
+            "server_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Server Model"
+            },
+            "wan_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wan Model"
+            },
+            "ap_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ap Model"
+            },
+            "ac_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ac Model"
+            },
+            "wireless_laptops": {
+              "default": false,
+              "title": "Wireless Laptops",
+              "type": "boolean"
+            },
+            "wireless_settings": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/WirelessSettings"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "lan_pool": {
               "default": "10.0.0.0/16",
@@ -10647,10 +12300,52 @@
               "title": "Routing",
               "type": "string"
             },
+            "ospf_process_id": {
+              "default": 1,
+              "maximum": 65535,
+              "minimum": 1,
+              "title": "Ospf Process Id",
+              "type": "integer"
+            },
+            "floating_routes": {
+              "default": false,
+              "title": "Floating Routes",
+              "type": "boolean"
+            },
             "dhcp": {
               "default": false,
               "title": "Dhcp",
               "type": "boolean"
+            },
+            "dual_stack": {
+              "default": false,
+              "title": "Dual Stack",
+              "type": "boolean"
+            },
+            "ipv6_base": {
+              "default": "2001:db8::/32",
+              "title": "Ipv6 Base",
+              "type": "string"
+            },
+            "vlans": {
+              "default": 2,
+              "maximum": 64,
+              "minimum": 1,
+              "title": "Vlans",
+              "type": "integer"
+            },
+            "custom_plan": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Custom Plan"
             }
           },
           "title": "TopologyRequest",
@@ -10703,6 +12398,373 @@
         "port_map"
       ],
       "title": "hcl_full_buildArguments",
+      "type": "object"
+    },
+    "hcl_stage_rename_device": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        },
+        "new_name": {
+          "title": "New Name",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name",
+        "device",
+        "new_name"
+      ],
+      "title": "hcl_stage_rename_deviceArguments",
+      "type": "object"
+    },
+    "hcl_stage_move_device": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name",
+        "device",
+        "x",
+        "y"
+      ],
+      "title": "hcl_stage_move_deviceArguments",
+      "type": "object"
+    },
+    "hcl_stage_delete_device": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name",
+        "device"
+      ],
+      "title": "hcl_stage_delete_deviceArguments",
+      "type": "object"
+    },
+    "hcl_stage_unlink": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "a": {
+          "title": "A",
+          "type": "string"
+        },
+        "a_port": {
+          "title": "A Port",
+          "type": "string"
+        },
+        "b": {
+          "title": "B",
+          "type": "string"
+        },
+        "b_port": {
+          "title": "B Port",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name",
+        "a",
+        "a_port",
+        "b",
+        "b_port"
+      ],
+      "title": "hcl_stage_unlinkArguments",
+      "type": "object"
+    },
+    "hcl_stage_add_note": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name",
+        "text",
+        "x",
+        "y"
+      ],
+      "title": "hcl_stage_add_noteArguments",
+      "type": "object"
+    },
+    "hcl_stage_clear_annotations": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        }
+      },
+      "required": [
+        "project_path",
+        "stage_name"
+      ],
+      "title": "hcl_stage_clear_annotationsArguments",
+      "type": "object"
+    },
+    "hcl_backup_config": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "topology": {
+          "title": "Topology",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_path",
+        "topology",
+        "device"
+      ],
+      "title": "hcl_backup_configArguments",
+      "type": "object"
+    },
+    "hcl_restore_config": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "topology": {
+          "title": "Topology",
+          "type": "string"
+        },
+        "backup_id": {
+          "title": "Backup Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_path",
+        "topology",
+        "backup_id"
+      ],
+      "title": "hcl_restore_configArguments",
+      "type": "object"
+    },
+    "hcl_live_deploy": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "topology": {
+          "title": "Topology",
+          "type": "string"
+        },
+        "devices": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Devices"
+        }
+      },
+      "required": [
+        "project_path",
+        "topology"
+      ],
+      "title": "hcl_live_deployArguments",
+      "type": "object"
+    },
+    "hcl_verify_connectivity": {
+      "additionalProperties": false,
+      "properties": {
+        "project_path": {
+          "title": "Project Path",
+          "type": "string"
+        },
+        "topology": {
+          "title": "Topology",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        },
+        "destination": {
+          "title": "Destination",
+          "type": "string"
+        },
+        "count": {
+          "default": 5,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "project_path",
+        "topology",
+        "device",
+        "destination"
+      ],
+      "title": "hcl_verify_connectivityArguments",
       "type": "object"
     }
   }

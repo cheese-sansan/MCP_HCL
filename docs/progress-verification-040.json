@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-02",
+  "version": "0.4.0",
+  "code_commit": "c08bded3cbca8dae9490aae07d370976bc90a8c3",
+  "tests": {
+    "ran": 119,
+    "passed": 118,
+    "skipped": 1,
+    "seconds": 32.825,
+    "receipt": "work/040-final-119.txt",
+    "sha256": "8f7635506cfeb957fe6a57d23373c214e676ee9ccf46b5441ad6efa037a8d5ce"
+  },
+  "wheel": {
+    "path": "work/wheels-040-verified/mcp_hcl-0.4.0-py3-none-any.whl",
+    "sha256": "de140780b822b630a5caf2c5c9e4d7506ec12d7a9e5166d4452a9fd6167fafae",
+    "all_source_bytes_match": true,
+    "version": "0.4.0",
+    "tools": 39,
+    "resources": 6,
+    "isolated_import": true,
+    "three_router_plan": true,
+    "real_hardware_executed": false
+  },
+  "wireless_evidence": {
+    "date": "2026-10-02",
+    "models": [
+      {
+        "model": "F1060",
+        "interfaces": 25,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\F1060.cfg",
+          "sha256": "656f2bdf8691ab9285e533cfb0584b6bfc36d6c027825343037785a0326aaf20"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "F1090",
+        "interfaces": 25,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\F1090.cfg",
+          "sha256": "2fd0c54249a139a13079d51eb7d607dfcccfa5fe3ea12cb5cd5dde4edfa6ed06"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "MSR36-20",
+        "interfaces": 12,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\MSR36-20.cfg",
+          "sha256": "e3942e210d80c7dc270d2ed57e27d780db37a2dccb5d93cd160988954bd5aeef"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "PC",
+        "interfaces": 2,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\PC.cfg",
+          "sha256": "35ee28d8d07baf0ce84928a3c17ae5f01d6c9bdfd9827a939c3c86636e8687de"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "S5820V2-54QS-GE",
+        "interfaces": 56,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\S5820V2-54QS-GE.cfg",
+          "sha256": "b609fbad8714915ca98b260c119b82e8cd2017f246f4509f0d9fa5d815ed12fc"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "S6850",
+        "interfaces": 56,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\S6850.cfg",
+          "sha256": "1664a888e2315d29429486d162fcb83372dd996668b1ee6327d368760e71b6a1"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "vpcs",
+        "interfaces": 0,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\vpcs.cfg",
+          "sha256": "14b4df150f3420bd7225a81f6f5d9779fa6a498c5b570eaa2cae21825aa9f85a"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "VSR-88",
+        "interfaces": 12,
+        "evidence": {
+          "source": "D:\\HCL\\devicecfgs\\VSR-88.cfg",
+          "sha256": "47bb9fb65d437803d4db63ea78b0b974fd8af36b85c085301d7fe2b941b01224"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "AC",
+        "interfaces": 0,
+        "evidence": {
+          "source": "D:\\HCL\\deviceInfo.ini",
+          "sha256": "fdac94681c77ac7c94d55741922e7a26d420191c69dbd0312e99f0ad7ff8cd06"
+        },
+        "factory_defaults_verified": false
+      },
+      {
+        "model": "AP",
+        "interfaces": 0,
+        "evidence": {
+          "source": "D:\\HCL\\deviceInfo.ini",
+          "sha256": "fdac94681c77ac7c94d55741922e7a26d420191c69dbd0312e99f0ad7ff8cd06"
+        },
+        "factory_defaults_verified": false
+      }
+    ],
+    "wireless_gate_complete": false,
+    "missing": [
+      "AC/AP captured CLI configurations",
+      "Wireless client model and association command profile",
+      "Independent scene/CLI mapping evidence"
+    ],
+    "runtime_verified": false
+  },
+  "stage_one_complete": false,
+  "stage_two_complete": false,
+  "full_live_gate_passed": false,
+  "remaining": [
+    "AC/AP configuration and mapping evidence",
+    "Verified wireless client association profile",
+    "Real GUI, guest, backup/restore and OSPF/DHCP/ping acceptance"
+  ],
+  "hardware_actions": "not_run"
+}

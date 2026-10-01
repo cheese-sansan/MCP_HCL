@@ -1,6 +1,6 @@
 # MCP_HCL Codex 交接
 
-当前工作分支：`codex/hcl-live-parity`；版本 0.3.0；更新日期 2026-10-01。
+当前工作分支：`codex/hcl-live-parity`；版本 0.4.0；更新日期 2026-10-01。
 本文件是当前交接入口。DSH 在 `1200f30` 的原交接已保存为 [历史快照](docs/history/dsh-handoff-1200f30.md)，不是当前分支操作指令。
 
 ## 目标与权限
@@ -14,7 +14,7 @@
 
 DSH 固定来源：`1200f30165ebb72a710bd45164231ee12ce6b355`；Codex 原基线：`1005ac3fb455b69b4cbd07b4eaca4f16a3d94e8c`。
 7 个 DSH 提交已快进接入，未 squash 或改写历史。Codex 新提交按 P0、目录、规划、生成、MCP/导出、无线修正分组。
-当前精确提交、测试与 wheel 哈希以 [0.3.0 验证记录](docs/progress-verification-030.json) 为准；[0.2.0 记录](docs/offline-verification.json) 保留为历史基线。
+当前精确提交、测试与 wheel 哈希以 [0.4.0 验证记录](docs/progress-verification-040.json) 为准；[0.2.0 记录](docs/offline-verification.json) 保留为历史基线。
 
 - P0 首次全绿：70 项，69 通过 / 1 symlink 权限跳过。
 - P0/P1 全套：86 项，85 通过 / 1 symlink 权限跳过。
@@ -54,7 +54,7 @@ plan_topology、validate_plan、list_modules 三行保留 planned；总 completi
 - `catalog.py` / `command_reference.py` / `data/`：安装目录与固定资料哈希；不复制厂商手册正文。
 - `planning.py` / `generation.py`：确定性规划、保守修复和离线 Comware 命令模板。
 - `artifact_store.py` / `artifacts.py`：SQLite 幂等日志、原子目录提交、哈希清单和重载。
-- `offline_tools.py` / `server.py`：29 工具、6 资源；业务逻辑不放进 façade。
+- `offline_tools.py` / `server.py`：39 工具、6 资源；业务逻辑不放进 façade。
 - `backend.py` / `console.py`：延续 DSH 的持久连接、帧规则与命名管道客户端，写门控默认关闭。
 
 历史后端协议、帧规则、启动失败与 BCD 操作事实见历史交接 §6、§8、§10–12。
@@ -76,8 +76,20 @@ Git branch -d 删除前验证了 dsh 是 Codex HEAD 的祖先，完整 --all bun
 
 新增 project_build.py：验证计划后，从真实 .net 模板克隆型号字段、分配新设备 ID/MAC、生成双向场景连线和注释，再原子提交。模型必须在源工程中存在；port_map 为调用者显式映射，字段须在安装 CLI 默认与源 slot 端口族中存在。映射不因此被标为物理已验证。未知注释引号/反斜杠转义拒绝，普通换行使用观察到的\n编码。
 
-新增 gui_relay.py 与 build_pipeline.py：29 工具 / 6 资源。GUI 接口只能操作带 stage-receipt.json 的输出副本，先核对 SimwareClient PID及完整 HCL - NAME [PATH] 标题；55秒超时后不重放，不引用旧回执。PowerShell 实现打包在 data/hcl_open_gate.ps1，scripts/ 下只保留薄入口，避免两份实现漂移。
+新增 gui_relay.py 与 build_pipeline.py：39 工具 / 6 资源。GUI 接口只能操作带 stage-receipt.json 的输出副本，先核对 SimwareClient PID及完整 HCL - NAME [PATH] 标题；55秒超时后不重放，不引用旧回执。PowerShell 实现打包在 data/hcl_open_gate.ps1，scripts/ 下只保留薄入口，避免两份实现漂移。
 
 100 项回归，99 通过、1 symlink 权限跳过；另有15项最终专项通过。GUI 测试是软件适配器/合成回执测试，不是本机 HCL 窗口验收。当前只读 HypervisorPresent=true；本轮未启动 GUI、Wrapper 或 guest。
 
 阶段 .cfg 保持空占位，CLI 命令放在 MCPArtifacts/commands，防止把交互命令流写成启动配置。完整命令下发、画布拓扑一致性和网络连通性仍待真实回读。相关 full_build/open/save 上游映射继续保持 planned；工具注册数量不等于完成数量。
+
+## 2026-10-02：0.4.0 实现记录
+
+新增 host_settings、subinterfaces、ipv6_ra、wireless_associations，保留 schema_version=1 和旧静态地址字段。地址/动态模式冲突、静态地址落入 DHCP 池、逻辑接口作为物理连线、缺 VLAN/父接口均拒绝。九模板语义已对照固定上游源码；star 的旧 hub-spoke 行为是明确修正。
+
+project_edit.py 同步副本 .net、元数据、绑定计划与生成命令。PersistentConsole 和 PipeLease 提供持续会话、跨请求管道租约、回显/提示符状态机、分页和有限输出。原 Console 接口也使用租约。
+
+deployment.py 从阶段绑定与重新生成的计划读取命令，拒绝被改写的命令文件。原生 save 指定独立备份文件，不改启动配置；more 读完整备份，configuration replace file 验证恢复后才开始正式下发。任一配置错误或读回错误自动恢复所有已修改设备，失败不声明恢复成功。原始输出/配置只放忽略的本地目录。
+
+accept_three_router_lab.py 仅供使用者触发，需要精确项目的 GUI 身份回执、已由使用者启动的 guest、实际拓扑管道名和写开关。验证 OSPF/路由/DHCP/六次 ping，网络验收失败也尝试恢复。full_live_gate_passed 只可能在原生通道和独立 GUI 身份均成立时通过；本轮未执行。
+
+当前硬门槛保持：AC/AP 无本机 CLI 默认资料、无线关联命令缺证据、场景映射未独立验证；原机 HypervisorPresent=true，仍需使用者手动准备环境。第一阶段和第二阶段都没有被软件测试替代收口。

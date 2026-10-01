@@ -105,3 +105,13 @@ The four added tools are hcl_stage_plan, hcl_open_project, hcl_save_project and 
 Compiled startup files are empty placeholders; generated command transcripts are separate .txt artifacts. The files include a stage receipt binding the copy to its source. GUI activation requires the live-write switch, an existing SimwareClient PID, a staged-copy marker and full caption identity. File receipts are request-local; prior success, preflight-only output or name/path prefixes cannot establish GUI success. No guest boot, CLI deployment or pixel verification is implied.
 
 The full-build tool defaults activate=false and supports durable offline retries. With activate=true it requires hcl_pid and rejects idempotency_key. Optional GUI opening leaves the complete live build partial.
+
+## 0.4.0 additions and migration
+
+All nine template keys are accepted; star now follows the pinned upstream single-router/multi-switch definition. New endpoint categories require explicit documented model selectors. DHCP clients use host_settings and have no static address/default route. IPv6 SLAAC/RA and strict subinterface declarations extend schema_version=1 additively. StaticRoute.preference defaults 60; redundant triangle backups use 254. Custom accepts only an explicit custom_plan.
+
+The six new copy-edit tools are hcl_stage_rename_device, hcl_stage_move_device, hcl_stage_delete_device, hcl_stage_unlink, hcl_stage_add_note and hcl_stage_clear_annotations. Clear removes known NOTE blocks only. Bound-plan edits revalidate/regenerate command artifacts.
+
+Four write-gated staged-device tools are hcl_backup_config, hcl_restore_config, hcl_live_deploy and hcl_verify_connectivity. They resolve IDs through staged bindings. Live deploy re-generates command artifacts from the validated plan to reject altered transcripts, backs up and restore-tests all devices before applying commands, and restores modified devices on failure. Recovery reconnects once only for native restoration; it never replays original commands. Backup restore checks project/topology/device identity and local content hash. Ping parses transmitted/received/loss statistics rather than exit status.
+
+New private captured profiles may be supplied through MCP_HCL_PROFILE_ROOT. Their template/configuration source hashes are rechecked; they do not establish factory defaults, physical mappings or wireless client command syntax. Unsupported wireless association generation remains a hard incomplete gate.
