@@ -97,3 +97,11 @@ Operation manifests preserve devices, links, annotations and optionally config
 commands. Scene-port candidates are labeled mapping_verified=false and need the
 future execution adapter and mapping/GUI acceptance. All runtime, guest,
 configuration and connectivity claims remain false.
+
+## Project compiler and GUI relay (0.3.0)
+
+The four added tools are hcl_stage_plan, hcl_open_project, hcl_save_project and hcl_full_build. See the current Schema snapshot and README for exact arguments. File compilation creates a replacement topology in a copy and retains unrelated source fields. Real source model templates and explicit port_map entries are mandatory. It never derives a live port mapping from catalog order.
+
+Compiled startup files are empty placeholders; generated command transcripts are separate .txt artifacts. The files include a stage receipt binding the copy to its source. GUI activation requires the live-write switch, an existing SimwareClient PID, a staged-copy marker and full caption identity. File receipts are request-local; prior success, preflight-only output or name/path prefixes cannot establish GUI success. No guest boot, CLI deployment or pixel verification is implied.
+
+The full-build tool defaults activate=false and supports durable offline retries. With activate=true it requires hcl_pid and rejects idempotency_key. Optional GUI opening leaves the complete live build partial.

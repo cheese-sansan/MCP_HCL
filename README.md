@@ -1,6 +1,6 @@
 # MCP_HCL
 
-与 Agent 客户端无关的 HCL MCP Server。当前在 `codex/hcl-live-parity` 分支开发，版本 **0.2.0**。
+与 Agent 客户端无关的 HCL MCP Server。当前在 `codex/hcl-live-parity` 分支开发，版本 **0.3.0**。
 目标仍是固定上游 MCP-Packet-Tracer 的 61 工具 / 5 资源在 HCL 上的功能等价；**总体 completion=incomplete**。
 
 接手请读 [HANDOFF.md](HANDOFF.md)，参数与限制见 [离线 API](docs/offline-api.md) 和 [严格契约迁移](docs/contract-v2.md)。
@@ -11,11 +11,11 @@
 | --- | --- |
 | 分支整合 | 保留 DSH 的 7 个提交，快进接入固定 `1200f30`；DSH 工作区未修改 |
 | P0 | 原始 JSON 严格校验、统一结果信封、损坏工程业务拒绝、持久离线重试、环境未知值不通过 |
-| 注册面 | 25 工具 / 6 资源 |
+| 注册面 | 29 工具 / 6 资源 |
 | P1 软件层 | 五类确定性图模板、规划/估算/解释/保守修复、十类服务参数与配置生成、原子导出及哈希重载 |
 | P1 完整验收 | **Incomplete**：AC/AP 默认 CLI 接口映射、逐型号网卡增强兼容性及完整上游规划请求覆盖仍缺证据 |
 | 上游映射 | 工具 12 implemented / 46 planned / 3 unverified；资源 5 implemented。implemented 仅在每行 verified_scope 内成立 |
-| 本机回归 | 86 项：85 通过、1 项因符号链接权限跳过 |
+| 本机回归 | 100 项：99 通过、1 项因符号链接权限跳过 |
 | 外部效果 | guest 启动、CLI 接受、配置下发、连通性与实时画布验收均未完成 |
 
 ## 可调用能力
@@ -33,7 +33,7 @@ SSH 生成要求设备已有本地主机密钥；SSID、凭据等 CLI token 的�
 无线 AC 配置显式开启射频；FAT AP 模板的射频接口由调用者指定，不推断本机 AP 的默认接口。
 
 `status=staged` 只表示独立工程文件已生成；配置文本只表示模板已生成。
-操作清单明确 `executable=false`，不能直接作为实时部署器使用。所有运行态验证字段保持 false。
+操作清单的实时执行仍标为 `executable=false`；可用 `hcl_stage_plan` 将计划编译到隔离工程。所有运行态验证字段保持 false。
 
 目录中的“网卡增强”是 HCL 手册记载的原生模式，不是 PT 扩展卡，也不是将固定端口冒充模块。
 手册版本为 5.10.1；实际 5.10.3 的逐型号兼容性仍未确认。
@@ -71,10 +71,22 @@ stdio 服务等待协议输入；将同一命令、环境变量及当前工作�
 
 骨架测试用合成安装、临时工程和测试管道，不启动 HCL、guest 或改写 BCD。
 引用校验只读厂商帮助与手册；它验证资料哈希，不验证固件接受命令。
-本次测试与打包摘要见 [验证记录](docs/offline-verification.json)。完整日志位于本工作区 `work/`，被 Git 忽略。
+本次测试与打包摘要见 [0.3.0 验证记录](docs/progress-verification-030.json)；[0.2.0 记录](docs/offline-verification.json) 保留为历史基线。完整日志位于本工作区 `work/`，被 Git 忽略。
 
 DSH 历史说明和交接已原样归档到 [docs/history](docs/history/dsh-handoff-1200f30.md)。
 历史回执保留在原工作区，索引只记录原路径和哈希；没有重放失败实验或删除历史证据。
 
 仓库不分发厂商程序、镜像、完整手册或用户配置。上游名称与映射固定在 `846db381bc2c6ee0229d56e1d7ce8847eb6b213d`。
 LICENSE：MIT。本轮没有 push、PR、发布、重启、BCD 写入或真实设备启动。
+
+## 0.3.0：工程生成与门控 GUI 接口
+
+`dsh` 已核实全部合入并删除；完整 Git bundle 校验通过。原 E:/MCP_HCL 的文件及历史回执保持原样，工作区停在 detached HEAD。删除回执见 [分支退役记录](docs/history/dsh-branch-retirement.json)。
+
+- `hcl_stage_plan(project_path, stage_name, plan, port_map, idempotency_key?)`：从源工程真实型号模板生成独立 .net、双向链路、注释与新设备绑定。每个连线接口必须显式指定 CLI→场景端口映射，不自动使用未验证的顺序候选。
+- `hcl_open_project(project_path, hcl_pid)` / `hcl_save_project(project_path, hcl_pid)`：默认写门控关闭，只接受输出根下带阶段回执的副本。打开只操作打开；保存先核对完整项目名称及路径。每次操作使用新回执目录，超时不自动重放。
+- `hcl_full_build(project_path, stage_name, request, port_map, activate=false, hcl_pid?, idempotency_key?)`：串联规划与工程编译。默认仅生成副本；GUI 激活需单独满足写开关、PID和阶段身份条件。实时激活不支持幂等重放。
+
+生成的 CLI 命令保存在 MCPArtifacts/commands/*.txt，DeviceConfig/*.cfg 为新设备空占位文件。命令文本不会被冒充为启动配置或已下发配置。
+
+当前已验证工程文件读回及软件适配器合同，未实际打开 HCL GUI。2026-10-01 本机只读结果为 HypervisorPresent=true，LastBootUpTime=2026-09-30T01:24:52+08:00。Guest、CLI 下发与连通性仍未验证。当前迭代证据见 [progress-verification-030.json](docs/progress-verification-030.json)。
