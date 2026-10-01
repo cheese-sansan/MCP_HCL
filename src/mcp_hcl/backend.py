@@ -7,15 +7,16 @@ Two deliberately separate layers:
   so that a running server can never grow new powers by accident.
 * :meth:`HclBackend.invoke` drives the observed **verb registry** below.  Every
   verb carries an evidence level and a write flag; write verbs are refused
-  unless the process was started with ``MCP_HCL_ALLOW_BACKEND_WRITE=1``.
+  unless the process was started with ``MCP_HCL_ALLOW_LIVE_WRITE=1``.
 
-Wire format (observed in HCL 5.10.3's own logs, see
-``docs/hcl-backend-protocol.md``)::
+Wire format (observed in HCL 5.10.3's own logs; see HANDOFF.md section 6)::
 
     request : <id> <service> <verb> [args...]\\n
-    response: <id>-<code>-<payload>\\r\\n/end
+    response: <id>-<code>[-<payload>]\\r\\n/end
 
-``code`` 100/101 mean success; 200/204/210/228 were observed as failures.
+``code`` 100/101 mean success; 200/204/210/219/228 were observed as failures.
+The payload segment is omitted entirely when the reply carries no parameters,
+so the terminator - not the field count - decides where a frame ends.
 
 Nothing here is vendor-documented.  Arguments are rendered from observation,
 not from a specification, so every builder validates shape strictly and refuses

@@ -217,7 +217,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
             "operation_id": uuid4().hex,
             "target_project": None,
             "verified_scope": "observed_verb_registry_only",
-            "evidence": [{"source": "docs/hcl-backend-protocol.md", "layer": "documentation"}],
+            "evidence": [{"source": "HANDOFF.md section 6", "layer": "documentation"}],
             "endpoint": {"host": backend.host, "port": backend.port},
             "write_verbs_enabled": backend.allow_writes,
             "console_exec_enabled": console.writes_enabled,
