@@ -1,9 +1,12 @@
 param(
-    [Parameter(Mandatory=$true)][ValidateSet('Create','Remove')][string]$Action,
+    [Parameter(Mandatory=$true)][ValidateSet('Create','Remove','Arm','Disarm')][string]$Action,
     [Parameter(Mandatory=$true)][string]$ReceiptDirectory,
     [string]$EntryId
 )
 # Run explicitly after approval. No automatic reboot or default boot change.
+# Arm/Disarm use the firmware boot manager's one-shot 'bootsequence': the next
+# boot goes straight into the lab entry and the setting clears itself, so the
+# default entry is never modified and no menu timing is involved.
 $ErrorActionPreference = 'Stop'
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($identity)
@@ -41,6 +44,23 @@ function Run-Bcd([string[]]$BcdArguments) {
     if ($exitCode -ne 0) { throw "BCDEdit failed: $output" }
     return $output
 }
+function Try-Bcd([string[]]$BcdArguments) {
+    # Probing helper: records the command but reports failure instead of throwing.
+    $lines = @(& $bcd @BcdArguments 2>&1)
+    $exitCode = $LASTEXITCODE
+    $output = $lines -join "`n"
+    $receipt.commands += @{arguments=$BcdArguments; exit_code=$exitCode; output=$output}
+    return @{exit_code=$exitCode; output=$output}
+}
+function Get-OneShotTarget {
+    # UEFI systems expose {fwbootmgr}; the Windows Boot Manager honours
+    # bootsequence as well. Prefer the firmware boot manager.
+    foreach ($candidate in '{fwbootmgr}','{bootmgr}') {
+        $probe = Try-Bcd @('/enum',$candidate)
+        if ($probe.exit_code -eq 0) { return $candidate }
+    }
+    return $null
+}
 $createdId = $null
 try {
     if ($Action -eq 'Create') {
@@ -74,6 +94,77 @@ try {
         $receipt.status = 'verified'
         $receipt.verified_scope = 'lab_boot_entry_created_and_read_back_only'
         $receipt.next_step = 'Manually restart and select MCP_HCL Lab, then inspect HypervisorPresent and start one isolated HCL device.'
+    } elseif ($Action -in @('Arm','Disarm')) {
+        if ($EntryId -notmatch '^\{[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\}$') {
+            throw 'Arm/Disarm requires the exact lab GUID from a Create receipt.'
+        }
+        $receipt.entry_id = $EntryId
+        $managerBefore = Run-Bcd -BcdArguments @('/enum','{bootmgr}')
+        $defaultBefore = [regex]::Match($managerBefore, '(?im)^default\s+(.+)$').Groups[1].Value.Trim()
+        if ($Action -eq 'Arm') {
+            $entry = Run-Bcd -BcdArguments @('/enum',$EntryId)
+            if ($entry -notmatch 'MCP_HCL Lab \(Hypervisor and VSM off\)') {
+                throw 'The GUID is not an MCP_HCL lab entry.'
+            }
+            # Not every boot manager accepts bootsequence: on this machine
+            # {fwbootmgr} enumerates but rejects the set with "element not found".
+            # Try both and keep the one that actually reads back.
+            $receipt.attempts = @()
+            $armed = $null
+            foreach ($candidate in '{bootmgr}','{fwbootmgr}') {
+                $probe = Try-Bcd @('/enum',$candidate)
+                if ($probe.exit_code -ne 0) {
+                    $receipt.attempts += @{target=$candidate; result='not_enumerable'}
+                    continue
+                }
+                $set = Try-Bcd @('/set',$candidate,'bootsequence',$EntryId)
+                if ($set.exit_code -ne 0) {
+                    $receipt.attempts += @{target=$candidate; result="set_failed: $($set.output)"}
+                    continue
+                }
+                $readback = Try-Bcd @('/enum',$candidate)
+                if ($readback.output -match [regex]::Escape($EntryId)) {
+                    $armed = $candidate
+                    $receipt.one_shot_readback = $readback.output
+                    $receipt.attempts += @{target=$candidate; result='armed'}
+                    break
+                }
+                $receipt.attempts += @{target=$candidate; result='readback_missing'}
+            }
+            if (-not $armed) {
+                throw 'No boot manager accepted a one-shot bootsequence; select the entry from the boot menu instead.'
+            }
+            $receipt.one_shot_target = $armed
+            $receipt.status = 'verified'
+            $receipt.verified_scope = 'one_shot_boot_sequence_armed_and_read_back_only'
+            $receipt.next_step = ('Use Restart (not Shutdown) once. The firmware will boot the lab entry ' +
+                                  'automatically and clear bootsequence by itself.')
+        } else {
+            foreach ($candidate in '{bootmgr}','{fwbootmgr}') {
+                $null = Try-Bcd @('/deletevalue',$candidate,'bootsequence')
+            }
+            $residual = @()
+            foreach ($candidate in '{bootmgr}','{fwbootmgr}') {
+                $probe = Try-Bcd @('/enum',$candidate)
+                if ($probe.exit_code -eq 0 -and $probe.output -match '(?im)^bootsequence') {
+                    $residual += $candidate
+                }
+            }
+            if ($residual.Count -gt 0) {
+                throw "bootsequence is still present on: $($residual -join ', ')"
+            }
+            $receipt.one_shot_target = 'cleared'
+            $receipt.one_shot_readback = 'no bootsequence value remains'
+            $receipt.status = 'verified'
+            $receipt.verified_scope = 'one_shot_boot_sequence_cleared_and_read_back_only'
+            $receipt.next_step = 'No pending one-shot boot; the next start uses the normal default entry.'
+        }
+        $managerAfter = Run-Bcd -BcdArguments @('/enum','{bootmgr}')
+        $defaultAfter = [regex]::Match($managerAfter, '(?im)^default\s+(.+)$').Groups[1].Value.Trim()
+        if (-not $defaultBefore -or $defaultBefore -ne $defaultAfter) {
+            throw 'Default boot entry changed unexpectedly.'
+        }
+        $receipt.default_entry_unchanged = $defaultAfter
     } else {
         if ($EntryId -notmatch '^\{[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\}$') {
             throw 'Remove requires the exact created GUID from a receipt.'

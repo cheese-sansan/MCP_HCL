@@ -192,13 +192,15 @@
 
 **验收**：启动一台设备后，`create_udp` 拿到的管道能读到 Comware 提示符；不追加任何长测试，只跑剩余必需门槛。
 
-> **进展（2026-10-01）**：使用者启用 Windows 11 内置 `sudo` 并作为设备所有者授权后，实验启动项**已创建并回读验证**。
-> 新项 GUID `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`，描述 `MCP_HCL Lab (Hypervisor and VSM off)`，回读 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 已先备份（SHA256 `2D849DC8…FB4A`）；
-> `{current}` 与 `{bootmgr}` 的 default **均未改变**，新项只追加在 `displayorder` 末尾；脚本未重启。
-> 回执：`work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`（`status=verified`）。
+> **进展（2026-10-01）**：使用者启用 Windows 11 内置 `sudo`（本机为**强制新建窗口模式**，提权动作必须用文件回执取结果）并作为设备所有者授权后：
 >
-> **剩下的唯一动作是使用者手动重启并选择该启动项**，然后跑 `scripts/hcl_lab_environment.ps1` 判定会话状态。
-> 注意：**"启动项已设置正确"不等于"guest 现在一定能起来"**，因果确认要等真正启动一台设备之后。详见 [控制平面实现与交接](control-plane.md) §10。
+> 1. 实验启动项**已创建并回读验证**（`hypervisorlaunchtype Off` / `vsmlaunchtype Off`，BCD 已先备份，`{current}` 与 `default` 均未变）。
+> 2. 第一次重启尝试**没有真正进入实验项**：会话内 `bcdedit {current}` 仍是 `Windows 11` / `Auto`，`HyperVisorPresent=true`，`systeminfo` 也显示自 2026-09-30 起未重启。只读判定脚本给出 `not_booted_into_lab_entry`，随后按计划回退删除条目——**当次没有产生任何因果关系结论**。
+> 3. 归因：启动菜单 `default` 是 `{current}`、`timeout` 30 秒，实验项被追加在最后，"人工在菜单里抢时间"会静默失败。
+> 4. 因此 `hcl_lab_boot.ps1` 增加 `Arm`/`Disarm`，改用**一次性引导**（`bootsequence`）：下次启动直接进实验项、启动后自动清除、`default` 不动。本机 `{fwbootmgr}` 拒绝该设置，已改为在 `{bootmgr}`/`{fwbootmgr}` 间自动择一；现已在 `{bootmgr}` 武装并回读（回执 `ae5381b1…`）。
+>
+> **下一步只等使用者用「重启」（不是「关机」——快速启动会跳过引导流程）进入实验项**，然后跑 `scripts/hcl_lab_environment.ps1` 判定。
+> **"引导项设置正确"仍不等于"guest 一定能起来"**，因果确认要等真正启动一台设备。详见 [控制平面实现与交接](control-plane.md) §10。
 
 ### P5 — D2 的 24 项 CLI 家族
 

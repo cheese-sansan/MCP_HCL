@@ -44,9 +44,11 @@
 
 ## 待确认的修复
 
-**状态更新（2026-10-01）**：`scripts/hcl_lab_boot.ps1 -Action Create` **已执行成功**。实验启动项 `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`（`MCP_HCL Lab (Hypervisor and VSM off)`）已创建并回读验证 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 已先备份；`{current}` 与默认启动项均未改动；脚本未重启。
+**状态更新（2026-10-01）**：`scripts/hcl_lab_boot.ps1` 的 `Create` 与新增的 `Arm` 均已成功执行。实验启动项 `{10311110-89bd-11f0-ad29-c0bfbeee1ce7}`（`MCP_HCL Lab (Hypervisor and VSM off)`）已按 `hypervisorlaunchtype Off` / `vsmlaunchtype Off` 建立并回读；**一次性引导已武装**（`{bootmgr}` 的 `bootsequence`），下次启动直接进实验项、设置随之自动清除，`default` 未改动。BCD 已先备份，脚本未重启。
 
-剩余唯一动作：**使用者手动重启并选择该实验项**，然后跑 `scripts/hcl_lab_environment.ps1` 判定会话状态（只读）。回退命令与完整回执见 [控制平面实现与交接](docs/control-plane.md) §10。
+第一次尝试**没有真正进入实验项**：会话内 `bcdedit {current}` 仍是 `Windows 11` / `Auto`、`HyperVisorPresent=true`，系统自 2026-09-30 起未重启；已按计划回退删除旧条目。归因是启动菜单默认项 + 30 秒超时 + 实验项排在最后，人工选择会静默失败。`Arm`/`Disarm` 就是为了消除这个失效点。
+
+剩余唯一动作：**使用者用「重启」进入实验项**（不要用「关机」，快速启动会跳过引导流程），然后跑只读的 `scripts/hcl_lab_environment.ps1` 判定。回退命令与完整回执见 [控制平面实现与交接](docs/control-plane.md) §10。
 
 本机 `sudo` 处于**强制新建窗口模式**，`--inline` 会被拒绝；提权动作一律用"写文件回执"取结果，不要依赖管道输出。
 

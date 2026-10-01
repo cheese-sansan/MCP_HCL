@@ -26,28 +26,35 @@
 
 `scripts/hcl_lab_boot.ps1` 为当前 Windows 创建独立的 `MCP_HCL Lab (Hypervisor and VSM off)` 启动项。脚本先导出 BCD 备份，只在副本上设置 `hypervisorlaunchtype=Off`、`vsmlaunchtype=Off`，添加到启动菜单并回读；不会自动重启、修改日常启动项或更换 VirtualBox。选择实验项时该会话的 Hypervisor/VSM 防护和依赖功能将不可用。
 
-**2026-10-01 更新：已执行成功。** 使用者启用 Windows 11 内置 `sudo` 并授权后，以提权方式执行：
+**2026-10-01 更新：创建与一次性引导均已成功执行。** 使用者启用 Windows 11 内置 `sudo` 并授权后，以提权方式执行：
 
 ```powershell
 sudo run powershell -NoProfile -ExecutionPolicy Bypass `
   -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Create `
   -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+# 然后武装一次性引导（下次启动直接进实验项，设置自动清除，default 不动）
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Arm `
+  -EntryId '{10311110-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-结果（回执 `work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`，`status=verified`）：新项 `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}`，回读 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 备份 SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A`；`{current}` 与默认启动项均未变；未重启。
+结果：启动项 `{10311110-89bd-11f0-ad29-c0bfbeee1ce7}`，回读 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`；BCD 备份 SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A`；`default` 与 `{current}` 均未变；`bootsequence` 已武装并回读；未重启。
 
-**剩余动作由使用者完成：手动重启并选择该实验项**，随后运行只读的 `scripts/hcl_lab_environment.ps1` 判定会话状态。注意本机 `sudo` 处于强制新建窗口模式，提权进程的输出不会回到调用终端，因此一律以文件回执为准。详见 [控制平面实现与交接](control-plane.md) §10。
+**第一次尝试没有进入实验项**：会话内 `bcdedit {current}` 仍是 `Windows 11` / `Auto`、`HyperVisorPresent=true`，系统自 2026-09-30 起未重启。只读判定脚本如实报 `not_booted_into_lab_entry`，旧条目随后被回退删除。归因是启动菜单默认项 + 30 秒超时 + 实验项排在最后——这正是新增 `Arm` 的原因。
 
-回退（必须先在普通 Windows 项下运行）：
+**剩余动作由使用者完成：用「重启」（不是「关机」，快速启动会跳过引导流程）进入实验项**，随后运行只读的 `scripts/hcl_lab_environment.ps1` 判定会话状态。注意本机 `sudo` 处于强制新建窗口模式，提权进程的输出不会回到调用终端，因此一律以文件回执为准。详见 [控制平面实现与交接](control-plane.md) §10。
+
+回退（先 `-Action Disarm` 清掉未生效的一次性引导，再在普通 Windows 项下 `-Action Remove`）：
 
 ```powershell
 sudo run powershell -NoProfile -ExecutionPolicy Bypass `
   -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Remove `
-  -EntryId '{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -EntryId '{10311110-89bd-11f0-ad29-c0bfbeee1ce7}' `
   -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-创建回执会包含新 GUID、备份路径、命令退出码和回读。使用者手动重启并选择实验项后，只执行一次剩余电源门槛；不要重跑已经通过的拓扑步骤。恢复普通启动后，可用同一脚本的 `-Action Remove -EntryId '{回执中的GUID}'` 删除实验项，删除保护会拒绝当前或默认的实验启动项。
+创建回执会包含新 GUID、备份路径、命令退出码和回读。一次性引导生效后只执行一次剩余电源门槛；不要重跑已经通过的拓扑步骤。恢复普通启动后，可先用 `-Action Disarm` 清掉未生效的一次性引导，再用 `-Action Remove -EntryId '{回执中的GUID}'` 删除实验项——删除保护会拒绝当前或默认的实验启动项。
 
 ## 隔离工程打开与保存探针
 

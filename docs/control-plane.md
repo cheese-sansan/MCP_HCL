@@ -315,7 +315,8 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 | 写开关默认关闭 | `p2-live-verification.json` 的 `gate_off` 段 |
 | 命名管道可用 | `console-test-run2.txt`、`probe_nonblocking.py` |
 | 66 项测试 | 提交前最后一次 `unittest discover` 输出 |
-| P4 被权限阻断 | `work/feasibility/lab_boot_20261001/elevation-blocked-20261001.json` |
+| P4 第一次尝试未进入实验项 + 回退 | `work/feasibility/lab_boot_20261001/2455f377…/lab-environment.json`、`a5eeece9…/result.json` |
+| P4 条目重建 + 一次性引导已武装 | `55c95115…/result.json`、`ae5381b1…/result.json` |
 
 ---
 
@@ -362,44 +363,60 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 ---
 
-## 10. P4 状态：启动项**已创建并回读验证**，剩下的是使用者重启
+## 10. P4 状态：条目已重建并**武装一次性引导**，等使用者重启
 
-### 10.1 已完成的动作（2026-10-01）
+### 10.0 第一次尝试的结果：条目建好了，但会话没进实验项
 
-使用者启用 Windows 11 内置 `sudo` 并作为设备所有者授权后执行：
+| 时间 | 事件 | 证据 |
+| --- | --- | --- |
+| 15:48 | `-Action Create` 成功，条目 `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}` | `2704c0bf…/result.json`（`status=verified`） |
+| 15:49 | 独立提权重枚举复核通过 | `verify-lab-entry.json` |
+| （无重启） | 系统启动时间仍为 2026-09-30 01:24:52 | `systeminfo` 与 `Win32_OperatingSystem.LastBootUpTime` 两个来源一致 |
+| 16:16 | `hcl_lab_environment.ps1` 判定 `not_booted_into_lab_entry` | `2455f377…/lab-environment.json` |
+| 16:16 | `-Action Remove` 成功，条目已删除 | `a5eeece9…/result.json`（`verified_scope=lab_boot_entry_removed_and_read_back_only`） |
+
+判定依据不是"谁说了什么"，而是**脚本在会话内自己读到的**：`bcdedit {current}` = `Windows 11` / `hypervisorlaunchtype Auto`，`HyperVisorPresent = true`。即那次运行所在的会话**不是**实验项。
+
+最可能的原因：启动菜单 `default` 是 `{current}`、`timeout` 是 30 秒，而实验项被**追加在最后**。没在菜单里及时选中，就会静默进入普通 Windows。**"人工在菜单里抢时间"是一个真实存在的失效点。**
+
+### 10.1 改进：一次性引导（`bootsequence`）
+
+`hcl_lab_boot.ps1` 增加了 `Arm` / `Disarm`：使用 Windows 引导管理器的**一次性引导**，下一次启动直接进实验项，**该设置启动后自动清除**，`default` 始终不动，也不需要人在菜单里做选择。
 
 ```powershell
 sudo run powershell -NoProfile -ExecutionPolicy Bypass `
-  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Create `
-  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Arm `
+  -EntryId '{GUID}' -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-> 本机 sudo 处于**强制新建窗口模式**（`sudo config` 如此报告），因此 `--inline` 会被拒绝，提权进程的 stdout 不回到调用终端。**凡是提权动作都要用"写文件回执"的方式取结果**，不要依赖管道输出。
+实现要点（本轮踩到的坑）：本机 `{fwbootmgr}` **能枚举但拒绝 `bootsequence`**（`BCDEdit failed: 找不到元素。`）。脚本因此改为对 `{bootmgr}` 与 `{fwbootmgr}` 依次尝试"设置 + 回读"，只接受真正回读成功的那一个；两个都失败就明确报错并退回人工选菜单，而不是假装成功。`Disarm` 对两个目标都清值并确认无残留。
 
-回执：`work/feasibility/lab_boot_20261001/2704c0bffb434eeaaaabbbebed6c379c/result.json`，`status = "verified"`，`verified_scope = "lab_boot_entry_created_and_read_back_only"`。
+### 10.2 当前状态
+
+条目已**重建**（旧 GUID 随回退删除，新 GUID 不同）：
 
 | 项 | 值 |
 | --- | --- |
-| 新启动项 GUID | `{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}` |
+| 启动项 GUID | `{10311110-89bd-11f0-ad29-c0bfbeee1ce7}` |
 | 描述 | `MCP_HCL Lab (Hypervisor and VSM off)` |
 | 回读 | `hypervisorlaunchtype Off`、`vsmlaunchtype Off` |
-| BCD 备份 | `...\2704c0bf...\bcd-before.bak`，SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A` |
-| `{current}` | **未变**，仍为 `Windows 11` / `hypervisorlaunchtype Auto` |
-| `{bootmgr}` default | **未变**，仍为 `{current}` |
-| `displayorder` | 新项**追加在最后** |
-| `reboot_performed` | `false`（脚本不重启） |
+| 一次性引导 | 已武装于 `{bootmgr}`：`bootsequence {10311110-…}`；回执 `ae5381b1…/result.json`（`verified_scope=one_shot_boot_sequence_armed_and_read_back_only`） |
+| `default` | **未变**，仍为 `{current}` |
+| `displayorder` | `{current}` + 实验项（人工选菜单的退路仍然保留） |
+| BCD 备份 | `2704c0bf…/bcd-before.bak`（第一次 Create 时导出），SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A` |
 
-提权本身也单独验证过（`probe-elevation.ps1`）：`elevated=true`、`can_read_bcd=true`。
+以上由脚本回执与一次独立提权重读（`bcdedit /enum {bootmgr}`）双向确认。
 
-> **备份是机器本地的。** `bcd-before.bak` 位于 `work/` 下，而 `work/` 被 Git 忽略，因此不会随仓库传播，清理 `work/` 会丢失它。它只用于灾难恢复；日常回退用 `-Action Remove`（见 §10.3）即可，不需要该文件。若要长期保留，请自行复制到 `work/` 之外。
+### 10.3 使用者需要做的唯一动作
 
-### 10.2 使用者需要做的唯一动作
+**用「重启」（Restart），不要用「关机」（Shutdown）。**
 
-**手动重启，在启动菜单选择 `MCP_HCL Lab (Hypervisor and VSM off)`。**
+- 本机若启用快速启动（Fast Startup），"关机再开机"可能恢复上次的内核会话、跳过引导流程，且 `LastBootUpTime` 不更新——这正是上一次难以判断的原因。
+- 重启走完整引导流程，`bootsequence` 生效，**不需要在菜单里做任何选择**。
 
-该会话的 Hypervisor/VBS 防护与依赖功能不可用——这是一次性的显式选择，不是静默关闭全局安全功能；日常启动项未受影响。
+该会话的 Hypervisor/VBS 防护与依赖功能不可用——这是一次性的显式选择，日常启动项未受影响。
 
-重启后运行（只读，不改任何设置）：
+重启后运行（只读）：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `
@@ -407,24 +424,33 @@ powershell -NoProfile -ExecutionPolicy Bypass `
   -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-它会判定三件事并给出 `verdict`：是否真的启动进了实验项（`bcdedit {current}` 是否显示该描述且 `hypervisorlaunchtype Off`）、本会话是否仍有 Hypervisor、VirtualBox 是否可读。`verdict=lab_entry_active_and_no_hypervisor` 时才继续跑剩余电源门槛。
+`verdict=lab_entry_active_and_no_hypervisor` 时才继续跑剩余电源门槛；若仍是 `not_booted_into_lab_entry`，说明一次性引导没生效，退回到"重启时在 30 秒菜单里选最后一项"。
 
-### 10.3 回退
+### 10.4 回退
 
 ```powershell
+# 1) 清掉未生效的一次性引导（重启前做，避免下次又进实验项）
+sudo run powershell -NoProfile -ExecutionPolicy Bypass `
+  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Disarm `
+  -EntryId '{10311110-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+
+# 2) 删除实验项（必须在普通 Windows 项下运行）
 sudo run powershell -NoProfile -ExecutionPolicy Bypass `
   -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Remove `
-  -EntryId '{1031110f-89bd-11f0-ad29-c0bfbeee1ce7}' `
+  -EntryId '{10311110-89bd-11f0-ad29-c0bfbeee1ce7}' `
   -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
 ```
 
-脚本的删除保护会拒绝删除"当前正在运行的项"或"已被设为默认的项"，因此**必须先在普通 Windows 项下运行**。
+删除保护会拒绝删除"当前正在运行的项"或"已被设为默认的项"，因此第 2 步**必须先在普通 Windows 项下运行**。
 
-### 10.4 仍未完成
+> **备份是机器本地的。** `bcd-before.bak` 位于 `work/` 下，而 `work/` 被 Git 忽略，因此不会随仓库传播，清理 `work/` 会丢失它。它只用于灾难恢复；日常回退用上面的 `Remove` 即可，不需要该文件。若要长期保留，请自行复制到 `work/` 之外。
+
+### 10.5 仍未完成
 
 - 重启本身（使用者操作）。
 - 启动一台隔离设备并读到 Comware 提示符——这是 P4 的真正验收，也是 P5（24 项 CLI 家族）的前置。
-- 修复效果的**因果确认**：目前只能说"启动项已按要求设置且回读正确"，不能说"guest 现在一定能起来"。
+- 修复效果的**因果确认**：目前只能说"引导项已按预期建立、一次性引导已武装并回读"，**不能说**"guest 现在一定能起来"。
 
 ---
 
