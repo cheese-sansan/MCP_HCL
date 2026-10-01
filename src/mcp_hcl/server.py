@@ -48,7 +48,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     backend = backend or HclBackend(port=int(os.environ.get("MCP_HCL_BACKEND_PORT", "16600")),
                                     allow_writes=writes)
     catalog = catalog or HclCatalog(Path(os.environ.get("MCP_HCL_INSTALL_ROOT", "D:/HCL")))
-    console = console or hcl_console.HclConsole(writes_enabled=writes)
+    console = console or hcl_console.HclConsole(writes_enabled=writes,lease_root=store.output_root/'.console-leases')
     # The wrapper keys a topology to the TCP connection, so at most one backend
     # session is held at a time: the one hcl_backend_topology opened.
     session_lock = threading.Lock()

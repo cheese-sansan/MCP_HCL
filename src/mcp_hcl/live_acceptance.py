@@ -21,9 +21,13 @@ def ospf_peers(text):
     return peers
 
 
-def accept_lab(deployment,project_path,topology):
+def accept_lab(deployment,project_path,topology,gui_receipt):
     if not deployment.writes_enabled: raise ValueError('Enable the live write switch explicitly after preparing the isolated lab')
     doc,bindings=deployment.bindings(project_path)
+    gui=json.loads(Path(gui_receipt).read_text(encoding='utf-8-sig'))
+    if (gui.get('status')!='verified' or not gui.get('project_identity_verified') or
+            Path(gui.get('target_project','')).resolve()!=doc.net_path):
+        raise ValueError('A verified GUI identity receipt for this exact staged project is required')
     plan=json.loads((doc.directory/'MCPArtifacts/plan.json').read_text(encoding='utf-8'))
     routers=['r1','r2','r3'];clients=[d['id'] for d in plan['devices'] if d['id'].startswith('h')]
     if set(clients)!={f'h{i}_1_{j}' for i in range(1,4) for j in (1,2)} or any(r not in bindings for r in routers): raise ValueError('Gate requires the fixed three-router/six-client plan')
@@ -36,7 +40,7 @@ def accept_lab(deployment,project_path,topology):
         lan[router]=candidates[0]
     operation=uuid4().hex;directory=deployment._directory(operation)
     configuration=deployment.run(project_path,topology)
-    result={'operation_id':operation,'configuration_result':configuration,'neighbor_checks':[],
+    result={'operation_id':operation,'gui_identity_result':gui,'configuration_result':configuration,'neighbor_checks':[],
             'route_checks':[],'lease_checks':[],'ping_checks':[],'full_live_gate_passed':False,'status':'partial'}
     if not configuration.get('configuration_verified'):
         (directory/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');return result
@@ -86,6 +90,7 @@ def accept_lab(deployment,project_path,topology):
         result['rollback_verified']=len(result['rollback'])==len(configuration['backups']) and all(r['status']=='verified' for r in result['rollback'])
     # GUI identity is an independent prerequisite, never inferred from console output.
     result['status']='verified' if result['network_gate_passed'] else 'partial'
+    result['full_live_gate_passed']=bool(result['network_gate_passed'] and configuration.get('native_channels') and gui.get('project_identity_verified'))
     result['verified_scope']='three_router_console_and_network_gate_only'
     (directory/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
     return result

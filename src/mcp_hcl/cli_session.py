@@ -50,6 +50,7 @@ class PipeLease:
 class PersistentConsole:
     def __init__(self, pipe: str, lease_root: Path, *, session=None, timeout=12.0, max_bytes=1024*1024):
         self.pipe = pipe
+        self.native_channel = session is None
         self.lease = PipeLease(lease_root, pipe)
         self.timeout = timeout
         self.max_bytes = max_bytes
@@ -61,7 +62,7 @@ class PersistentConsole:
                 query=("$needle='"+needle+"'; $p=@(Get-CimInstance Win32_Process -ErrorAction Stop | "
                        "Where-Object {$_.Name -in @('putty.exe','SimwareMultiCC.exe')}); "
                        "[bool](@($p | Where-Object {$_.Name -eq 'SimwareMultiCC.exe' -or "
-                       "[string]::IsNullOrEmpty($_.CommandLine) -or $_.CommandLine.Contains($needle)}).Count)")
+                       "[string]::IsNullOrEmpty($_.CommandLine) -or $_.CommandLine.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0}).Count)")
                 checked=subprocess.run(['powershell.exe','-NoProfile','-Command',query],capture_output=True,timeout=10)
                 if checked.returncode != 0 or checked.stdout.strip().lower() != b'false':
                     raise ConsoleError('PuTTY/MultiCC may own this console; release it before requesting an exclusive lease')

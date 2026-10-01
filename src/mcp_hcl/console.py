@@ -33,6 +33,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
+from pathlib import Path
 from uuid import uuid4
 
 #: ``\\.\pipe\<topology>-device<N>`` exactly as observed in HCL 5.10.3.
@@ -205,6 +206,7 @@ class HclConsole:
     read_timeout: float = 8.0
     settle_seconds: float = 0.25
     writes_enabled: bool = False
+    lease_root: Path | None = None
 
     def run(self, pipe_name: str, command: str, *, expect: str | None = None) -> dict[str, Any]:
         """Send one command and return only the output that followed it."""
@@ -234,14 +236,20 @@ class HclConsole:
         started = time.monotonic()
         session: ConsoleSession | None = None
         try:
-            descriptor = open_console_pipe(pipe_name, timeout=self.open_timeout)
-            session = ConsoleSession(descriptor)
-            # Let anything the device already emitted arrive, then throw it away:
-            # it belongs to an earlier request, not to this one.
-            time.sleep(min(self.settle_seconds, self.idle_gap))
-            stale = session.drain()
-            session.send(command)
-            raw = session.read_until_idle(idle_gap=self.idle_gap, timeout=self.read_timeout)
+            if self.lease_root is not None:
+                from mcp_hcl.cli_session import PersistentConsole
+                import base64
+                with PersistentConsole(pipe_name,self.lease_root,timeout=self.read_timeout) as channel:
+                    reply=channel.exchange(command)
+                    raw=base64.b64decode(reply['raw_output_b64'])
+                    stale=b'0'*reply['discarded_stale_bytes']
+            else:
+                descriptor = open_console_pipe(pipe_name, timeout=self.open_timeout)
+                session = ConsoleSession(descriptor)
+                time.sleep(min(self.settle_seconds, self.idle_gap))
+                stale = session.drain()
+                session.send(command)
+                raw = session.read_until_idle(idle_gap=self.idle_gap, timeout=self.read_timeout)
         except ConsoleError as exc:
             result["status"] = "unverified"
             result["errors"] = [{"code": "console_unavailable", "message": str(exc)}]
