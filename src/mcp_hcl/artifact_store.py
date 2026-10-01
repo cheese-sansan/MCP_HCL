@@ -47,6 +47,8 @@ class ArtifactRetries:
             source_path = Path(source).resolve()
             if not any(source_path.is_relative_to(p) for p in self.source_roots):
                 raise ValueError("Source is outside configured project roots")
+            if self.root.is_relative_to(source_path):
+                raise ValueError("Stage output root must not be inside the source project")
             data["source_directory"] = str(source_path)
             data["source"] = tree_hash(source_path)
         fingerprint = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False,

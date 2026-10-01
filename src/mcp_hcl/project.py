@@ -234,6 +234,8 @@ class ProjectStore:
         return projects
 
     def _stage(self, doc: ProjectDocument, stage_name: str) -> tuple[Path, Path]:
+        if self.output_root.is_relative_to(doc.directory):
+            raise ProjectError('Stage output root must not be inside the source project')
         if not _STAGE_NAME.fullmatch(stage_name):
             raise ProjectError("stage_name must be 1-20 ASCII letters, digits or underscores")
         final_root = self.output_root / stage_name

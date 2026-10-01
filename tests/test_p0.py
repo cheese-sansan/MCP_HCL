@@ -50,6 +50,19 @@ class RetryTests(unittest.TestCase):
 
 
 class EnvelopeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stage_output_inside_source_is_rejected_before_any_write(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = build_fixture(Path(temporary))
+            source = next(p.parent for p in paths['root'].rglob('*.net'))
+            before = {p.relative_to(source).as_posix():p.read_bytes() for p in source.rglob('*') if p.is_file()}
+            unsafe_output = source / 'ConfigDisk' / 'nested_output'
+            server = create_server(store=ProjectStore([paths['root']], unsafe_output), catalog=HclCatalog(paths['install']))
+            for key in (None,'unsafe-key'):
+                result = await server.call_tool('hcl_stage_copy', {'project_path':str(source),'stage_name':'Nested','idempotency_key':key})
+                self.assertEqual(result.structuredContent['status'],'rejected')
+                self.assertFalse(unsafe_output.exists())
+                self.assertEqual(before,{p.relative_to(source).as_posix():p.read_bytes() for p in source.rglob('*') if p.is_file()})
+
     async def test_stage_retry_and_argument_linkage(self):
         with tempfile.TemporaryDirectory() as temporary:
             paths = build_fixture(Path(temporary))
