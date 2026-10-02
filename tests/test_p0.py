@@ -94,4 +94,4 @@ class LabVerdictTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout), ['unknown', 'unknown', 'lab_entry_active_and_no_hypervisor', 'lab_entry_active_but_hypervisor_still_present'])
         source = script.with_name('hcl_lab_environment.ps1').read_text(encoding='utf-8')
         self.assertNotIn('1031110f', source)
-        self.assertIn('$creation.entry_id', source)
+        self.assertIn('Retired boot-entry-specific check', source)

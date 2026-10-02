@@ -1,6 +1,6 @@
 # MCP_HCL Codex 交接
 
-当前工作分支：`codex/hcl-live-parity`；版本 0.4.0；更新日期 2026-10-01。
+当前工作分支：`codex/hcl-live-parity`；版本 0.4.0；更新日期 2026-10-02。
 本文件是当前交接入口。DSH 在 `1200f30` 的原交接已保存为 [历史快照](docs/history/dsh-handoff-1200f30.md)，不是当前分支操作指令。
 
 ## 目标与权限
@@ -40,7 +40,7 @@ P1 的目录、规划、参数模型、命令模板、操作清单、原子导�
 1. AC/AP 的默认 CFG 缺失；目录只有安装端口族和镜像存在证据，不能声称已确认它们的默认 CLI 接口映射。
 2. 型号场景端口映射含按安装资料顺序配对的候选，`mapping_verified=false`；需要独立映射证据。
 3. 手册确实记载网卡增强（普通最多 7、增强最多 35 连接，S6850 为文档示例），但资料是 5.10.1，5.10.3 逐型号兼容性未验证。
-4. 当前规划支持五类 HCL 图模板和 static/OSPF/RIP/none；完整上游规划请求的 WAN、无线客户端等覆盖仍待补齐。
+4. 当前规划支持九类 HCL 图模板和 static/OSPF/RIP/none；完整上游规划请求的 WAN、无线客户端等覆盖仍待补齐。
 5. 所有配置只验证结构、依赖和有据可查的模板，固件接受、guest 启动和网络连通性仍未验证。
 
 上游工具计数为 12 implemented / 46 planned / 3 unverified；只有窄范围离线合同被标为 implemented。
@@ -93,3 +93,9 @@ deployment.py 从阶段绑定与重新生成的计划读取命令，拒绝被改
 accept_three_router_lab.py 仅供使用者触发，需要精确项目的 GUI 身份回执、已由使用者启动的 guest、实际拓扑管道名和写开关。验证 OSPF/路由/DHCP/六次 ping，网络验收失败也尝试恢复。full_live_gate_passed 只可能在原生通道和独立 GUI 身份均成立时通过；本轮未执行。
 
 当前硬门槛保持：AC/AP 无本机 CLI 默认资料、无线关联命令缺证据、场景映射未独立验证；原机 HypervisorPresent=true，仍需使用者手动准备环境。第一阶段和第二阶段都没有被软件测试替代收口。
+
+## 2026-10-02：启动配置清理边界
+
+使用者明确批准后，已先导出并读回验证当前 BCD，再移除 MCP_HCL Lab 实验启动项及一次性启动设置。正常 Windows、恢复入口和其他 BCD 对象回读保持不变；未重启验证。备份与回执保留在 `C:/Users/w8p1p/Documents/MCP_HCL-boot-backups/20261002-151945-bd06865eed7a4b7ab8f346c7c518c218/`，备份 SHA256 为 `0514F3230D816A53591C326187EB27E26A423C02BBBAC5C7B3C58E50A2CD0B2F`。
+
+后续复现不再依赖实验启动项，不修改 BCD、系统安全功能或共享 VirtualBox。活动启动项脚本已退役；docs/history 中的原件仅是历史资料，不是操作指令。

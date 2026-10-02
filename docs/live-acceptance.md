@@ -5,9 +5,9 @@ reboot. Real HCL guests must already be running in an isolated staged project.
 Current evidence still shows Hypervisor enabled; software tests do not satisfy
 this gate.
 
-1. Manually restart into the previously approved lab entry when ready. Run the
-   current `hcl_lab_environment.ps1` with its explicit `EntryId` or verified
-   `CreateReceipt`. Unknown readings or a hypervisor still present do not pass.
+1. Use an independent, already working HCL environment. Do not recreate a lab
+   boot entry or change this host's security or virtualization settings. Read-only
+   observations do not prove guest or console readiness.
 2. Obtain real model templates and independently check CLI-to-scene port maps.
    Generate the fixed request: multi_lan, 3 MSR36-20 routers, 1 switch/router,
    2 PC DHCP clients/LAN, routing=ospf, ospf_process_id=1, dhcp=true.

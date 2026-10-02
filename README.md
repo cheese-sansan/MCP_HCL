@@ -5,14 +5,14 @@
 
 接手请读 [HANDOFF.md](HANDOFF.md)，参数与限制见 [离线 API](docs/offline-api.md) 和 [严格契约迁移](docs/contract-v2.md)。
 
-## 当前进度（2026-10-01）
+## 当前进度（2026-10-02）
 
 | 项目 | 已验证结果 |
 | --- | --- |
 | 分支整合 | 保留 DSH 的 7 个提交，快进接入固定 `1200f30`；DSH 工作区未修改 |
 | P0 | 原始 JSON 严格校验、统一结果信封、损坏工程业务拒绝、持久离线重试、环境未知值不通过 |
 | 注册面 | 39 工具 / 6 资源 |
-| P1 软件层 | 五类确定性图模板、规划/估算/解释/保守修复、十类服务参数与配置生成、原子导出及哈希重载 |
+| P1 软件层 | 九类确定性图模板、规划/估算/解释/保守修复、十类服务参数与配置生成、原子导出及哈希重载 |
 | P1 完整验收 | **Incomplete**：AC/AP 默认 CLI 接口映射、逐型号网卡增强兼容性及完整上游规划请求覆盖仍缺证据 |
 | 上游映射 | 工具 12 implemented / 46 planned / 3 unverified；资源 5 implemented。implemented 仅在每行 verified_scope 内成立 |
 | 本机回归 | 119 项：118 通过、1 项因符号链接权限跳过 |
@@ -104,3 +104,9 @@ LICENSE：MIT。本轮没有 push、PR、发布、重启、BCD 写入或真实�
 **第一阶段仍 Incomplete**：本机 AC/AP 默认 CLI 配置缺失，无线终端关联命令与独立场景映射没有完整证据。顺序候选不标为 verified，缺资料的无线生成不输出猜测命令。scripts/capture_model_evidence.py 可采集模板与配置的路径、哈希、型号和接口；MCP_HCL_PROFILE_ROOT 可读取带一致源哈希的捕获资料，不能据此推断 factory defaults 或已验证映射。
 
 **第二阶段仍未真实验收**：本轮没有启动设备、改 BCD 或重启。使用者触发步骤见 [live-acceptance.md](docs/live-acceptance.md)。软件回归与模拟恢复不能替代四条 FULL 邻居记录、六份 DHCP 客户端地址及网关和六次双向零丢包 ping。
+
+## 2026-10-02：启动配置清理边界
+
+使用者明确批准后，已先导出并读回验证当前 BCD，再移除 MCP_HCL Lab 实验启动项及一次性启动设置。正常 Windows、恢复入口和其他 BCD 对象回读保持不变；未重启验证。备份与回执保留在 `C:/Users/w8p1p/Documents/MCP_HCL-boot-backups/20261002-151945-bd06865eed7a4b7ab8f346c7c518c218/`，备份 SHA256 为 `0514F3230D816A53591C326187EB27E26A423C02BBBAC5C7B3C58E50A2CD0B2F`。
+
+后续复现不再依赖实验启动项，不修改 BCD、系统安全功能或共享 VirtualBox。活动启动项脚本已退役；docs/history 中的原件仅是历史资料，不是操作指令。
