@@ -394,7 +394,7 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 ---
 
-## 10. P4 现状：**启动配置方案已被设备所有者否决**，guest 启动暂无解
+## 10. P4 现状：方案 A 被所有者否决、方案 B 已只读评估但未授权 —— guest 启动当前不可用
 
 ### 10.1 决定（2026-10-02，设备所有者）
 
