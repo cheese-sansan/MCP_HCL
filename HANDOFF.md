@@ -341,6 +341,11 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 | 环境/BCD/VBS/VM 只读快照 | `work/feasibility/environment_20261001/`、`.../device6-VBox.log` |
 | 目录快照 | `work/feasibility/catalog-20261001.json` |
 | P4 启动项 / 一次性引导 / 回退 | `work/feasibility/lab_boot_20261001/*/result.json`、`*/lab-environment.json` |
+| 引导配置已还原（无实验项、无 bootsequence） | `work/feasibility/lab_boot_20261001/bcd-after-cleanup.json` |
+| 提权读 BCD（2026-10-02 发现条目消失） | `work/feasibility/lab_boot_20261001/bcd-report-20261002.json` |
+| Hyper-V/VBS/可选功能现状 | `work/feasibility/lab_boot_20261001/hypervisor-report-20261002.json` |
+| 方案 B 评估：HCL 二进制里的版本字面量扫描与上下文 | `work/feasibility/dsh-20261001/vbox-version-scan.txt`、`vbox-version-context.txt` |
+| 方案 B 评估脚本（只读） | `work/feasibility/dsh-20261001/scan_vbox_version.py`、`dump_strings.py` |
 
 ---
 
@@ -373,9 +378,12 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 只有"打开/保存"走窗口自动化，其余全部确定性。编辑类 9 项先用 relay 实现；注释 2 项本就是 `.net` 的 `[Non-vBox-DATA]` 段（实测 4 个 `[[NOTE n]]`），属纯文件编辑。
 验收：每次编辑后 `query_topology` 与 `.net` 回读一致；源工程哈希不变；操作与请求绑定。
 
-### P4 guest 启动 —— **启动配置方案被所有者否决；D2 因此保持阻塞**
+### P4 guest 启动 —— **启动配置方案（A）被所有者否决；B 已只读评估；D2 保持阻塞**
 根因是 VirtualBox 6.0.14 的 WHPX 实现与本机 Windows 构建不兼容（日志证据见 §10.2），**不是配置没调对、也不是缺 WHPX 功能**。在"不改启动配置 + 不换 VirtualBox"的前提下没有非侵入式解法。
-因此 P5 的 24 项 CLI 家族**暂时无法推进**；把精力放在 D0/D1（33 项，见 §10.4）。所有者若改变主意，可选方案见 §10.3。
+
+- **方案 A（关闭 Hypervisor/VSM）**：已实现并验证过，但**被所有者否决**（改变系统启动配置），条目与 `bootsequence` 已清除。
+- **方案 B（升级 VirtualBox 到 6.1+）**：**只读评估已完成**——HCL 不校验版本、路径与绑定方式兼容（见 §10.3"已排除的障碍"），但 `vboxapi` 与 VM 配置格式升级**只读无法证明**；结论是"带真实回退风险的机器级试验"，仍需授权。
+- 因此 P5 的 24 项 CLI 家族**暂时无法推进**；把精力放在 D0/D1（33 项，见 §10.4）。
 
 ### P5 D2 的 24 项 CLI 家族
 有了 P2 的管道客户端和 P4 的可用 guest，这层是批量工程：`apply_*`（VLAN/STP/端口安全/加固/接口调优/ACL/NAT/NetStream）、`read_vlans`/`read_qos`/`inspect_ports`、`audit_security`、`backup_config`、`verify_connectivity`、`diff`、`health_check`、`send_raw`、`deploy`/`full_build`/`live_deploy`。
@@ -531,6 +539,7 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 
 **未验证**
 
+- **方案 B 的两处无法只读证明**：HCL 内嵌的 6.0.14 版 `vboxapi`/`VirtualBox_constants.py` 是否仍匹配 6.1 的类型库；以及 6.1 升级后 guest 是否真能启动。二者都必须实际安装才能验证（详见 §10.3）。
 - `start` 在**同时存在真实设备**时能否真正拉起 guest。本机受 `VERR_NEM_VM_CREATE_FAILED` 阻塞；目前只证明"命令进入了 `SimwareTopo startVM`"。
 - 控制台**实际输出**：管道只在设备控制台创建后才存在，当前 `FileNotFoundError` 是正确结果而非缺陷。
 - **命名管道并发语义**：HCL 的 PuTTY 已连接时能否第二客户端接入、是否互斥、是否原始终字节流——**全未测**。设为 P5 可行性的判定项：结论为"不可共享"时 CLI 方案必须回到评审，改用 HCL 自己的控制台或 `SimwareMultiCC`。
@@ -575,7 +584,7 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 3. **P1 规划 4 项 + 型号端口映射** —— 纯计算层；端口映射可直接用 `deviceInfo.ini` 与 `devicecfgs` 离线推导。
 4. **命名管道并发测量**（决定 P5 可行性）：在 HCL 的 PuTTY 已连接同一管道时尝试第二客户端；给"可并发/需互斥/不可共享"的明确结论与原始回执。
 5. **补齐 `create`/`delete`/`create_udp`**：从 HCL 打开工程时的日志抓完整请求行与返回码。验收：在隔离拓扑上创建再删除一台设备，`vm_root` 前后一致。
-6. **P4 / guest 启动**：**暂时无解**（启动配置方案已被否决）。不要再去碰 BCD；要推进只能先由所有者决定 §10.3 里的 B（升级 VirtualBox）或重新授权 A。在此期间把精力放在 1–5 项。
+6. **P4 / guest 启动**：**暂时无解**（启动配置方案 A 已被否决；方案 B 只读评估已完成但需授权才能执行）。不要再去碰 BCD。在 B 未决期间，**可以零授权先做 B 的"准备"部分**：记录 `VBoxManage` 基线、**整目录备份 `C:\Users\w8p1p\HCL VMs\`**、找到 6.0.14 安装包作为回退资产（当前磁盘上没有）。这些都是只读或纯备份，不改变系统；真正的升级动作要等明确授权。其余精力放在 1–5 项。
 
 ### 改动纪律（请延续）
 
@@ -596,6 +605,7 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 - 文档收敛为 `HANDOFF.md` + `README.md` 两份。
 - 本机测试基线 **66 项通过**（1 项因账号无 symlink 权限 skip）。
 - guest 启动阻塞的**根因已定位**（§10.2），且已确认"缺 WHPX"是错误假设。
+- 方案 B 的**只读兼容性评估已完成**（§10.3）：HCL 不校验 VirtualBox 版本、路径与绑定方式兼容；`vboxapi`/VM 配置格式升级属只读不可证。执行仍需授权。
 
 **待所有者决定**
 
