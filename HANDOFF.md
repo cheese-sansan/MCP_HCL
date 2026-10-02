@@ -451,31 +451,60 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 
 **回执**：`2704c0bf…`（Create）、`ae5381b1…`（Arm）、`cbee2b27…`（Verify）、`c7ad1fec…`（Disarm）、`95909812…`（Remove）、`bcd-after-cleanup.json`（复核）。
 
-#### 方案 B：升级 VirtualBox 到 6.1+
+#### 方案 B：升级 VirtualBox 到 6.1+ —— **已做只读评估，结论：不能判定兼容，风险中等**
 
-**机制**：VirtualBox 6.1+ 重写了 WHPX/NEM 适配，修正了 6.0.x 的 IOCTL 参数不匹配（即 §10.2 的 `cbInput == sizeof(HV_VP_INDEX)` / `dwErr=87`）。升级后 **可以在 Hyper-V/VBS 继续运行的同时启动 guest**，因此**不需要改动启动配置**——与所有者的明确意愿不冲突。这是唯一同时满足"不动启动配置"与"guest 能跑"的候选。
+**机制**：VirtualBox 6.1+ 重写了 WHPX/NEM 适配，修正了 6.0.x 的 IOCTL 参数不匹配（即 §10.2 的 `cbInput == sizeof(HV_VP_INDEX)` / `dwErr=87`）。升级后**可以在 Hyper-V/VBS 继续运行的前提下启动 guest**，因此**不需要改动启动配置**——与所有者的明确意愿不冲突。这是唯一同时满足"不动启动配置"与"guest 能跑"的候选。
 
-**状态：未评估、未授权。** 此前记录为"未授权更换共享 VirtualBox"。**执行升级属于机器级变更，必须先获得明确授权；调查本身只读，不需要授权。**
+**状态：未执行、未授权。** 执行升级是机器级变更，必须先获得明确授权。下面是只读评估的结果。
 
-**升级前必须查清的五件事（均可只读完成）**：
+##### ✅ 已排除的障碍
 
-1. **HCL 是否绑定自带版本。** HCL 通过 `D:\HCL\vboxapi\`（随程序分发的 Python 绑定）经 COM 调 VirtualBox；`SimwareWrapper.exe` 内部使用该绑定。要确认它是否对 VirtualBox COM 接口版本做了硬校验。
-2. **安装路径假设。** HCL 是否写死 `C:\Program Files\Oracle\VirtualBox`；升级安装到同路径还是并行安装。
-3. **HCL 实际使用的调用面**是否仍被 6.1 兼容：日志显示它用到 clone、`setChipsetType`、修改内存/NIC/串口、附加硬盘、`safeSaveSettings`、`safeLockMachine` 等 COM 调用。
-4. **Extension Pack 与已注册 VM 的兼容性**：升级后既有 VM 配置（`C:\Users\<用户>\HCL VMs\`，含 `Simware_Base` 模板）是否仍可读、可克隆。
-5. **回退路径**：保留 6.0.14 安装包、记录升级前 `VBoxManage --version` 与 `VBoxManage list vms` 输出、确认可卸载回 6.0.14。
+| 项 | 证据 |
+| --- | --- |
+| HCL **不校验** VirtualBox 版本 | `SimwareClient.exe` 中 `CheckVirtualboxInstall` 附近的字符串只有 `g_strVboxPath` + `path.join` + `VirtualBox.exe` + `VBoxManage.exe` + `isfile`，**没有版本比较**。日志里的 `Virtual Box version: 6.0.14` 是运行时读出来的。 |
+| 那个 `6.0.14` 字面量不是硬编码期望值 | 它位于 `Core\Globals\Symbols.py` 的 docstring 示例文本里，旁边是 `hclVersion: 5.1.0` 与 `Windows-10-10.0.18362`——都是比当前安装更旧的示例，属陈旧注释。`SimwareWrapper.exe` 与 `H3C Cloud Lab.exe` 里根本没有 `6.0.14` 字面量。 |
+| 安装路径假设与原地升级兼容 | 注册表 `HKLM\SOFTWARE\Oracle\VirtualBox` 的 `InstallDir = C:\Program Files\Oracle\VirtualBox\`，HCL 用的 `g_strVboxPath` 也是同一个路径。**原地升级不改路径**，符合 HCL 假设；并行安装则会破坏它。 |
+| 绑定方式本身是版本自适应的 | HCL 用 **pywin32 晚绑定 COM**（`D:\HCL\pythoncom38.dll`），安装目录里**没有任何 `VBoxPython*.dll`**。`vboxapi` 走 `win32com.client.gencache.EnsureDispatch('VirtualBox.VirtualBox')`，包装器是**从已安装版本的类型库现场生成**的。 |
+| HCL 用到的 COM 调用面是长期稳定接口 | 日志显示它只用 `findMachine`、clone、`setChipsetType`、内存/NIC/串口修改、`attachDevice`、`saveSettings`、`lockMachine` 这些核心接口，6.1 均保留。 |
+| Extension Pack 与本场景无关 | HCL 的控制台走命名管道串口，不用 USB/RDP/VRDP。 |
 
-**风险与可逆性**：
+##### ⚠️ 未排除的风险（**只读无法证明**）
 
-- HCL 与 6.1 若不兼容，**连现有能力也会受影响**（阶段工程依赖 HCL 打开工程，后端控制平面依赖 HCL 的后端）。这是本方案最大的风险，必须先备份 `D:\HCL\vboxapi\` 与 VM 列表。
-- 升级前应保存：`VBoxManage --version`、`VBoxManage list vms`、`VBoxManage list systemproperties`、`D:\HCL\vboxapi` 目录文件哈希。
+1. **HCL 内嵌的 `vboxapi` 与 `VirtualBox_constants.py` 是 6.0.14 那一份**（已确认 SDK 的 `vboxapi/__init__.py:185` 与 HCL 回溯里的 `_CustomGetAttr` 完全对应）。若 6.1 改动 HCL 用到的枚举值或接口签名，可能出错。**必须实际安装才能验证。**
+2. **stale `gen_py` 缓存**：`C:\Users\w8p1p\AppData\Local\Temp\gen_py` 已存在（4 个文件）。升级后若不清除，pywin32 可能继续用 6.0.14 生成的包装器。**升级后必须删掉该目录。**
+3. **VM 配置格式是单向升级**：当前 `.vbox` 为 `version="1.16-windows"`。6.1 会把 VM 配置改写成新格式，**之后 6.0.14 可能读不回来**——所以"升级后不行再降级"对既有 VM **不完全可靠**。升级前必须整目录备份 `C:\Users\w8p1p\HCL VMs\`。
+4. **回退资产缺失**：`D:\` 与 `Downloads` 下**都没有 VirtualBox 6.0.14 安装包**，降级需要重新获取。
+5. **目标版本存在取舍**：6.1.28+ 修 Windows 11 主机问题，但 HCL 的 COM 绑定是 6.0 时代的；7.0 的 WHPX 共存最成熟，但 COM API 变动更大，对 HCL 更危险。**建议若做，选 6.1 系列最新版而不是 7.x。**
+6. **外部证据不足以定论**：工单标题为 ["No VM will start on Windows 11 host => fixed in 6.1.28"](https://www.virtualbox.org/ticket/20536)，但另有用户报告 [6.1.26 升到 6.1.28 后出现同样的 `E_FAIL (0x80004005)`](https://superuser.com/questions/1684788/virtualbox-fails-to-start-vm-after-upgrade-from-6-1-26-to-6-1-28-with-result-cod)。本机 `virtualbox.org` 与镜像域名都解析到非公网 IP，**未能读取工单正文**，因此这条只能作为线索，不能作为结论。
 
-**验收标准**（缺一不可）：
+##### 评估结论
+
+- **"HCL 会不会因为版本不对而拒绝运行"——已排除，不会。**
+- **"装了 6.1 之后 guest 能不能起来"——无法只读证明**，取决于 6.1 的 WHPX 实现能否修掉 §10.2 那个参数尺寸问题，以及 HCL 那份 6.0 时代 `vboxapi` 是否仍匹配 6.1 的类型库。
+- 因此这仍是一个**需要所有者授权的、带真实回退风险的机器级试验**，而不是一个"可以先做做看"的低风险改动。
+
+##### 若决定执行：最小风险步骤与验收
+
+**准备（全部只读，可先做）**
+
+1. 记录基线：`VBoxManage --version`、`list vms`、`list systemproperties`（已存 `hypervisor-report-20261002.json`）。
+2. **整目录备份** `C:\Users\w8p1p\HCL VMs\`（含 `Simware_Base` 与既有拓扑）。
+3. 拿到 VirtualBox 6.0.14 安装包（当前磁盘上没有）作为回退资产，并记录 `D:\HCL\vboxapi` 的可用性（该目录在 exe 内，只能记录其来源）。
+4. 记录 HCL 侧基线：`hcl_bridge_status` 的 `1.0.0&6.0.14`、隔离副本的 `inspect` 结果、`create_topology` 返回 `100`。
+
+**执行**：原地升级到 6.1 系列最新版 → 删除 `%TEMP%\gen_py` → 以管理员重启 VBoxSVC。
+
+**验收（缺一不可）**
 
 1. `VBoxManage startvm` 能启动一台测试 VM 并进入 guest；
-2. HCL 打开隔离副本 → 新增/删除设备 → 保存回读仍然成功（即现有已验证能力不退化）；
+2. HCL 打开隔离副本 → 新增/删除设备 → 保存回读仍然成功（现有已验证能力不退化）；
 3. `hcl_backend_topology` 的 `create_topology` 仍返回 `errorCode=100`；
-4. HCL 日志中不再出现 `VERR_NEM_VM_CREATE_FAILED`。
+4. HCL 日志中不再出现 `VERR_NEM_VM_CREATE_FAILED`；
+5. 既有 `topo1`/`topo77` 拓扑的 VM 配置仍能被 HCL 读取（格式升级未破坏）。
+
+**失败判定与回退**：任一条不满足即视为不兼容；此时回退到 6.0.14 并恢复 `HCL VMs` 备份。**注意第 3 条风险**：若 6.1 已改写 VM 配置，回退未必能完全复原。
+
+**证据文件**：`work/feasibility/dsh-20261001/vbox-version-scan.txt`、`vbox-version-context.txt`、`work/feasibility/lab_boot_20261001/hypervisor-report-20261002.json`。
 
 #### 方案 C（当前默认）：接受 guest 不可用，推进 D0/D1
 
@@ -573,7 +602,7 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 | 事项 | 说明 |
 | --- | --- |
 | 方案 A 是否重新授权 | 见 §10.3；当前被否决，条目已清除 |
-| 方案 B 是否评估/执行 | 见 §10.3；调查只读、执行需授权 |
+| 方案 B 是否执行 | **只读评估已完成，见 §10.3"方案 B"**：HCL 不校验版本、路径与绑定方式兼容，但 `vboxapi` 与 VM 配置格式升级属只读不可证；结论是"带真实回退风险的机器级试验"，需授权 |
 | 是否开工 P1 离线层 | 见 §9；D0 的 11 项零阻塞、可离线回归 |
 
 **不要做的事**：不要为了"让 P4 看起来有进展"再去碰 BCD；不要把 guest 起不来写成项目无法继续（33 项不受影响）。
