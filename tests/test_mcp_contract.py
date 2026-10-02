@@ -341,7 +341,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertFalse(body["full_live_gate_passed"])
 
     # ------------------------------------------------------------------ plan
-    async def test_plan_structural_errors_use_pydantic_shape_not_semantic_codes(self) -> None:
+    async def test_plan_structural_errors_carry_a_stable_code(self) -> None:
         unknown_field = base_plan()
         unknown_field["unexpected"] = 1
         wrong_version = base_plan()
@@ -359,11 +359,12 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(body["status"], "rejected")
                     self.assertFalse(body["valid"])
                     first = body["errors"][0]
-                    # structural errors carry the raw pydantic shape: no "code" key
-                    self.assertNotIn("code", first)
-                    self.assertEqual(first["type"], expected_type)
-                    self.assertIn("msg", first)
-                    self.assertIn("loc", first)
+                    # structural and semantic errors now share one shape, so a
+                    # client can branch on errors[].code uniformly
+                    self.assertEqual(first["code"], "invalid_plan_structure")
+                    self.assertIn("message", first)
+                    self.assertTrue(first["loc"])
+                    self.assertEqual(first["detail"]["type"], expected_type)
 
             result, _ = await call(session, "hcl_validate_plan", {"plan": "not-an-object"})
             self.assertTrue(result.isError, "a non-object plan is an argument error, not a verdict")
@@ -616,12 +617,11 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("MSR36-20 R1", staged_bytes.decode("utf-8"))
 
     async def test_corrupt_projects_never_report_ok(self) -> None:
-        """Malformed projects must never come back as status=ok.
+        """Malformed projects must come back as a business rejection, never ok.
 
-        The handoff warns that "some corrupt projects may raise a tool error
-        instead of a business rejected".  This test pins down which shapes are
-        already handled as business rejections and which two still escape as
-        tool errors, so hardening them is a visible change.
+        Every shape below used to be either a business rejection or a tool-level
+        exception; the numeric ones escaped as tool errors until _field_integer
+        and _field_number were added.  None of them may ever be reported as ok.
         """
         structural = {
             "no_vbox_section": lambda t: t.replace("[vbox 127.0.0.1:16600]\r\n", ""),
@@ -631,8 +631,6 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             "duplicate_field": lambda t: t.replace(
                 "        slot0 = MSR36 384", "        slot0 = MSR36 384\r\n        x = 7.0", 1),
             "asymmetric_link": lambda t: t.replace("GE_0/0 = R1 GE_0/0", "GE_0/0 = R1 GE_0/1"),
-        }
-        escaping = {
             "non_numeric_device_id": lambda t: t.replace("device_id = 1", "device_id = abc"),
             "non_numeric_coordinate": lambda t: t.replace("x = 0.0", "x = not-a-number"),
         }
@@ -643,8 +641,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     path = self.write_variant(label, mutate)
                     result, body = await call(session, "hcl_inspect_project",
                                               {"project_path": str(path)})
-                    self.assertFalse(result.isError, f"{label} should be a business rejection")
+                    self.assertFalse(result.isError, f"{label} must be a business rejection")
                     self.assertEqual(body["status"], "rejected")
+                    self.assertTrue(body["error"])
 
             with self.subTest(case="invalid_utf8"):
                 path = self.write_variant("invalid_utf8", lambda t: t,
@@ -654,16 +653,6 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(result.isError)
                 self.assertEqual(body["status"], "rejected")
                 self.assertIn("not UTF-8", body["error"])
-
-            for label, mutate in escaping.items():
-                with self.subTest(case=label):
-                    path = self.write_variant(label, mutate)
-                    result, body = await call(session, "hcl_inspect_project",
-                                              {"project_path": str(path)})
-                    # documented caveat: this shape escapes as a tool error
-                    self.assertTrue(result.isError,
-                                    "expected the documented tool-error escape hatch")
-                    self.assertNotEqual((body or {}).get("status"), "ok")
 
     # -------------------------------------------------- argument / protocol
     async def test_argument_and_jsonrpc_edge_behaviour(self) -> None:

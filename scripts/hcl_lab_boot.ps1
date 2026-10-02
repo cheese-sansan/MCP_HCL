@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][ValidateSet('Create','Remove','Arm','Disarm')][string]$Action,
+    [Parameter(Mandatory=$true)][ValidateSet('Create','Remove','Arm','Disarm','Verify')][string]$Action,
     [Parameter(Mandatory=$true)][string]$ReceiptDirectory,
     [string]$EntryId
 )
@@ -165,6 +165,32 @@ try {
             throw 'Default boot entry changed unexpectedly.'
         }
         $receipt.default_entry_unchanged = $defaultAfter
+    } elseif ($Action -eq 'Verify') {
+        # Read-only pre-flight: confirm the entry and the one-shot are still in
+        # place at check time. Exists because the entry and bootsequence were
+        # found missing on 2026-10-02 after having been created and armed.
+        if ($EntryId -notmatch '^\{[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\}$') {
+            throw 'Verify requires the exact lab GUID from a Create receipt.'
+        }
+        $receipt.entry_id = $EntryId
+        $entry = Try-Bcd @('/enum',$EntryId)
+        $manager = Try-Bcd @('/enum','{bootmgr}')
+        $receipt.entry_present = ($entry.exit_code -eq 0 -and
+                                  $entry.output -match 'MCP_HCL Lab \(Hypervisor and VSM off\)')
+        $receipt.entry_readback = $entry.output
+        $receipt.bootmanager_readback = $manager.output
+        $receipt.bootsequence = [regex]::Match($manager.output, '(?im)^bootsequence\s+(.+)$').Groups[1].Value.Trim()
+        $receipt.one_shot_armed = ($receipt.bootsequence -eq $EntryId)
+        $receipt.default_entry = [regex]::Match($manager.output, '(?im)^default\s+(.+)$').Groups[1].Value.Trim()
+        if ($receipt.entry_present -and $receipt.one_shot_armed) {
+            $receipt.status = 'verified'
+            $receipt.verified_scope = 'lab_entry_and_one_shot_present_at_check_time_only'
+            $receipt.next_step = 'Safe to restart now: the next boot goes into the lab entry once.'
+        } else {
+            $receipt.status = 'partial'
+            $receipt.error = "entry_present=$($receipt.entry_present) one_shot_armed=$($receipt.one_shot_armed)"
+            $receipt.next_step = 'Re-run -Action Arm (and -Action Create if the entry is gone) before restarting.'
+        }
     } else {
         if ($EntryId -notmatch '^\{[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\}$') {
             throw 'Remove requires the exact created GUID from a receipt.'

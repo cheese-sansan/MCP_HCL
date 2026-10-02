@@ -70,9 +70,9 @@ class ProjectDocument:
                 {
                     "name": section.name,
                     "model": section.model,
-                    "device_id": int(section.fields["device_id"]),
-                    "x": float(section.fields.get("x", "0")),
-                    "y": float(section.fields.get("y", "0")),
+                    "device_id": _field_integer(section.fields["device_id"], section.name, "device_id"),
+                    "x": _field_number(section.fields.get("x", "0"), section.name, "x"),
+                    "y": _field_number(section.fields.get("y", "0"), section.name, "y"),
                 }
                 for section in self.sections.values()
             ],
@@ -81,6 +81,28 @@ class ProjectDocument:
                 for a, b in sorted(links)
             ],
         }
+
+
+def _field_integer(value: str, device: str, field: str) -> int:
+    """Parse a device field that must be an integer, as a business rejection.
+
+    A corrupt project must not escape as a tool-level exception: the caller has
+    to be able to tell "this project is broken" from "the server crashed".
+    """
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ProjectError(f"Device {device} has a non-numeric {field}: {value!r}") from exc
+
+
+def _field_number(value: str, device: str, field: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ProjectError(f"Device {device} has a non-numeric {field}: {value!r}") from exc
+    if not math.isfinite(number):
+        raise ProjectError(f"Device {device} has a non-finite {field}: {value!r}")
+    return number
 
 
 def _read_document(directory: Path) -> ProjectDocument:

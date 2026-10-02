@@ -347,9 +347,16 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 依赖顺序：**P0 → P1 → P2 → P3 → P4 → P5 → P6**，但 P1 与 P4 可并行（互不依赖）。
 
-### P0 契约硬化
+### P0 契约硬化 —— **部分完成**
 范围：严格参数校验（拒绝未知参数名，明确可选参数联动）；统一结果信封（`status/operation_id/request_id/target/verified_scope/evidence/errors[{code,message}]/warnings`）；结构错误也映射出 `code`；损坏工程一律业务 `rejected`；引入可选 `idempotency_key`。
 验收：`test_mcp_contract.py` 全绿 + 新增严格参数用例；5 个旧接口保持字段兼容。
+
+> **已完成（2026-10-02，`dsh-2`）**
+> - **结构错误统一形状**：`hcl_validate_plan` 的结构错误现在也是 `{code: "invalid_plan_structure", message, loc, detail:{type}}`，客户端可统一按 `errors[].code` 分支。
+> - **损坏工程不再以工具错误逃逸**：`project.py` 新增 `_field_integer` / `_field_number`，`device_id = abc`、`x = not-a-number` 等一律返回业务 `rejected`；非有限坐标同样被拒。
+> - 两项都由 `test_mcp_contract.py` 固定（原先的 characterization 测试已改成契约断言）。
+>
+> **仍缺**：未知参数名被 FastMCP 在进入工具函数前丢弃，**函数层根本看不到多余参数**——要拒绝它必须做中间件或原始请求校验，**不要**用加 `**kwargs` 之类的办法糊过去。`request_id` 回显与 `idempotency_key` 也尚未实现。
 
 ### P1 离线层（11 工具 + 3 资源，最大收益，零外部依赖）
 范围：`list_modules`、`list_templates`、三个目录资源；`plan_topology`、`estimate_plan`、`explain_plan`、`fix_plan`、补全 `validate_plan` 的服务参数校验；`load_project`、`export`、`generate_configs`、`generate_script`；**顺带把 `deviceInfo.ini` 与型号接口列表连接成真正的"型号 → 场景端口"映射**。
@@ -383,22 +390,30 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 | 时间 | 事件 | 证据 |
 | --- | --- | --- |
-| 15:48 | 第一次 `Create` 成功，条目 `{1031110f-…}` | `2704c0bf…/result.json`（`verified`） |
-| 16:16 | 只读判定 `not_booted_into_lab_entry`，随后回退删除 | `2455f377…/lab-environment.json`、`a5eeece9…/result.json` |
-| — | **系统自 2026-09-30 01:24:52 起未重启** | `systeminfo` 与 `LastBootUpTime` 两来源一致 |
-| 16:2x | 条目**重建**为 `{10311110-…}`，一次性引导**已武装** | `55c95115…/result.json`、`ae5381b1…/result.json` |
+| 10-01 15:48 | 第一次 `Create` 成功，条目 `{1031110f-…}` | `2704c0bf…/result.json`（`verified`） |
+| 10-01 16:16 | 只读判定 `not_booted_into_lab_entry`，随后回退删除 | `2455f377…/lab-environment.json`、`a5eeece9…/result.json` |
+| 10-01 16:18 | 条目**重建**为 `{10311110-…}` | `55c95115…/result.json` |
+| 10-01 16:19 | 一次性引导**已武装**并回读 | `ae5381b1…/result.json` |
+| 10-02 15:20 | 系统重启（`LastBootUpTime`），进入的是**普通 Windows**：`HyperVisorPresent=true` | 会话内读取 |
+| 10-02 16:19 | 提权读 BCD：**`{10311110-…}` 已不存在，`bootsequence` 已消失，`displayorder` 只剩 `{current}`** | `bcd-report-20261002.json` |
 
-第一次尝试没进实验项，归因是启动菜单 `default` 是 `{current}`、`timeout` 30 秒、实验项被追加在**最后**——"人工在菜单里抢时间"会静默失败。这已由 `Arm` 消除。
+**两个未解释的事实必须保留在案：**
 
-### 当前引导状态
+1. 第一次重启没有进入实验项。归因是启动菜单 `default` 是 `{current}`、`timeout` 30 秒、实验项被追加在**最后**——"人工在菜单里抢时间"会静默失败。这已由 `Arm` 消除。
+2. **10-01 16:19 武装的条目与 `bootsequence`，在 10-02 15:20 重启前被完全清掉了，而 `work/` 里没有对应的 `Remove`/`Disarm` 回执。** 引导配置回到了原始状态（`osloader` 只剩 Windows 11 与 WinRE）。原因未确认——不要假设"它自己会消失"，也不要假设是谁删的；重启前必须用 `-Action Verify` 复查。
+
+### 当前引导状态（10-02 重新建立，已 `Verify`）
 
 | 项 | 值 |
 | --- | --- |
-| 启动项 | `{10311110-89bd-11f0-ad29-c0bfbeee1ce7}` — `MCP_HCL Lab (Hypervisor and VSM off)` |
+| 启动项 | `{10311111-89bd-11f0-ad29-c0bfbeee1ce7}` — `MCP_HCL Lab (Hypervisor and VSM off)` |
 | 回读 | `hypervisorlaunchtype Off`、`vsmlaunchtype Off` |
-| 一次性引导 | `{bootmgr}` 的 `bootsequence {10311110-…}`（启动后自动清除，`default` 不动） |
-| `default` / `displayorder` | 仍 `{current}`；实验项也在 `displayorder` 里，作为人工选菜单的退路 |
+| 一次性引导 | `{bootmgr}` 的 `bootsequence {10311111-…}`（启动后自动清除，`default` 不动） |
+| `default` | 仍 `{current}` |
+| `Verify` 结果 | `entry_present=true`、`one_shot_armed=true`（`cbee2b27…/result.json`） |
 | BCD 备份 | `2704c0bf…/bcd-before.bak`，SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A` |
+
+`-Action Verify` 是新增的**只读重启前自检**：确认条目仍在、`bootsequence` 仍指向它。鉴于上面第 2 条，**重启前请先跑一次 Verify**。
 
 ### 使用者动作
 
@@ -471,8 +486,8 @@ sudo run powershell -NoProfile -ExecutionPolicy Bypass `
 
 - `protocolVersion = 2025-11-25`；`resources/templates/list` 返回 **0**；`prompts/list` 为空但 capabilities 声明了 prompts 能力。
 - **`isError` 是双向的**：`isError=false` 不等于业务成功，`isError=true` **也不等于** HCL 业务失败（缺必填参数、类型错误、未知工具都会是 `isError=true`）。真正的业务失败是 `isError=false` + `status=rejected`。
-- `errors[]` 形状不一致：语义错误是 `{code,message}`，**结构错误是 pydantic 原始 `{type,loc,msg,url}`，没有 `code` 键**。
-- 损坏工程（`device_id = abc`、`x = not-a-number`）会以**工具错误逃逸**而非业务 `rejected`；缺 `[vbox]`、两个 `[vbox]`、缺 `device_id`、重复字段、非对称链路、非 UTF-8 都已正确返回 `rejected`。
+- ~~`errors[]` 形状不一致：语义错误是 `{code,message}`，结构错误是 pydantic 原始 `{type,loc,msg,url}`，没有 `code` 键~~ → **已在 `dsh-2` 统一**：结构错误也带 `code: "invalid_plan_structure"`，原始 pydantic 形状移入 `detail`。
+- ~~损坏工程（`device_id = abc`、`x = not-a-number`）会以**工具错误逃逸**而非业务 `rejected`~~ → **已在 `dsh-2` 修复**：`project.py` 的 `_field_integer`/`_field_number` 让这些形状统一返回业务 `rejected`（非有限坐标也拒）。其余形状（缺 `[vbox]`、两个 `[vbox]`、缺 `device_id`、重复字段、非对称链路、非 UTF-8）本来就正确拒绝。
 - **未知参数被静默忽略**：可选参数拼错会返回 `staged` 但没做那件事（例如 `connect_to` 写成 `connect_too` → 只加设备、不连线）。
 - `operation_id` 每次调用重新生成，**不是可跨接口关联的稳定键**。
 - `hcl://catalog/devices` 与 `hcl_list_devices` 的负载除 `operation_id` 外逐字段一致。

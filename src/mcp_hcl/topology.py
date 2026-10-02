@@ -104,7 +104,17 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
     try:
         plan = TopologyPlan.model_validate(data)
     except ValidationError as exc:
-        result.update(status='rejected', valid=False, errors=exc.errors(include_input=False, include_context=False))
+        # Structural errors get a stable code too, so callers can branch on
+        # errors[].code uniformly; the raw pydantic shape moves into `detail`.
+        result.update(status='rejected', valid=False, errors=[
+            {
+                'code': 'invalid_plan_structure',
+                'message': row.get('msg', 'invalid plan structure'),
+                'loc': [str(part) for part in row.get('loc', ())],
+                'detail': {'type': row.get('type')},
+            }
+            for row in exc.errors(include_input=False, include_context=False)
+        ])
         return result
     try:
         installed = catalog.devices()

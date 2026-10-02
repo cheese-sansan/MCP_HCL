@@ -54,7 +54,20 @@ try {
         $result.vboxmanage_read_ok = $false
     }
 
-    if (-not $result.booted_lab_entry) {
+    if (-not $result.bcd_current_read_ok) {
+        # bcdedit refuses to enumerate without elevation. Not being able to
+        # observe is NOT evidence of "not booted into the lab entry": saying so
+        # would be a false negative (this happened on 2026-10-02).
+        $result.verdict = 'unknown_cannot_read_bcd'
+        if ($result.hypervisor_present) {
+            $result.next_step = 'Run this script elevated (or via "sudo run") to read {current}. ' +
+                                'A hypervisor is present in this session, so it is most likely NOT the lab entry, ' +
+                                'but do not treat that as a verdict.'
+        } else {
+            $result.next_step = 'Run this script elevated (or via "sudo run") to read {current}. ' +
+                                'No hypervisor is reported, which is consistent with the lab entry.'
+        }
+    } elseif (-not $result.booted_lab_entry) {
         $result.verdict = 'not_booted_into_lab_entry'
         $result.next_step = 'Restart and select "MCP_HCL Lab (Hypervisor and VSM off)"; nothing else was changed.'
     } elseif ($result.hypervisor_present) {
