@@ -115,3 +115,17 @@ The six new copy-edit tools are hcl_stage_rename_device, hcl_stage_move_device, 
 Four write-gated staged-device tools are hcl_backup_config, hcl_restore_config, hcl_live_deploy and hcl_verify_connectivity. They resolve IDs through staged bindings. Live deploy re-generates command artifacts from the validated plan to reject altered transcripts, backs up and restore-tests all devices before applying commands, and restores modified devices on failure. Recovery reconnects once only for native restoration; it never replays original commands. Backup restore checks project/topology/device identity and local content hash. Ping parses transmitted/received/loss statistics rather than exit status.
 
 New private captured profiles may be supplied through MCP_HCL_PROFILE_ROOT. Their template/configuration source hashes are rechecked; they do not establish factory defaults, physical mappings or wireless client command syntax. Unsupported wireless association generation remains a hard incomplete gate.
+
+## 0.5.0 原生无线与证据迁移
+
+MCP 注册面保持 39 工具 / 6 资源，contract_version=2，plan schema_version=1。工具外层参数错误为 MCP 工具错误；严格请求模型内部错误保持结构化业务 rejected，不发生类型转换。
+
+TopologyRequest 新增 wireless_clients_per_lan 和 wireless_client_model，明确选择 Phone 时不改变既有 laptop_model / wireless_laptops 的含义。两组无线终端不能重复表达同一组客户端。原生终端必须 DHCP，未验证 IPv6、静态地址、路由和 Comware 服务拒绝。
+
+WirelessSettings 与 Wireless 服务增加 security=open|wpa2_psk，默认 wpa2_psk；psk 只有 PSK 模式才允许且必需。原有携带有效 psk 的请求保持相同意图。WirelessAssociation 也携带相同安全模式，SSID/AP/安全设置必须相互匹配。
+
+Phone 型号同时保留 native_interfaces 和 control_kind=native_gui，default_interfaces 不伪造为 CLI 接口。配置生成只有真实原生设置序列化得到验证后才能成功；目前 wireless_client_commands_unverified / native_terminal_settings_unverified 会阻止完整配置与工程生成。include_configs=false 的操作清单可记录关联意图，但 executable=false，不是完整生成或运行验收。
+
+证据合同独立使用 schema_version=2。MCP_HCL_PROFILE_ROOT 可以读取已导入 artifact/evidence/manifest.json；schema_version=1 的旧单型号资料继续读取，但新增固件内容匹配检查，不接受声明版本与原始配置不符。跨机器推荐 v2，使用 mcp-hcl-lab collect/audit/import；捕获内容、运行成功、独立端口映射和工厂默认分别声明，不能互相推断。
+
+原始配置和原生页面仅存本地私有目录。CLI/MCP 目录摘要只包含型号、来源、哈希、限制及缺项，不返回捕获的凭据或原始配置。

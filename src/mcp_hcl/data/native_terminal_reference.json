@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "guide_version": "5.10.1",
+  "model": "Phone",
+  "control_kind": "native_gui",
+  "section": "5.6.6 Phone device",
+  "documented_capabilities": {
+    "ipv4_modes": [
+      "dhcp"
+    ],
+    "ipv6_modes": [
+      "none"
+    ],
+    "wireless_security": [
+      "open"
+    ]
+  },
+  "hcl_5_10_3_security_verified": false,
+  "native_setting_serialization_verified": false,
+  "evidence": [
+    {
+      "source": "document/H3C Cloud Lab User Guide V5.10.1.chm",
+      "sha256": "3886138bf1ba61ea7bcdb694f58ab9e94fcb92a1f052bd616dac23debab0636f",
+      "member": "html/-794176966_1637792840_-105039579.htm",
+      "member_sha256": "7304ceecb7e707bedb2e47e53c42fed9c11fbef82e8c170c45a4d463fdeb6c48",
+      "layer": "installed_user_guide"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # MCP_HCL
 
-与 Agent 客户端无关的 HCL MCP Server。当前在 `codex/hcl-live-parity` 分支开发，版本 **0.4.0**。
+与 Agent 客户端无关的 HCL MCP Server。当前在 `codex/hcl-live-parity` 分支开发，版本 **0.5.0**。
 目标仍是固定上游 MCP-Packet-Tracer 的 61 工具 / 5 资源在 HCL 上的功能等价；**总体 completion=incomplete**。
 
 接手请读 [HANDOFF.md](HANDOFF.md)，参数与限制见 [离线 API](docs/offline-api.md) 和 [严格契约迁移](docs/contract-v2.md)。
@@ -15,7 +15,7 @@
 | P1 软件层 | 九类确定性图模板、规划/估算/解释/保守修复、十类服务参数与配置生成、原子导出及哈希重载 |
 | P1 完整验收 | **Incomplete**：AC/AP 默认 CLI 接口映射、逐型号网卡增强兼容性及完整上游规划请求覆盖仍缺证据 |
 | 上游映射 | 工具 12 implemented / 46 planned / 3 unverified；资源 5 implemented。implemented 仅在每行 verified_scope 内成立 |
-| 本机回归 | 119 项：118 通过、1 项因符号链接权限跳过 |
+| 本机回归 | 138 项：137 通过、1 项因符号链接权限跳过 |
 | 外部效果 | guest 启动、CLI 接受、配置下发、连通性与实时画布验收均未完成 |
 
 ## 可调用能力
@@ -71,7 +71,7 @@ stdio 服务等待协议输入；将同一命令、环境变量及当前工作�
 
 骨架测试用合成安装、临时工程和测试管道，不启动 HCL、guest 或改写 BCD。
 引用校验只读厂商帮助与手册；它验证资料哈希，不验证固件接受命令。
-本次测试与打包摘要见 [0.4.0 验证记录](docs/progress-verification-040.json)；[0.2.0 记录](docs/offline-verification.json) 保留为历史基线。完整日志位于本工作区 `work/`，被 Git 忽略。
+本次测试与打包摘要见 [0.5.0 验证记录](docs/progress-verification-050.json)；[0.2.0 记录](docs/offline-verification.json) 保留为历史基线。完整日志位于本工作区 `work/`，被 Git 忽略。
 
 DSH 历史说明和交接已原样归档到 [docs/history](docs/history/dsh-handoff-1200f30.md)。
 历史回执保留在原工作区，索引只记录原路径和哈希；没有重放失败实验或删除历史证据。
@@ -110,3 +110,13 @@ LICENSE：MIT。本轮没有 push、PR、发布、重启、BCD 写入或真实�
 使用者明确批准后，已先导出并读回验证当前 BCD，再移除 MCP_HCL Lab 实验启动项及一次性启动设置。正常 Windows、恢复入口和其他 BCD 对象回读保持不变；未重启验证。备份与回执保留在 `C:/Users/w8p1p/Documents/MCP_HCL-boot-backups/20261002-151945-bd06865eed7a4b7ab8f346c7c518c218/`，备份 SHA256 为 `0514F3230D816A53591C326187EB27E26A423C02BBBAC5C7B3C58E50A2CD0B2F`。
 
 后续复现不再依赖实验启动项，不修改 BCD、系统安全功能或共享 VirtualBox。活动启动项脚本已退役；docs/history 中的原件仅是历史资料，不是操作指令。
+
+## 0.5.0：原生无线终端与独立实验环境准备
+
+保持 39 工具 / 6 资源，contract_version=2，plan schema_version=1。新增显式 Phone 终端请求与 open / wpa2_psk 安全模式；既有 PSK 意图不降级。Phone 不具有已验证的 Comware 控制合同，不能生成伪造的客户端 CLI。
+
+统一本地入口 `mcp-hcl-lab` 支持 prepare、collect、audit、import、preflight、accept-wired 和 accept-wireless。完整步骤见 [独立实验环境验收](docs/live-acceptance.md)。可搬运证据仅证明原始内容、身份和结构的一致性；导入不证明 factory defaults、独立端口映射或运行成功。
+
+**软件与验收包可以交付，无线阶段仍 Incomplete**：5.10.1 手册中的 Phone 只支持 DHCP 和未加密 Wi-Fi；5.10.3 安全关联、原生设置保存及恢复均未实测。开放网络只用于诊断，完整生成和无线部署保持拒绝，不能宣称安全终端用例通过。三路由器 OSPF/DHCP 实时验收也未执行。
+
+本轮使用当前工作区独立 .venv，不修改 E:/MCP_HCL 的依赖。安装包不包含厂商镜像、完整手册或用户配置；准备包携带经过测试的依赖锁定清单，需要使用者在独立 Windows 环境安装。

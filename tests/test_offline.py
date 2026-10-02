@@ -120,6 +120,16 @@ class OfflineStdioTests(unittest.IsolatedAsyncioTestCase):
                 schema=tools['hcl_generate_configs'].inputSchema
                 self.assertFalse(schema['additionalProperties'])
                 self.assertIn('discriminator',schema['properties']['plan']['properties']['services']['items'])
+                request_schema=tools['hcl_plan_topology'].inputSchema['properties']['request']
+                self.assertIn('wireless_clients_per_lan',request_schema['properties'])
+                self.assertIn('wireless_client_model',request_schema['properties'])
+                invalid=await session.call_tool('hcl_plan_topology',{'request':{'wireless_clients_per_lan':True}})
+                self.assertFalse(invalid.isError)
+                self.assertEqual(invalid.structuredContent['status'],'rejected')
+                self.assertEqual(invalid.structuredContent['errors'][0]['code'],'int_type')
+                from jsonschema import Draft202012Validator
+                from test_050_wireless import request as phone_request
+                Draft202012Validator(tools['hcl_plan_topology'].inputSchema).validate({'request':phone_request()})
                 _,planned=await call(session,'hcl_plan_topology',{'request':{}})
                 self.assertTrue(planned['valid'],planned['errors'])
                 _,exported=await call(session,'hcl_export_artifacts',{'plan':planned['plan'],'artifact_name':'stdio','idempotency_key':'stdio-key'})

@@ -1,6 +1,6 @@
 {
   "contract_version": 2,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "tools": {
     "hcl_capabilities": {
       "additionalProperties": false,
@@ -1443,10 +1443,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -1524,8 +1541,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -1548,6 +1564,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -3382,10 +3407,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -3463,8 +3505,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -3487,6 +3528,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -3554,52 +3604,6 @@
       "additionalProperties": false,
       "properties": {
         "request": {
-          "$defs": {
-            "WirelessSettings": {
-              "additionalProperties": false,
-              "properties": {
-                "ssid": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
-                  "title": "Ssid",
-                  "type": "string"
-                },
-                "psk": {
-                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-                  "title": "Psk",
-                  "type": "string"
-                },
-                "hardware_model": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
-                  "title": "Hardware Model",
-                  "type": "string"
-                },
-                "serial_ids": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "maxItems": 20,
-                  "minItems": 1,
-                  "title": "Serial Ids",
-                  "type": "array"
-                },
-                "vlan": {
-                  "default": 10,
-                  "maximum": 4094,
-                  "minimum": 1,
-                  "title": "Vlan",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "ssid",
-                "psk",
-                "hardware_model",
-                "serial_ids"
-              ],
-              "title": "WirelessSettings",
-              "type": "object"
-            }
-          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -3771,6 +3775,25 @@
               "default": false,
               "title": "Wireless Laptops",
               "type": "boolean"
+            },
+            "wireless_clients_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Wireless Clients Per Lan",
+              "type": "integer"
+            },
+            "wireless_client_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wireless Client Model"
             },
             "wireless_settings": {
               "anyOf": [
@@ -3860,58 +3883,74 @@
         "request"
       ],
       "title": "hcl_plan_topologyArguments",
-      "type": "object"
+      "type": "object",
+      "$defs": {
+        "WirelessSettings": {
+          "additionalProperties": false,
+          "properties": {
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
+              "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
+            },
+            "hardware_model": {
+              "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+              "title": "Hardware Model",
+              "type": "string"
+            },
+            "serial_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "minItems": 1,
+              "title": "Serial Ids",
+              "type": "array"
+            },
+            "vlan": {
+              "default": 10,
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "ssid",
+            "hardware_model",
+            "serial_ids"
+          ],
+          "title": "WirelessSettings",
+          "type": "object"
+        }
+      }
     },
     "hcl_estimate_plan": {
       "additionalProperties": false,
       "properties": {
         "request": {
-          "$defs": {
-            "WirelessSettings": {
-              "additionalProperties": false,
-              "properties": {
-                "ssid": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
-                  "title": "Ssid",
-                  "type": "string"
-                },
-                "psk": {
-                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-                  "title": "Psk",
-                  "type": "string"
-                },
-                "hardware_model": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
-                  "title": "Hardware Model",
-                  "type": "string"
-                },
-                "serial_ids": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "maxItems": 20,
-                  "minItems": 1,
-                  "title": "Serial Ids",
-                  "type": "array"
-                },
-                "vlan": {
-                  "default": 10,
-                  "maximum": 4094,
-                  "minimum": 1,
-                  "title": "Vlan",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "ssid",
-                "psk",
-                "hardware_model",
-                "serial_ids"
-              ],
-              "title": "WirelessSettings",
-              "type": "object"
-            }
-          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -4084,6 +4123,25 @@
               "title": "Wireless Laptops",
               "type": "boolean"
             },
+            "wireless_clients_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Wireless Clients Per Lan",
+              "type": "integer"
+            },
+            "wireless_client_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wireless Client Model"
+            },
             "wireless_settings": {
               "anyOf": [
                 {
@@ -4172,7 +4230,69 @@
         "request"
       ],
       "title": "hcl_estimate_planArguments",
-      "type": "object"
+      "type": "object",
+      "$defs": {
+        "WirelessSettings": {
+          "additionalProperties": false,
+          "properties": {
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
+              "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
+            },
+            "hardware_model": {
+              "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+              "title": "Hardware Model",
+              "type": "string"
+            },
+            "serial_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "minItems": 1,
+              "title": "Serial Ids",
+              "type": "array"
+            },
+            "vlan": {
+              "default": 10,
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "ssid",
+            "hardware_model",
+            "serial_ids"
+          ],
+          "title": "WirelessSettings",
+          "type": "object"
+        }
+      }
     },
     "hcl_explain_plan": {
       "additionalProperties": false,
@@ -5589,10 +5709,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -5670,8 +5807,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -5694,6 +5830,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -7147,10 +7292,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -7228,8 +7390,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -7252,6 +7413,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -8705,10 +8875,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -8786,8 +8973,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -8810,6 +8996,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -10268,10 +10463,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -10349,8 +10561,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -10373,6 +10584,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -11843,10 +12063,27 @@
               "title": "Vlan",
               "type": "integer"
             },
-            "psk": {
-              "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-              "title": "Psk",
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
             },
             "radio": {
               "default": 1,
@@ -11924,8 +12161,7 @@
             "mode",
             "template",
             "ssid",
-            "vlan",
-            "psk"
+            "vlan"
           ],
           "title": "Wireless",
           "type": "object"
@@ -11948,6 +12184,15 @@
             "ssid": {
               "pattern": "^[A-Za-z0-9_.-]{1,32}$",
               "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
               "type": "string"
             }
           },
@@ -12050,52 +12295,6 @@
           "type": "string"
         },
         "request": {
-          "$defs": {
-            "WirelessSettings": {
-              "additionalProperties": false,
-              "properties": {
-                "ssid": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,32}$",
-                  "title": "Ssid",
-                  "type": "string"
-                },
-                "psk": {
-                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
-                  "title": "Psk",
-                  "type": "string"
-                },
-                "hardware_model": {
-                  "pattern": "^[A-Za-z0-9_.-]{1,63}$",
-                  "title": "Hardware Model",
-                  "type": "string"
-                },
-                "serial_ids": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "maxItems": 20,
-                  "minItems": 1,
-                  "title": "Serial Ids",
-                  "type": "array"
-                },
-                "vlan": {
-                  "default": 10,
-                  "maximum": 4094,
-                  "minimum": 1,
-                  "title": "Vlan",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "ssid",
-                "psk",
-                "hardware_model",
-                "serial_ids"
-              ],
-              "title": "WirelessSettings",
-              "type": "object"
-            }
-          },
           "additionalProperties": false,
           "properties": {
             "schema_version": {
@@ -12268,6 +12467,25 @@
               "title": "Wireless Laptops",
               "type": "boolean"
             },
+            "wireless_clients_per_lan": {
+              "default": 0,
+              "maximum": 64,
+              "minimum": 0,
+              "title": "Wireless Clients Per Lan",
+              "type": "integer"
+            },
+            "wireless_client_model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Wireless Client Model"
+            },
             "wireless_settings": {
               "anyOf": [
                 {
@@ -12398,7 +12616,69 @@
         "port_map"
       ],
       "title": "hcl_full_buildArguments",
-      "type": "object"
+      "type": "object",
+      "$defs": {
+        "WirelessSettings": {
+          "additionalProperties": false,
+          "properties": {
+            "ssid": {
+              "pattern": "^[A-Za-z0-9_.-]{1,32}$",
+              "title": "Ssid",
+              "type": "string"
+            },
+            "security": {
+              "default": "wpa2_psk",
+              "enum": [
+                "open",
+                "wpa2_psk"
+              ],
+              "title": "Security",
+              "type": "string"
+            },
+            "psk": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9_.@:+/!=-]{8,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Psk"
+            },
+            "hardware_model": {
+              "pattern": "^[A-Za-z0-9_.-]{1,63}$",
+              "title": "Hardware Model",
+              "type": "string"
+            },
+            "serial_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "minItems": 1,
+              "title": "Serial Ids",
+              "type": "array"
+            },
+            "vlan": {
+              "default": 10,
+              "maximum": 4094,
+              "minimum": 1,
+              "title": "Vlan",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "ssid",
+            "hardware_model",
+            "serial_ids"
+          ],
+          "title": "WirelessSettings",
+          "type": "object"
+        }
+      }
     },
     "hcl_stage_rename_device": {
       "additionalProperties": false,

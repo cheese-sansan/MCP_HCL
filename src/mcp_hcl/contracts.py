@@ -69,7 +69,9 @@ class StrictFastMCP(FastMCP):
                 tool.parameters['properties']['plan'] = schema
             if 'request' in model.model_fields:
                 from mcp_hcl.planning import TopologyRequest
-                tool.parameters['properties']['request'] = TopologyRequest.model_json_schema()
+                schema = TopologyRequest.model_json_schema()
+                tool.parameters.setdefault('$defs', {}).update(schema.pop('$defs', {}))
+                tool.parameters['properties']['request'] = schema
             self._strict_models[tool.name] = model
         return self._strict_models[tool.name]
 

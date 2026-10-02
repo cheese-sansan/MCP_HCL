@@ -14,6 +14,8 @@ def main():
     args=parser.parse_args()
     result=verify_installed_reference(args.install_root)
     platform=json.loads(files('mcp_hcl').joinpath('data/platform_reference.json').read_text(encoding='utf-8'))
+    terminal=json.loads(files('mcp_hcl').joinpath('data/native_terminal_reference.json').read_text(encoding='utf-8'))
+    platform['evidence'] += terminal['evidence']
     result['platform_sources']=[]
     for source in platform['evidence']:
         path=args.install_root/source['source']

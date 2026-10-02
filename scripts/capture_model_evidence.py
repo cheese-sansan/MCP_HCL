@@ -9,11 +9,20 @@ from mcp_hcl.project import ProjectStore
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--project-directory',type=Path,required=True)
-    parser.add_argument('--configuration-file',type=Path,required=True)
-    parser.add_argument('--model',required=True)
+    parser.add_argument('--project-directory',type=Path)
+    parser.add_argument('--configuration-file',type=Path)
+    parser.add_argument('--model')
+    parser.add_argument('--spec',type=Path,help='Portable AC/AP/Phone multi-model capture specification')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
+    if args.spec:
+        if any((args.project_directory,args.configuration_file,args.model)):
+            parser.error('--spec cannot be combined with legacy single-model arguments')
+        from mcp_hcl.evidence import collect_evidence,read_file
+        print(json.dumps(collect_evidence(json.loads(read_file(args.spec).decode('utf-8-sig')),args.output),ensure_ascii=False))
+        return
+    if not all((args.project_directory,args.configuration_file,args.model)):
+        parser.error('Supply --spec or all legacy single-model arguments')
     directory=args.project_directory.resolve();configuration=args.configuration_file.resolve()
     if configuration.is_symlink() or configuration.stat().st_size>1024*1024: raise ValueError('Configuration must be a bounded regular file')
     store=ProjectStore([directory],args.output.parent/'unused-stage-output')

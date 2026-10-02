@@ -40,6 +40,17 @@ external_console_present=([bool](@($p | Where-Object {$_ -in @('putty.exe','Simw
         models = HclCatalog(installation).devices()['devices']
         observations['installation'] = {'path': str(installation), 'models': [m['model'] for m in models],
                                        'missing_cli_defaults': [m['model'] for m in models if not m['default_interfaces']]}
+        client=installation/'SimwareClient.exe'
+        observations['installation']['hcl_version']={'value':None,'status':'unknown'}
+        try:
+            import win32api
+            info=win32api.GetFileVersionInfo(str(client),'\\')
+            high,low=info['FileVersionMS'],info['FileVersionLS']
+            observations['installation']['hcl_version']={'value':f'{high>>16}.{high&65535}.{low>>16}.{low&65535}','status':'observed_file_version'}
+        except Exception:
+            # Many HCL binaries carry no version resource. Never guess from a
+            # user-supplied version label or a bundled guide's older version.
+            pass
     except (OSError, ValueError) as exc:
         result['errors'].append({'code': 'catalog_unavailable', 'message': str(exc)})
     result['status'] = 'unknown' if result['errors'] else 'observed'

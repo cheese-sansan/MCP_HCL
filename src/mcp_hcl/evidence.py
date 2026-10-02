@@ -1,6 +1,7 @@
 """Portable private model evidence. Integrity never implies runtime acceptance."""
 from __future__ import annotations
 import hashlib
+import base64
 import json
 import re
 import shutil
@@ -45,6 +46,7 @@ class ModelCapture(StrictModel):
     phone_before: str | None = None
     phone_after: str | None = None
     phone_page: str | None = None
+    native_transcript: str | None = None
 
 
 class EvidenceManifest(StrictModel):
@@ -161,6 +163,24 @@ def audit_evidence(directory: Path) -> dict:
                         if not observed_version or normalize(observed_version[1]) != normalize(firmware[1]):
                             raise ValueError('Firmware version readback differs from configuration')
                 else: missing.append(f'{record.model}: {role}')
+            if manifest.origin.capture_method=='native_console':
+                from mcp_hcl.cli_session import clean_text,PROMPT,CLI_ERROR
+                from mcp_hcl.deployment import config_text
+                transcript=json.loads(referenced(record.native_transcript,'native_transcript'))
+                commands=['display current-configuration','display version','display interface']
+                if not isinstance(transcript,list) or len(transcript)!=3: raise ValueError('Incomplete native command history')
+                for reply,command,role in zip(transcript,commands,['configuration','version_readback','interface_readback']):
+                    try: raw_reply=base64.b64decode(reply['raw_output_b64'],validate=True)
+                    except (ValueError,KeyError) as exc: raise ValueError('Invalid native raw output') from exc
+                    observed=clean_text(raw_reply)
+                    if (reply.get('command')!=command or reply.get('complete') is not True or
+                        reply.get('output_sha256')!=digest(raw_reply) or reply.get('request_sha256')!=digest(command.encode('ascii')) or
+                        reply.get('output')!=observed or not PROMPT.search(observed) or CLI_ERROR.search(observed) or
+                        not any(line.strip()==command or line.strip().endswith('>'+command) or line.strip().endswith(']'+command) for line in observed.splitlines())):
+                        raise ValueError('Native output is incomplete or cannot be attributed to the command')
+                    captured=referenced(getattr(record,role),role)
+                    if (config_text(observed) if role=='configuration' else observed)!=captured:
+                        raise ValueError('Captured output differs from raw native transcript')
         else:
             if record.model != 'Phone': raise ValueError('No native GUI terminal profile is verified for this model')
             inventory = one('port_inventory')[2].decode('utf-8-sig')
@@ -237,12 +257,23 @@ def collect_evidence(spec_data: dict, output: Path) -> dict:
                 from mcp_hcl.console import endpoint
                 from mcp_hcl.deployment import config_text
                 pipe=endpoint(spec.topology,row['device_id'])
-                with PersistentConsole(pipe,output.parent/'.console-leases') as channel:
-                    for role,command in [('configuration','display current-configuration'),('version_readback','display version'),('interface_readback','display interface brief')]:
-                        reply=channel.exchange(command)
-                        text=config_text(reply['output']) if role=='configuration' else reply['output']
-                        row[role]=add_bytes(text.encode('utf-8'),f'sources/{index}-{role}.txt',role,pipe)
-                    add_bytes(json.dumps(channel.history,indent=2).encode(),f'sources/{index}-transcript.json','native_transcript',pipe)
+                from mcp_hcl.console import ConsoleError
+                channel=None
+                try:
+                    with PersistentConsole(pipe,output.parent/'.console-leases') as channel:
+                        for role,command in [('configuration','display current-configuration'),('version_readback','display version'),('interface_readback','display interface')]:
+                            reply=channel.exchange(command)
+                            text=config_text(reply['output']) if role=='configuration' else reply['output']
+                            row[role]=add_bytes(text.encode('utf-8'),f'sources/{index}-{role}.txt',role,pipe)
+                        row['native_transcript']=add_bytes(json.dumps(channel.history,indent=2).encode(),f'sources/{index}-transcript.json','native_transcript',pipe)
+                except (ConsoleError,OSError) as exc:
+                    history=channel.history if channel else []
+                    add_bytes(json.dumps(history,indent=2).encode(),f'sources/{index}-failed-transcript.json','native_transcript',pipe)
+                    failure={'status':'partial','error':str(exc),'device':section.name,'origin_host':socket.gethostname(),
+                             'receipt_directory':str(output),'runtime_verified':False,'full_live_gate_passed':False}
+                    (temp/'capture-failed.json').write_text(json.dumps(failure,indent=2),encoding='utf-8')
+                    temp.rename(output)
+                    return failure
             for role in ('configuration','version_readback','interface_readback','phone_before','phone_after','phone_page'):
                 source=getattr(device,role)
                 if source: row[role]=add(source,f'sources/{index}-{role}{Path(source).suffix}',role)

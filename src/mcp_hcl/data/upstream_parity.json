@@ -406,7 +406,7 @@
       ],
       "state": "implemented",
       "live_required": false,
-      "note": "Five deterministic HCL-native graph templates with source hashes.",
+      "note": "Nine deterministic HCL-native template keys with offline scope; full request and wireless acceptance remain incomplete.",
       "verified_scope": "offline_hcl_contract_only"
     },
     {
@@ -458,7 +458,7 @@
       ],
       "state": "planned",
       "live_required": false,
-      "note": "Nine template keys, dynamic host settings, dual stack, strict subinterfaces and explicit role models are registered. Wireless evidence and client association commands remain incomplete; full parity stays planned."
+      "note": "Nine templates and explicit native Phone intent/security gates. Native serialization, WPA2-PSK terminal capability and external acceptance remain incomplete."
     },
     {
       "upstream_tool": "pt_project_metadata",

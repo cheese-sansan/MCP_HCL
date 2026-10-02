@@ -122,6 +122,8 @@ class HclCatalog:
                     'evidence':ports['evidence'][0]})
             for model in models:
                 model.setdefault('control_kind','comware')
+                if model['model']=='Phone':
+                    model['capability_evidence']=json.loads(files('mcp_hcl').joinpath('data/native_terminal_reference.json').read_text(encoding='utf-8'))['evidence']
                 family = MODEL_FAMILIES.get(model['model'], model['model'])
                 model['port_family'] = family if family in ports['families'] else None
                 model['scene_ports'] = []
@@ -133,7 +135,8 @@ class HclCatalog:
                                i.startswith(prefix) and int(i.rsplit('/', 1)[-1]) == port['index']]
                     if len(matches) == 1:
                         row['cli_interface'] = matches[0]
-                    row['mapping_verified'] = row['cli_interface'] is not None
+                    row['mapping_verified'] = False
+                    row['mapping_method'] = 'installed_numeric_index_candidate_unverified'
                     model['scene_ports'].append(row)
                 model['port_evidence'] = ports['evidence']
                 # Match complete physical groups in natural CLI order. This is
