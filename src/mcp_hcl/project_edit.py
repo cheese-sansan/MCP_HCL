@@ -74,6 +74,11 @@ def edit_project(store,catalog,project_path,stage_name,action,**parameters):
         if action=='rename':
             next(row for row in plan['devices'] if row['id']==identifier)['name']=parameters['new_name']
             bound[device]['name']=parameters['new_name']
+            # Stable plan IDs retain association references. AC AP names follow
+            # a renamed source AP only when the previous name matched it.
+            for service in plan['services']:
+                if service['feature']=='wireless' and service['parameters'].get('ap_device')==identifier and service['parameters'].get('ap_name')==device:
+                    service['parameters']['ap_name']=parameters['new_name']
         elif action=='move':
             next(row for row in plan['devices'] if row['id']==identifier).update(x=parameters['x'],y=parameters['y'])
         elif action=='delete':

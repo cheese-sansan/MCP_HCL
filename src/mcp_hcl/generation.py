@@ -97,9 +97,8 @@ def render_security(p):
 
 
 def render_wireless(p):
-    lines=view(f'wlan service-template {p.template}', [f'ssid {p.ssid}',f'vlan {p.vlan}',
-               'akm mode psk','security-ie rsn','cipher-suite ccmp',
-               f'preshared-key pass-phrase simple {p.psk}','service-template enable'])
+    security=['akm mode psk','security-ie rsn','cipher-suite ccmp',f'preshared-key pass-phrase simple {p.psk}'] if p.security=='wpa2_psk' else []
+    lines=view(f'wlan service-template {p.template}', [f'ssid {p.ssid}',f'vlan {p.vlan}',*security,'service-template enable'])
     if p.mode=='ac':
         lines+=view(f'wlan ap {p.ap_name} model {p.ap_model}',
                     [f'serial-id {p.serial_id}', *view(f'radio {p.radio}',['radio enable',f'service-template {p.template}'])])
@@ -136,8 +135,11 @@ def generate_configs(data,catalog):
     if not validated.get('valid'): return validated
     if validated['plan']['wireless_associations']:
         return {'status': 'rejected', 'errors': [{'code': 'wireless_client_commands_unverified',
-                'message': 'Wireless client association commands have no verified model profile; collect evidence before generating executable commands'}],
+                'message': 'Native terminal association serialization has no independently accepted profile; CLI substitution and security downgrade are forbidden'}],
                 'runtime_verified': False, 'full_live_gate_passed': False}
+    models={row['model']:row for row in catalog.devices()['devices']}
+    if any(models[d['model']].get('control_kind')=='native_gui' for d in validated['plan']['devices']):
+        return {'status':'rejected','errors':[{'code':'native_terminal_settings_unverified','message':'Native GUI terminal serialization is unverified; no Comware commands will be generated'}], 'runtime_verified':False}
     plan=TopologyPlan.model_validate(validated['plan']);configs={};evidence=feature_evidence('base')
     for feature in sorted({s.feature for s in plan.services}): evidence+=feature_evidence(feature)
     for device in plan.devices:
@@ -193,6 +195,8 @@ def generate_operations(data,catalog,include_configs=True):
                               'mapping_verified':False}
         operations.append({'action':'create_link','medium':link['medium'],**translated})
     operations.extend({'action':'add_annotation', **annotation} for annotation in plan['annotations'])
+    operations.extend({'action':'associate_wireless_terminal', **association, 'executable':False,
+                       'serialization_verified':False} for association in plan['wireless_associations'])
     if include_configs:
         operations.extend({'action':'configure_device','device':d,'commands':commands.splitlines()} for d,commands in validated['configs'].items())
     return {'status':'verified','verified_scope':'offline_hcl_operation_manifest_only','schema_version':1,

@@ -103,6 +103,7 @@ class WirelessAssociation(StrictModel):
     interface: str
     ap: str
     ssid: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,32}$')
+    security: Literal['open','wpa2_psk'] = 'wpa2_psk'
 
 
 class TopologyPlan(StrictModel):
@@ -162,12 +163,12 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         model = models.get(device.model)
         if model is None:
             return False
-        logical = {f'Vlan-interface{svi.vlan}' for service in plan.services if service.device == device_id and service.feature == 'vlan'
-                   for svi in service.parameters.svis}
+        logical = {f'Vlan-interface{vlan}' for service in plan.services if service.device == device_id and service.feature == 'vlan'
+                   for vlan in service.parameters.vlans}
         logical |= {s.interface for s in plan.subinterfaces if s.device == device_id}
         if physical_only:
             logical = set()
-        if interface not in set(model['default_interfaces']) | logical or interface == 'NULL0':
+        if interface not in set(model['default_interfaces']) | set(model.get('native_interfaces',[])) | logical or interface == 'NULL0':
             error('unknown_physical_interface', f'{device_id}/{interface}')
             return False
         return True
@@ -189,6 +190,8 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
     addresses: set[str] = set()
     for address in plan.addresses:
         check_endpoint(address.device, address.interface)
+        if address.device in devices and models.get(devices[address.device].model,{}).get('control_kind')=='native_gui':
+            error('native_terminal_static_address_unverified',address.device)
         parsed = ip_interface(address.cidr)
         key = (address.device, address.interface, parsed.version)
         if key in assigned:
@@ -206,9 +209,11 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             error('unknown_device', route.device)
         if ip_network(route.network).version != ip_address(route.next_hop).version:
             error('route_address_family_mismatch', route.network)
+        if route.device in devices and models.get(devices[route.device].model,{}).get('control_kind')=='native_gui': error('native_terminal_route_unverified',route.device)
     subkeys = set()
     for sub in plan.subinterfaces:
         check_endpoint(sub.device, sub.parent, physical_only=True)
+        if sub.device in devices and models.get(devices[sub.device].model,{}).get('control_kind')=='native_gui': error('native_terminal_subinterface_forbidden',sub.device)
         key = (sub.device, sub.interface)
         if key in subkeys:
             error('duplicate_subinterface', str(key))
@@ -218,6 +223,11 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
     hostkeys = set()
     for host in plan.host_settings:
         check_endpoint(host.device, host.interface, physical_only=True)
+        model=models.get(devices[host.device].model,{}) if host.device in devices else {}
+        if model.get('control_kind')=='native_gui':
+            capabilities=model.get('capabilities',{})
+            if host.ipv4 not in capabilities.get('ipv4_modes',[]) or host.ipv6 not in capabilities.get('ipv6_modes',[]):
+                error('native_terminal_address_mode_unverified',host.device)
         key = (host.device, host.interface)
         if key in hostkeys:
             error('duplicate_host_setting', str(key))
@@ -232,10 +242,17 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
             error('ra_without_ipv6_address', f'{ra.device}/{ra.interface}')
     for association in plan.wireless_associations:
         check_endpoint(association.device, association.interface, physical_only=True)
+        device=devices.get(association.device)
+        model=models.get(device.model,{}) if device else {}
+        if model.get('control_kind')=='native_gui':
+            if association.security not in model.get('capabilities',{}).get('wireless_security',[]):
+                error('wireless_security_unverified',association.device)
+            if not any(h.device==association.device and h.interface==association.interface and h.ipv4=='dhcp' for h in plan.host_settings):
+                error('wireless_dhcp_client_missing',association.device)
         if association.ap not in devices:
             error('unknown_wireless_ap', association.ap)
         elif not any(service.feature == 'wireless' and service.parameters.ap_device == association.ap and
-                     service.parameters.ssid == association.ssid for service in plan.services
+                     service.parameters.ssid == association.ssid and service.parameters.security == association.security for service in plan.services
                      if service.feature == 'wireless' and service.parameters.mode == 'ac'):
             error('wireless_ssid_dependency', association.ssid)
     for service in plan.services:
@@ -246,9 +263,16 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
                 ip = ip_interface(address.cidr).ip
                 if ip.version == 4 and ip in pool and not any(start <= ip <= end for start, end in excluded):
                     error('static_address_in_dhcp_pool', f'{address.device}/{ip}')
+            for vlan in (s for s in plan.services if s.feature=='vlan'):
+                for svi in vlan.parameters.svis:
+                    ip=ip_interface(svi.cidr).ip
+                    if ip in pool and not any(start <= ip <= end for start,end in excluded):
+                        error('static_address_in_dhcp_pool', f'{vlan.device}/{ip}')
     for service in plan.services:
         if service.device not in devices:
             error('unknown_device', service.device)
+        elif models.get(devices[service.device].model,{}).get('control_kind')=='native_gui':
+            error('native_terminal_cli_service_forbidden',service.device)
         result['warnings'].append({'code': 'feature_runtime_unverified', 'device': service.device,
                                    'feature': service.feature})
     result['errors'].extend(service_errors(plan, models))

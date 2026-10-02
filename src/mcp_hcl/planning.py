@@ -13,10 +13,17 @@ from mcp_hcl.contracts import validation_errors
 
 class WirelessSettings(StrictModel):
     ssid: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,32}$')
-    psk: str = Field(pattern=r'^[A-Za-z0-9_.@:+/!=-]{8,63}$')
+    security: Literal['open','wpa2_psk'] = 'wpa2_psk'
+    psk: str | None = Field(default=None, pattern=r'^[A-Za-z0-9_.@:+/!=-]{8,63}$')
     hardware_model: str = Field(pattern=r'^[A-Za-z0-9_.-]{1,63}$')
     serial_ids: list[str] = Field(min_length=1, max_length=20)
     vlan: int = Field(default=10, ge=1, le=4094)
+
+    @model_validator(mode='after')
+    def security_parameters(self):
+        if (self.security=='wpa2_psk') != (self.psk is not None):
+            raise ValueError('WPA2-PSK requires a key; open security forbids a key')
+        return self
 
 
 class TopologyRequest(StrictModel):
@@ -39,6 +46,8 @@ class TopologyRequest(StrictModel):
     ap_model: str | None = None
     ac_model: str | None = None
     wireless_laptops: bool = False
+    wireless_clients_per_lan: int = Field(default=0, ge=0, le=64)
+    wireless_client_model: str | None = None
     wireless_settings: WirelessSettings | None = None
     lan_pool: str = '10.0.0.0/16'
     transit_pool: str = '172.16.0.0/16'
@@ -73,6 +82,13 @@ class TopologyRequest(StrictModel):
             raise ValueError('Floating routes require static routing and the redundant triangle template')
         if self.wireless_laptops and (not self.laptops_per_lan or not self.access_points):
             raise ValueError('Wireless laptops require laptops and access points')
+        if self.wireless_clients_per_lan:
+            if self.wireless_laptops: raise ValueError('Wireless client and laptop groups cannot overlap')
+            if not self.wireless_client_model or not self.access_points or not self.dhcp:
+                raise ValueError('Native wireless clients require explicit model, APs and DHCP')
+            if self.dual_stack: raise ValueError('Native wireless client IPv6 capability is unverified')
+        elif self.wireless_client_model is not None:
+            raise ValueError('wireless_client_model requires a nonzero client group')
         if self.access_points and (not self.ap_model or not self.ac_model or not self.wireless_settings):
             raise ValueError('Wireless requires explicit AC/AP models, SSID/PSK and observed AP serial IDs')
         if self.wireless_settings and len(self.wireless_settings.serial_ids) != self.access_points:
@@ -99,14 +115,22 @@ def plan_topology(data,catalog):
     for required,model,category in [(wan,request.wan_model,'WAN provider'),(request.servers,request.server_model,'server'),
                                     (request.laptops_per_lan,request.laptop_model,'laptop')]:
         if required and not model: return rejection('explicit_model_required',f'{category} requires a documented HCL model; no substitution is made')
-    if (request.pcs_per_lan or request.laptops_per_lan or request.servers or request.access_points) and not nswitches:
+    if (request.pcs_per_lan or request.laptops_per_lan or request.servers or request.access_points or request.wireless_clients_per_lan) and not nswitches:
         return rejection('missing_access_switch','Endpoints require an access switch')
     models={m['model']:m for m in catalog.devices()['devices']}
+    if request.wireless_clients_per_lan:
+        model=models.get(request.wireless_client_model,{})
+        if model.get('control_kind')!='native_gui' or not model.get('native_interfaces'):
+            return rejection('wireless_evidence_missing','Explicit native terminal model/radio evidence is missing')
+        if request.wireless_settings.security not in model.get('capabilities',{}).get('wireless_security',[]):
+            return rejection('wireless_security_unverified','Native terminal security association is unverified; no downgrade is made')
+        if request.access_points != nrouters*nswitches or request.template=='router_on_a_stick' or request.wireless_settings.vlan==1:
+            return rejection('wireless_layout_unverified','Native clients require one AP per LAN and separate management/business VLANs')
     if request.access_points:
         for model in (request.ap_model,request.ac_model,request.laptop_model if request.wireless_laptops else request.ap_model):
             if model not in models or not models[model]['default_interfaces']:
                 return rejection('wireless_evidence_missing','Wireless model CLI defaults are missing; collect real model profiles before accepting this plan')
-    count=nrouters*(1+nswitches*(1+request.pcs_per_lan+request.laptops_per_lan))+request.servers+request.access_points+(1 if request.access_points else 0)+(1 if wan else 0)
+    count=nrouters*(1+nswitches*(1+request.pcs_per_lan+request.laptops_per_lan+request.wireless_clients_per_lan))+request.servers+request.access_points+(1 if request.access_points else 0)+(1 if wan else 0)
     if count>256: return rejection('device_limit','Plan exceeds 256 devices')
     if request.access_points>nrouters*nswitches: return rejection('ap_count','At most one AP is allocated per LAN')
     lan=IPv4Network(request.lan_pool);transit=IPv4Network(request.transit_pool)
@@ -139,12 +163,15 @@ def plan_topology(data,catalog):
             v6=next(ipv6_ranges);assign(a,pa,v6.network_address+1,64);assign(b,pb,v6.network_address+2,64)
 
     def client(identifier,model,switch,network,gateway,v6,index,x,y,wireless=False):
-        add(identifier,model,x,y)
+        native=models[model].get('control_kind')=='native_gui'
+        if native:
+            plan['devices'].append({'id':identifier,'name':identifier,'model':model,'x':float(x),'y':float(y)})
+        else: add(identifier,model,x,y)
         if wireless:
-            radio=[i for i in models[model]['default_interfaces'] if i.startswith(('WLAN','Wireless'))]
+            radio=models[model].get('native_interfaces',[]) if native else [i for i in models[model]['default_interfaces'] if i.startswith(('WLAN','Wireless'))]
             if not radio: raise ValueError('Wireless client has no observed radio interface')
             interface=radio[0]
-            plan.setdefault('wireless_associations',[]).append({'device':identifier,'interface':interface,'ssid':request.wireless_settings.ssid,'ap':f'ap{wireless_index}'})
+            plan.setdefault('wireless_associations',[]).append({'device':identifier,'interface':interface,'ssid':request.wireless_settings.ssid,'ap':f'ap{wireless_index}', 'security':request.wireless_settings.security})
         else: _,interface=connect(switch,identifier)
         setting={'device':identifier,'interface':interface,'ipv4':'dhcp' if request.dhcp else 'static','ipv6':'slaac' if v6 else 'none'}
         if not request.dhcp:
@@ -174,6 +201,9 @@ def plan_topology(data,catalog):
                     plan['services'].append({'device':switch,'feature':'vlan','parameters':{'vlans':vlan_ids,'ports':[{'interface':switch_uplink,'mode':'trunk','allowed_vlans':vlan_ids}]}})
                 for group in range(groups):
                     network=next(lan_ranges);gateway=str(network.network_address+1);interface=physical
+                    native_wireless=bool(request.wireless_clients_per_lan)
+                    if native_wireless:
+                        plan['subinterfaces'].append({'device':router,'parent':physical,'vlan':1});interface=f'{physical}.1'
                     if groups>1 or request.template=='router_on_a_stick':
                         plan['subinterfaces'].append({'device':router,'parent':physical,'vlan':vlan_ids[group]});interface=f'{physical}.{vlan_ids[group]}'
                     assign(router,interface,gateway,24);lans.append((router,str(network)))
@@ -184,16 +214,39 @@ def plan_topology(data,catalog):
                     members += [('l',request.laptop_model,k) for k in range(request.laptops_per_lan) if k%groups==group]
                     if i==0 and j==0: members += [('srv',request.server_model,k) for k in range(request.servers) if k%groups==group]
                     if request.access_points and wireless_index<request.access_points and group==0:
-                        wireless_index+=1;ap=f'ap{wireless_index}';add(ap,request.ap_model,i*350,450);connect(switch,ap)
-                        if wireless_index==1: connect(switch,'ac1')
+                        wireless_index+=1;ap=f'ap{wireless_index}';add(ap,request.ap_model,i*350,450);ap_switch_port,_=connect(switch,ap)
+                        ac_switch_port=None
+                        if wireless_index==1: ac_switch_port,_=connect(switch,'ac1')
                         settings=request.wireless_settings
-                        plan['services'].append({'device':'ac1','feature':'wireless','parameters':{'mode':'ac','template':f'wifi{wireless_index}','ssid':settings.ssid,'vlan':settings.vlan,'psk':settings.psk,'ap_device':ap,'ap_name':ap,'ap_model':settings.hardware_model,'serial_id':settings.serial_ids[wireless_index-1],'radio':1}})
+                        plan['services'].append({'device':'ac1','feature':'wireless','parameters':{'mode':'ac','template':f'wifi{wireless_index}','ssid':settings.ssid,'vlan':settings.vlan,'security':settings.security,'psk':settings.psk,'ap_device':ap,'ap_name':ap,'ap_model':settings.hardware_model,'serial_id':settings.serial_ids[wireless_index-1],'radio':1}})
+                        if native_wireless:
+                            business=next(lan_ranges);business_gateway=str(business.network_address+1)
+                            plan['subinterfaces'].append({'device':router,'parent':physical,'vlan':settings.vlan})
+                            business_interface=f'{physical}.{settings.vlan}'
+                            assign(router,business_interface,business_gateway,24);lans.append((router,str(business)))
+                            plan['services'].append({'device':router,'feature':'dhcp','parameters':{'mode':'server','interface':business_interface,'pool':f'{switch}_wifi','network':str(business),'gateway':business_gateway,'excluded':[{'start':business_gateway,'end':business_gateway}]}})
+                            trunk_ports=[switch_uplink,ap_switch_port]+([ac_switch_port] if ac_switch_port else [])
+                            plan['services'].append({'device':switch,'feature':'vlan','parameters':{'vlans':[1,settings.vlan],'ports':[{'interface':p,'mode':'trunk','allowed_vlans':[1,settings.vlan]} for p in trunk_ports]}})
+                            plan['services'].append({'device':ap,'feature':'vlan','parameters':{'vlans':[1],'svis':[{'vlan':1,'cidr':f'{network.network_address+200}/24'}]}})
+                            if wireless_index==1:
+                                plan['services'].append({'device':'ac1','feature':'vlan','parameters':{'vlans':[1,settings.vlan],'svis':[{'vlan':1,'cidr':f'{network.network_address+201}/24'}]}})
+                            for k in range(request.wireless_clients_per_lan):
+                                client(f'w{i+1}_{j+1}_{k+1}',request.wireless_client_model,switch,business,business_gateway,None,k+2,i*350+k*55,580,True)
                     for index,(kind,model,k) in enumerate(members,2):
                         identifier=f'{kind}{i+1}_{j+1}_{k+1}';client(identifier,model,switch,network,gateway,v6,index,i*350+k*55,350+j*120,kind=='l' and request.wireless_laptops)
                         if request.template=='router_on_a_stick':
                             port=plan['links'][-1]['a']['interface']
                             next(s for s in plan['services'] if s['device']==switch and s['feature']=='vlan')['parameters']['ports'].append({'interface':port,'mode':'access','vlan':vlan_ids[group]})
-        if request.access_points: plan['services'].append({'device':'ac1','feature':'vlan','parameters':{'vlans':[request.wireless_settings.vlan]}})
+        if request.access_points and not request.wireless_clients_per_lan: plan['services'].append({'device':'ac1','feature':'vlan','parameters':{'vlans':[request.wireless_settings.vlan]}})
+        if request.wireless_clients_per_lan:
+            # Exclude all explicitly assigned management addresses, including SVI intent.
+            for service in plan['services']:
+                if service['feature']=='dhcp':
+                    pool=IPv4Network(service['parameters']['network'])
+                    for vlan in (s for s in plan['services'] if s['feature']=='vlan'):
+                        for svi in vlan['parameters'].get('svis',[]):
+                            ip=__import__('ipaddress').ip_interface(svi['cidr']).ip
+                            if ip in pool: service['parameters']['excluded'].append({'start':str(ip),'end':str(ip)})
         for origin in graph:
             if request.routing=='static':
                 for target,network in lans:

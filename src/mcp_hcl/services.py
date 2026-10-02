@@ -211,7 +211,8 @@ class Wireless(StrictModel):
     template: Token
     ssid: Annotated[str, Field(pattern=r'^[A-Za-z0-9_.-]{1,32}$')]
     vlan: VlanId
-    psk: Annotated[str, Field(pattern=r'^[A-Za-z0-9_.@:+/!=-]{8,63}$')]
+    security: Literal['open','wpa2_psk'] = 'wpa2_psk'
+    psk: Annotated[str, Field(pattern=r'^[A-Za-z0-9_.@:+/!=-]{8,63}$')] | None = None
     radio: int = Field(default=1, ge=1, le=4)
     ap_device: str | None = None
     ap_name: Token | None = None
@@ -220,6 +221,8 @@ class Wireless(StrictModel):
     radio_interface: InterfaceName | None = None
     @model_validator(mode='after')
     def binding_required(self):
+        if (self.security=='wpa2_psk') != (self.psk is not None):
+            raise ValueError('WPA2-PSK requires a key; open security forbids a key')
         if self.mode == 'ac' and (not all((self.ap_device,self.ap_name,self.ap_model,self.serial_id)) or self.radio_interface):
             raise ValueError('AC mode requires AP device/name/model/serial-id and forbids radio_interface')
         if self.mode == 'fat_ap' and (not self.radio_interface or any((self.ap_device,self.ap_name,self.ap_model,self.serial_id))):
