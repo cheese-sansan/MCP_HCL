@@ -62,6 +62,7 @@ E:\MCP_HCL\.venv\Scripts\python.exe -m mcp_hcl.server   # stdio，等协议输�
 
 **仍然不要做**
 
+- **不要改动系统启动配置。** 设备所有者 2026-10-02 明确否决了"额外启动菜单项 / 下次优先进入实验模式"的做法，要求保持正常 Windows 开机体验。`scripts/hcl_lab_boot.ps1` 的 `Create`/`Arm` 不得再使用，除非重新获得明确授权。
 - 不静默关闭 Windows 安全功能；不自动重启；不把 BCD 默认项改掉。
 - 不用 LLM 识图或固定像素坐标作为产品级控制面。
 - 不把"配置已生成"说成"配置已下发"，不把"命令返回"说成"网络连通"，不推断 PT 的逐事件仿真语义。
@@ -372,8 +373,9 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 只有"打开/保存"走窗口自动化，其余全部确定性。编辑类 9 项先用 relay 实现；注释 2 项本就是 `.net` 的 `[Non-vBox-DATA]` 段（实测 4 个 `[[NOTE n]]`），属纯文件编辑。
 验收：每次编辑后 `query_topology` 与 `.net` 回读一致；源工程哈希不变；操作与请求绑定。
 
-### P4 引导配置 —— **条目已建立、一次性引导已武装，等使用者重启**
-见 §10。
+### P4 guest 启动 —— **启动配置方案被所有者否决；D2 因此保持阻塞**
+根因是 VirtualBox 6.0.14 的 WHPX 实现与本机 Windows 构建不兼容（日志证据见 §10.2），**不是配置没调对、也不是缺 WHPX 功能**。在"不改启动配置 + 不换 VirtualBox"的前提下没有非侵入式解法。
+因此 P5 的 24 项 CLI 家族**暂时无法推进**；把精力放在 D0/D1（33 项，见 §10.4）。所有者若改变主意，可选方案见 §10.3。
 
 ### P5 D2 的 24 项 CLI 家族
 有了 P2 的管道客户端和 P4 的可用 guest，这层是批量工程：`apply_*`（VLAN/STP/端口安全/加固/接口调优/ACL/NAT/NetStream）、`read_vlans`/`read_qos`/`inspect_ports`、`audit_security`、`backup_config`、`verify_connectivity`、`diff`、`health_check`、`send_raw`、`deploy`/`full_build`/`live_deploy`。
@@ -384,75 +386,69 @@ E:\MCP_HCL\.venv\Scripts\python.exe -X utf8 E:\MCP_HCL\work\feasibility\dsh-2026
 
 ---
 
-## 10. P4 现状与使用者操作
+## 10. P4 现状：**启动配置方案已被设备所有者否决**，guest 启动暂无解
 
-### 事实
+### 10.1 决定（2026-10-02，设备所有者）
 
-| 时间 | 事件 | 证据 |
-| --- | --- | --- |
-| 10-01 15:48 | 第一次 `Create` 成功，条目 `{1031110f-…}` | `2704c0bf…/result.json`（`verified`） |
-| 10-01 16:16 | 只读判定 `not_booted_into_lab_entry`，随后回退删除 | `2455f377…/lab-environment.json`、`a5eeece9…/result.json` |
-| 10-01 16:18 | 条目**重建**为 `{10311110-…}` | `55c95115…/result.json` |
-| 10-01 16:19 | 一次性引导**已武装**并回读 | `ae5381b1…/result.json` |
-| 10-02 15:20 | 系统重启（`LastBootUpTime`），进入的是**普通 Windows**：`HyperVisorPresent=true` | 会话内读取 |
-| 10-02 16:19 | 提权读 BCD：**`{10311110-…}` 已不存在，`bootsequence` 已消失，`displayorder` 只剩 `{current}`** | `bcd-report-20261002.json` |
+**不要改动系统启动配置。** 设备所有者明确表示：HCL 实验额外添加启动菜单项、并设置"下次优先进入关闭 Hypervisor/VSM 的实验模式"，**不符合其保持正常 Windows 开机体验、避免实验改变系统启动配置的意愿**，因此该方案被否决。
 
-**两个未解释的事实必须保留在案：**
+10-01 与 10-02 建立的实验启动项与 `bootsequence` 已由所有者清理；我随后（在得知该意愿之前）重建的那一套，也已按要求清除并独立复核：
 
-1. 第一次重启没有进入实验项。归因是启动菜单 `default` 是 `{current}`、`timeout` 30 秒、实验项被追加在**最后**——"人工在菜单里抢时间"会静默失败。这已由 `Arm` 消除。
-2. **10-01 16:19 武装的条目与 `bootsequence`，在 10-02 15:20 重启前被完全清掉了，而 `work/` 里没有对应的 `Remove`/`Disarm` 回执。** 引导配置回到了原始状态（`osloader` 只剩 Windows 11 与 WinRE）。原因未确认——不要假设"它自己会消失"，也不要假设是谁删的；重启前必须用 `-Action Verify` 复查。
-
-### 当前引导状态（10-02 重新建立，已 `Verify`）
-
-| 项 | 值 |
+| 复核项 | 结果 |
 | --- | --- |
-| 启动项 | `{10311111-89bd-11f0-ad29-c0bfbeee1ce7}` — `MCP_HCL Lab (Hypervisor and VSM off)` |
-| 回读 | `hypervisorlaunchtype Off`、`vsmlaunchtype Off` |
-| 一次性引导 | `{bootmgr}` 的 `bootsequence {10311111-…}`（启动后自动清除，`default` 不动） |
-| `default` | 仍 `{current}` |
-| `Verify` 结果 | `entry_present=true`、`one_shot_armed=true`（`cbee2b27…/result.json`） |
-| BCD 备份 | `2704c0bf…/bcd-before.bak`，SHA256 `2D849DC815CF3A5551EDF4B3B09DFA1539FEAE0384250B528CA93DE68305FB4A` |
+| `{10311111-…}` 实验项 | **不存在**（`osloader` 只剩 Windows 11 与 Windows Recovery Environment） |
+| `{bootmgr}` 的 `bootsequence` | **不存在** |
+| Disarm / Remove 回执 | 均 `status=verified`（`c7ad1fec…`、`95909812…`） |
+| 独立复核 | `bcd-after-cleanup.json` |
 
-`-Action Verify` 是新增的**只读重启前自检**：确认条目仍在、`bootsequence` 仍指向它。鉴于上面第 2 条，**重启前请先跑一次 Verify**。
+**结论：不要再用 `scripts/hcl_lab_boot.ps1` 的 `Create`/`Arm` 触碰启动配置**，除非所有者重新明确授权。脚本保留在仓库里仅作为工具与历史记录。
 
-### 使用者动作
+### 10.2 根因：VirtualBox 6.0.14 的 WHPX 实现与本机 Windows 不兼容（不是缺功能，也不是安全设置）
 
-**用「重启」（Restart），不要用「关机」（Shutdown）** —— 快速启动可能恢复上次内核会话、跳过引导流程，且 `LastBootUpTime` 不更新（这正是第一次难以判断的原因）。重启走完整流程，`bootsequence` 生效，**不需要在菜单里做任何选择**。
+保存的失败日志 `work/feasibility/environment_20261001/92ba4f26c1db4cd58ac21ea012192366/device6-VBox.log`（SHA256 `F1360EC2…9F30`）给出了此前从未被读透的关键行：
 
-该会话的 Hypervisor/VBS 防护与依赖功能不可用——一次性的显式选择，日常启动项未受影响。
-
-重启后：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass `
-  -File E:\MCP_HCL\scripts\hcl_lab_environment.ps1 `
-  -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+```
+NEM: VidGetHvPartitionId            -> fun:0x2210c3 in:0x0 out:0x8
+AssertLogRel ... nemR3WinIoctlDetector_StartVirtualProcessor(...): cbInput == sizeof(HV_VP_INDEX)
+RTErrInfoSet(VERR_NEM_RING3_ONLY): Problem figuring out VidStartVirtualProcessor: fRet=0 dwErr=87
+NEM: Disabling UseRing0Runloop.
+NEM: Created partition 000000000174cc20.
+NEM: Adjusting APIC configuration from X2APIC to APIC max mode.  X2APIC is not supported by the WinHvPlatform API!
+NEM: Not available: Problem figuring out VidStartVirtualProcessor: fRet=0 dwErr=87
+NEM: NEMR3Init: Active.
+VMSetError: ...NEMR3Native-win.cpp(1408)... rc=VERR_NEM_VM_CREATE_FAILED
+VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20 (hPartitionDevice=…0ad1, Last=0xc0000002/1)
 ```
 
-`verdict=lab_entry_active_and_no_hypervisor` 时才继续跑剩余电源门槛；仍是 `not_booted_into_lab_entry` 则退回"重启时在 30 秒菜单里选最后一项"。
+读法：
 
-### 提权与回退
+1. **WHPX 是可用且已经工作的**——`NEM: Created partition` 说明 Windows Hypervisor Platform 分区创建成功，NEM 后端也确实以 Active 状态初始化了。所以"缺 WHPX / 需要启用 HypervisorPlatform 功能"这条假设**被日志否定**（我一度这样猜过，不要重复这个错误）。
+2. 失败点是 `VidStartVirtualProcessor`：`dwErr=87`（`ERROR_INVALID_PARAMETER`），触发断言 `cbInput == sizeof(HV_VP_INDEX)`。这是 **VirtualBox 6.0.14 编译时假定的 WHPX IOCTL 参数尺寸与当前 Windows 构建的 API 不一致**。
+3. `Last=0xc0000002` 是 `STATUS_NOT_IMPLEMENTED`，即取分区设备句柄这一步也没实现。
+4. 旁证：`X2APIC is not supported by the WinHvPlatform API!` —— 6.0.x 对当前 WHPX 的适配本就是早期的。
 
-本机 `sudo` 处于**强制新建窗口模式**（`sudo config` 如此报告）：`--inline` 会被拒绝，提权进程 stdout 不回调用终端。**凡提权动作都要用"写文件回执"取结果**，不要依赖管道输出。
+**因此：在 VirtualBox 6.0.14 保持不动、且系统继续以 `hypervisorlaunchtype Auto` 启动的前提下，没有非侵入式解法。** 不是配置没调对，是 6.0.14 这版实现太旧。
 
-```powershell
-# 武装一次性引导
-sudo run powershell -NoProfile -ExecutionPolicy Bypass `
-  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Arm `
-  -EntryId '{GUID}' -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+### 10.3 剩下的选择（都属于所有者决策）
 
-# 清掉未生效的一次性引导（重启前）
-sudo run powershell -NoProfile -ExecutionPolicy Bypass `
-  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Disarm `
-  -EntryId '{GUID}' -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
+| 方案 | 代价 | 状态 |
+| --- | --- | --- |
+| A. 启动时关闭 Hypervisor/VSM（`hypervisorlaunchtype Off`） | 需要额外启动菜单项——**已被否决** | 不可用 |
+| B. 升级 VirtualBox 到 6.1+（WHPX 实现成熟） | 改动 HCL 自带组件，可能与 HCL 5.10.3 不兼容；此前未授权更换共享 VirtualBox | 待所有者决定 |
+| C. 接受 guest 启动不可用，先做 D0 + D1 | 无 | **推荐，见 10.4** |
 
-# 删除实验项（必须先回到普通 Windows 项）
-sudo run powershell -NoProfile -ExecutionPolicy Bypass `
-  -File E:\MCP_HCL\scripts\hcl_lab_boot.ps1 -Action Remove `
-  -EntryId '{GUID}' -ReceiptDirectory E:\MCP_HCL\work\feasibility\lab_boot_20261001
-```
+### 10.4 关键事实：这个阻塞只影响 61 项里的 24 项
 
-`Arm`/`Disarm` 的实现细节：不是每个引导管理器都接受 `bootsequence`——本机 `{fwbootmgr}` 能枚举但拒绝设置（`找不到元素`），脚本因此在 `{bootmgr}`/`{fwbootmgr}` 间依次尝试"设置 + 回读"，只接受真正回读成功者，两个都失败就明确报错并退回人工选菜单，**不假装成功**；两处都断言 `default` 未变。
+按 HANDOFF §5 的分类，**D0 离线 14 项 + D1 后端控制平面 19 项 = 33 项完全不需要 guest 启动**。其中 D0 还有 11 项没做、D1 还有 18 项没做。所以：
+
+- P0 契约硬化、P1 全部离线层、P2 控制平面其余部分、P3 注释与 relay，**都不受本阻塞影响**。
+- 受影响的只有 D2 的 24 项 CLI 家族（`apply_*`、`read_vlans`、`verify_connectivity`、`deploy`、`backup_config` 等）与仿真 3 项。
+- 不要在报告里把"guest 起不来"写成"项目无法继续"。
+
+### 10.5 仍然成立的两条经验
+
+- 本机 `sudo` 处于**强制新建窗口模式**（`sudo config`）：`--inline` 被拒绝，提权进程 stdout 不回调用终端。**凡提权动作都要用"写文件回执"取结果**，不要依赖管道输出。
+- `bcdedit` 非提权下**无法枚举** `{current}`。此时"读不到"**不是**"没进实验项"——`hcl_lab_environment.ps1` 已改为返回 `verdict=unknown_cannot_read_bcd`，不要再把无法观测当成否定结论。
 
 > **备份是机器本地的**：`bcd-before.bak` 在 `work/` 下，`work/` 被 Git 忽略，清理它会丢。它只用于灾难恢复，日常回退用 `Remove` 即可。
 
@@ -506,7 +502,7 @@ sudo run powershell -NoProfile -ExecutionPolicy Bypass `
 3. **P1 规划 4 项 + 型号端口映射** —— 纯计算层；端口映射可直接用 `deviceInfo.ini` 与 `devicecfgs` 离线推导。
 4. **命名管道并发测量**（决定 P5 可行性）：在 HCL 的 PuTTY 已连接同一管道时尝试第二客户端；给"可并发/需互斥/不可共享"的明确结论与原始回执。
 5. **补齐 `create`/`delete`/`create_udp`**：从 HCL 打开工程时的日志抓完整请求行与返回码。验收：在隔离拓扑上创建再删除一台设备，`vm_root` 前后一致。
-6. **P4**：使用者重启后跑 `hcl_lab_environment.ps1`，然后启动一台隔离设备并读控制台。
+6. **P4 / guest 启动**：**暂时无解**（启动配置方案已被否决）。不要再去碰 BCD；要推进只能先由所有者决定 §10.3 里的 B（升级 VirtualBox）或重新授权 A。在此期间把精力放在 1–5 项。
 
 ### 改动纪律（请延续）
 

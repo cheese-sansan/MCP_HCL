@@ -78,15 +78,20 @@
 
 ## 已知阻塞与下一步
 
-**阻塞**：VirtualBox 6.0.14 与 Windows 11 的 Hypervisor/VBS 冲突导致 guest 无法启动（`VERR_NEM_VM_CREATE_FAILED`）。实验启动项已创建并武装一次性引导，**只等使用者用「重启」进入该会话**。
+**阻塞**：guest 无法启动（`VERR_NEM_VM_CREATE_FAILED`）。根因已由 VirtualBox 自身日志定位——**WHPX 分区创建成功（`NEM: Created partition`），失败点是 `VidStartVirtualProcessor` 返回 `dwErr=87` 并触发断言 `cbInput == sizeof(HV_VP_INDEX)`**，即 VirtualBox 6.0.14 假定的 WHPX IOCTL 参数尺寸与当前 Windows 构建的 API 不一致。**不是缺 WHPX 功能，也不是安全设置没关。**
 
-**下一步优先级**
+由此：
 
-1. P0 契约硬化（严格参数校验、统一结果信封、损坏工程一律业务 `rejected`）。
+- 唯一已知的有效做法是启动时关闭 Hypervisor/VSM，但那需要额外启动菜单项——**设备所有者已明确否决**（要求保持正常 Windows 开机体验、不接受实验改动系统启动配置）。相关启动项与一次性引导已清除并独立复核。
+- 在"不改启动配置 + 不换 VirtualBox"的前提下没有非侵入式解法。
+- 因此 **24 项 CLI 家族暂时无法推进**；但 **D0 + D1 共 33 项完全不受影响**，其中 29 项仍待实现。详见 [HANDOFF.md](HANDOFF.md) §10。
+
+**下一步优先级**（不含被阻塞项）
+
+1. P0 契约硬化剩余部分：未知参数名拒绝（需中间件，函数层看不到多余参数）、`request_id` 回显、`idempotency_key`。结构错误统一与损坏工程拒绝已完成。
 2. P1 离线层：`list_modules`、`list_templates` + 3 个目录资源；`plan_topology`/`estimate`/`explain`/`fix`；`export`/`generate_configs`/`generate_script`/`load_project`；并离线推导"型号 → 场景端口"映射。
-3. 命名管道并发测量（决定 CLI 家族可行性）。
-4. 补齐 `create`/`delete`/`create_udp` 的字段语义。
-5. 重启进入实验项后，启动一台隔离设备并读控制台。
+3. P3 注释编辑（纯文件层）与 relay 闭环验证。
+4. 命名管道并发测量：不依赖 guest 启动，但仍决定 CLI 家族未来的可行性。
 
 ---
 
