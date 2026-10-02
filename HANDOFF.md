@@ -429,13 +429,57 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 
 **因此：在 VirtualBox 6.0.14 保持不动、且系统继续以 `hypervisorlaunchtype Auto` 启动的前提下，没有非侵入式解法。** 不是配置没调对，是 6.0.14 这版实现太旧。
 
-### 10.3 剩下的选择（都属于所有者决策）
+### 10.3 让 guest 启动的两条技术方案（都属于所有者决策）
 
-| 方案 | 代价 | 状态 |
-| --- | --- | --- |
-| A. 启动时关闭 Hypervisor/VSM（`hypervisorlaunchtype Off`） | 需要额外启动菜单项——**已被否决** | 不可用 |
-| B. 升级 VirtualBox 到 6.1+（WHPX 实现成熟） | 改动 HCL 自带组件，可能与 HCL 5.10.3 不兼容；此前未授权更换共享 VirtualBox | 待所有者决定 |
-| C. 接受 guest 启动不可用，先做 D0 + D1 | 无 | **推荐，见 10.4** |
+背景：§10.2 已确认失败点是 VirtualBox 6.0.14 与当前 Windows WHPX API 的参数尺寸不匹配。因此只有两条路能让 guest 真正启动。
+
+#### 方案 A：启动时关闭 Hypervisor/VSM（`hypervisorlaunchtype Off`）
+
+**机制**：Hypervisor 不加载后，VirtualBox 6.0 会走 HM/raw-mode VT-x 而不是 NEM/WHPX，从而完全绕开 6.0.14 的 WHPX 缺陷。这也是 H3C 官方安装说明建议的状态。
+
+**实现**：已完全实现并验证过，工具在 `scripts/hcl_lab_boot.ps1`：
+`-Action Create`（复制 `{current}`、只对副本设 `hypervisorlaunchtype Off` / `vsmlaunchtype Off`、追加到 `displayorder`、回读校验、先导出 BCD 备份）→ `-Action Arm`（在 `{bootmgr}`/`{fwbootmgr}` 间自动择一设置一次性引导 `bootsequence`，启动后自动清除，`default` 不动）→ `-Action Verify`（只读重启前自检）→ `-Action Disarm` / `-Action Remove` 回退。
+
+**代价与风险**：
+
+- 启动菜单会多出一个条目；选择该会话时 Hypervisor/VBS 防护与依赖功能不可用。
+- `{current}` 与 `{bootmgr}` 的 `default` 自始至终未被改动（脚本每次都会断言）。
+- 一次性引导只在**下一次**启动生效，之后自动消失。
+
+**状态：已被设备所有者否决（2026-10-02）。** 理由是它改变系统启动配置、影响正常 Windows 开机体验。相关启动项与 `bootsequence` 已清除并独立复核（Disarm/Remove 均 `verified`；`osloader` 只剩 Windows 11 与 WinRE）。
+**若要重启该方案**：需要所有者重新明确授权；重启前先跑 `-Action Verify`。
+
+**回执**：`2704c0bf…`（Create）、`ae5381b1…`（Arm）、`cbee2b27…`（Verify）、`c7ad1fec…`（Disarm）、`95909812…`（Remove）、`bcd-after-cleanup.json`（复核）。
+
+#### 方案 B：升级 VirtualBox 到 6.1+
+
+**机制**：VirtualBox 6.1+ 重写了 WHPX/NEM 适配，修正了 6.0.x 的 IOCTL 参数不匹配（即 §10.2 的 `cbInput == sizeof(HV_VP_INDEX)` / `dwErr=87`）。升级后 **可以在 Hyper-V/VBS 继续运行的同时启动 guest**，因此**不需要改动启动配置**——与所有者的明确意愿不冲突。这是唯一同时满足"不动启动配置"与"guest 能跑"的候选。
+
+**状态：未评估、未授权。** 此前记录为"未授权更换共享 VirtualBox"。**执行升级属于机器级变更，必须先获得明确授权；调查本身只读，不需要授权。**
+
+**升级前必须查清的五件事（均可只读完成）**：
+
+1. **HCL 是否绑定自带版本。** HCL 通过 `D:\HCL\vboxapi\`（随程序分发的 Python 绑定）经 COM 调 VirtualBox；`SimwareWrapper.exe` 内部使用该绑定。要确认它是否对 VirtualBox COM 接口版本做了硬校验。
+2. **安装路径假设。** HCL 是否写死 `C:\Program Files\Oracle\VirtualBox`；升级安装到同路径还是并行安装。
+3. **HCL 实际使用的调用面**是否仍被 6.1 兼容：日志显示它用到 clone、`setChipsetType`、修改内存/NIC/串口、附加硬盘、`safeSaveSettings`、`safeLockMachine` 等 COM 调用。
+4. **Extension Pack 与已注册 VM 的兼容性**：升级后既有 VM 配置（`C:\Users\<用户>\HCL VMs\`，含 `Simware_Base` 模板）是否仍可读、可克隆。
+5. **回退路径**：保留 6.0.14 安装包、记录升级前 `VBoxManage --version` 与 `VBoxManage list vms` 输出、确认可卸载回 6.0.14。
+
+**风险与可逆性**：
+
+- HCL 与 6.1 若不兼容，**连现有能力也会受影响**（阶段工程依赖 HCL 打开工程，后端控制平面依赖 HCL 的后端）。这是本方案最大的风险，必须先备份 `D:\HCL\vboxapi\` 与 VM 列表。
+- 升级前应保存：`VBoxManage --version`、`VBoxManage list vms`、`VBoxManage list systemproperties`、`D:\HCL\vboxapi` 目录文件哈希。
+
+**验收标准**（缺一不可）：
+
+1. `VBoxManage startvm` 能启动一台测试 VM 并进入 guest；
+2. HCL 打开隔离副本 → 新增/删除设备 → 保存回读仍然成功（即现有已验证能力不退化）；
+3. `hcl_backend_topology` 的 `create_topology` 仍返回 `errorCode=100`；
+4. HCL 日志中不再出现 `VERR_NEM_VM_CREATE_FAILED`。
+
+#### 方案 C（当前默认）：接受 guest 不可用，推进 D0/D1
+
+不需要任何授权，**33 项不受影响**，见 §10.4。在 A/B 未决期间这是唯一可推进的方向。
 
 ### 10.4 关键事实：这个阻塞只影响 61 项里的 24 项
 
@@ -510,4 +554,26 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 - 写动词默认 `invocable=False`，除非字段语义有据可依。
 - 每个"成功"都要有 `verified_scope`，并且**不得跨层推断**：命令被接受 ≠ guest 启动 ≠ 配置下发 ≠ 网络连通。
 - 任何对外部世界的成功声明都要附回执路径；回执进 `work/`（被 Git 忽略）。
-- 只提交到 `dsh` 分支。
+- 只提交到 `dsh-2` 分支（`dsh` 已被所有者删除；历史提交自 `3bbccdb` 起完整保留在 `dsh-2`）。
+
+---
+
+## 14. 当前阶段状态与待决事项
+
+**阶段性完成（2026-10-02，`dsh-2`）**
+
+- 控制平面第一层：动词注册表、写总开关、帧解析、持久连接会话、命名管道控制台、4 个 MCP 工具 —— 已实现并**对真实后端验证**。
+- P0 契约硬化前两项：结构错误统一 `code`；损坏工程不再以工具错误逃逸。
+- 文档收敛为 `HANDOFF.md` + `README.md` 两份。
+- 本机测试基线 **66 项通过**（1 项因账号无 symlink 权限 skip）。
+- guest 启动阻塞的**根因已定位**（§10.2），且已确认"缺 WHPX"是错误假设。
+
+**待所有者决定**
+
+| 事项 | 说明 |
+| --- | --- |
+| 方案 A 是否重新授权 | 见 §10.3；当前被否决，条目已清除 |
+| 方案 B 是否评估/执行 | 见 §10.3；调查只读、执行需授权 |
+| 是否开工 P1 离线层 | 见 §9；D0 的 11 项零阻塞、可离线回归 |
+
+**不要做的事**：不要为了"让 P4 看起来有进展"再去碰 BCD；不要把 guest 起不来写成项目无法继续（33 项不受影响）。
