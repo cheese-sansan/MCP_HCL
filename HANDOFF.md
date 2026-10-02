@@ -616,3 +616,16 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 | 是否开工 P1 离线层 | 见 §9；D0 的 11 项零阻塞、可离线回归 |
 
 **不要做的事**：不要为了"让 P4 看起来有进展"再去碰 BCD；不要把 guest 起不来写成项目无法继续（33 项不受影响）。
+
+
+## 15. 2026-10-02：使用者授权分支内试验后的更新
+
+本轮在 **dsh-2** 实际执行官方 SDK 声明对比、安装资产校验、完整 VM 备份和软件回归；结果见 [方案 B 试验报告](docs/plan-b-sdk-assessment.md) 与 [验证记录](docs/plan-b-verification-20261002.json)。
+
+30 个选定接口成员中 29 个声明相同；launchVMProcess 第三参数从字符串变为字符串数组，MachineState 部分快照枚举和 IMachine UUID 也改变。因此 §10.3 中“核心 COM 接口长期稳定 / 升级可直接让 guest 启动”不能作为兼容性保证，实际 HCL 参数转换、COM 注册和 WHPX guest 启动仍未验证。
+
+6.1.50 候选包和 6.0.14 回退包均已下载，官方哈希匹配，Oracle 签名 Valid；52 个现有 HCL VM 文件及 VirtualBox.xml 已备份并核对字节一致。恢复未测试。原安装仍为 6.0.14r133895，安装器未执行。
+
+本轮回归 **69 项，68 通过、1 权限相关跳过**。本分支仍来自 1200f30，没有包含 Codex 的 0.5.0；旧的 15 工具/3 资源和 P0/P1 说明仅属于 dsh-2 的旧应用基线，不能用于评价 Codex 的 39/6、138 项测试。
+
+授权仅限分支内操作。共享 VirtualBox 的驱动、COM 和已有 VM 配置不受 Git 分支隔离；未额外授权前不安装、不清缓存、不修改 BCD 或系统安全功能、不启动真实 guest。当前结论仍为 **方案 B 尚未证明可行**，full_live_gate_passed=false。
