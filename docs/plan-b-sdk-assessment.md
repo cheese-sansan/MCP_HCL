@@ -41,3 +41,7 @@ E:\MCP_HCL\.venv\Scripts\python.exe -B -X utf8 scripts\hcl_vbox_sdk_probe.py `
 安装后至少分别验证 COM 参数适配、HCL 打开/保存隔离工程、原生控制台、WHPX guest 启动与回退。任一项未验证就维持 hcl_runtime_compatible=null；不得把安装完成、sdk 声明相似或备份存在写成实时成功。
 
 原始资产、52 文件备份和私有 VM 哈希清单位于本分支忽略的 work/feasibility/plan-b-20261002/，不能随 Git 分发。不要删除或覆盖旧回执。
+
+## 后续状态：追加授权后的安装完成
+
+所有者随后明确批准机器级升级。6.1.50 已安装并完成基础版本、COM 和原 VM 身份读回；此前未授权/未安装的描述仅属于本次 SDK 试验阶段。真实 HCL 绑定、guest 启动和恢复仍未验证。最新记录见 [机器升级回执](plan-b-host-upgrade-20261002.json)。

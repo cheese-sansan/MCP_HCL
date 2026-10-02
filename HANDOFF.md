@@ -629,3 +629,17 @@ VMSetError: Failed to get device handle and/or partition ID for 000000000174cc20
 本轮回归 **69 项，68 通过、1 权限相关跳过**。本分支仍来自 1200f30，没有包含 Codex 的 0.5.0；旧的 15 工具/3 资源和 P0/P1 说明仅属于 dsh-2 的旧应用基线，不能用于评价 Codex 的 39/6、138 项测试。
 
 授权仅限分支内操作。共享 VirtualBox 的驱动、COM 和已有 VM 配置不受 Git 分支隔离；未额外授权前不安装、不清缓存、不修改 BCD 或系统安全功能、不启动真实 guest。当前结论仍为 **方案 B 尚未证明可行**，full_live_gate_passed=false。
+
+
+## 16. 2026-10-02：所有者追加授权后，VirtualBox 原地升级已完成
+
+使用者对“本机原地升级到 6.1.50，不修改 BCD/安全设置、不自动重启，guest 验收由使用者触发”的请求明确回复 **允许**。这是一次性机器级升级授权，不是对未来系统变更的通用授权。此前仅限分支内的限制在这一次安装上被明确扩展。
+
+- 官方签名 x64 MSI 已安装，退出码 **0**；当前 VBoxManage 为 **6.1.50r161033**，路径仍 C:/Program Files/Oracle/VirtualBox。安装器未要求重启，未自动重启。
+- 只读动态 COM 回读 version=6.1.50、APIVersion=6_1；findMachine 能找到原 Simware_Base，UUID 不变，状态 powered off。没有调用 launchVMProcess 或 HCL 自带 SDK 启动流程，也没有清理共享 gen_py 缓存。
+- 安装前后 BCD 全量枚举相同、启动会话相同，Hypervisor 继续启用。52 个原 VM 文件在安装及 API 读取后哈希未改变。备份与 6.0.14 回退包保留，恢复未试验。
+- VBox 驱动当前回读见新记录；旧后端、失败日志与 SDK 对比仍是各自历史层面的证据，不能据安装成功改写为运行通过。
+
+安装回执、日志、驱动与 COM 读回路径见 [机器升级记录](docs/plan-b-host-upgrade-20261002.json)。目前 **只有安装和基础 API 层通过**；HCL 的旧 SDK 参数转换、GUI 打开/保存、真实 guest、控制台配置、网络连通性与回退均未验收，full_live_gate_passed=false。§10 的“当前安装 6.0.14 / 方案 B 未执行”从此仅代表升级前历史状态。
+
+下一步由使用者打开隔离阶段工程并手动启动其中一台设备，再提供本次控制台与 VBox/HCL 日志以核对。不要启动 Simware_Base 或原工程做实验，不自动启动 guest，不因失败而关闭安全功能、重建启动项或重放启动。任何超过一分钟的真实验收仍由使用者触发。

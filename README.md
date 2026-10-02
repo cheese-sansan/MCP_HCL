@@ -139,3 +139,10 @@ $env:MCP_HCL_OUTPUT_ROOT  = 'E:\YOUR_WORKSPACE\MCP_HCL\work\staged'
 - `work/` 被 Git 忽略，包含回执、阶段工程与虚拟磁盘副本，**不要提交**。
 
 LICENSE：MIT。上游接口名称与映射来自固定提交，未移植上游运行代码。
+
+
+## 2026-10-02：方案 B 安装层更新
+
+所有者追加明确授权后，VirtualBox 已从 6.0.14 原地升级为 6.1.50r161033；安装退出码 0，无自动重启，BCD 回读不变，原 52 个 VM 文件哈希保持一致。基础动态 COM 版本及原 Simware_Base 身份读回通过。详情见 [升级记录](docs/plan-b-host-upgrade-20261002.json) 与 HANDOFF §16。
+
+**安装成功不等于 HCL/guest 兼容性通过**。本轮没有启动 HCL 或 guest，尚未取得新控制台和网络回读。旧章节中 6.0.14 的阻塞是历史诊断；现在等待使用者在隔离工程中手动启动一台设备进行真实验收，不再使用启动项方案。
