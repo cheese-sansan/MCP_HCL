@@ -35,3 +35,66 @@ DSH 的 7 个提交已快进接入，dsh 分支已安全删除；原工作区 E:
 ## 下一步
 
 按 docs/live-acceptance.md 在独立环境收集真实 AC/AP/Phone 及有线型号证据。先完成型号/映射资料检查，再运行固定三路由器验收；无线只有真实安全关联、两客户端正确 DHCP 与连通性通过才能收口。不得因导入带有成功标志的文件而提升运行结论。每次运行保留独立新回执，恢复失败逐设备报告，不重放原部署。
+
+## 给下一位 Agent：先做独立软件测试
+
+使用者本次要把项目交给另一个 Agent 测试。先验证现有交付，不把测试请求理解为允许更改宿主机启动、安全、虚拟化设置或开展真实部署。
+
+- 当前工作区：`C:/Users/w8p1p/.codex/worktrees/ed66/MCP_HCL`。交接前 HEAD 为 `2cb7f52`，工作区干净；本次后续提交只更新交接文档。接手先重新检查 branch、HEAD 和 status，不自动切换、重置或清理工作区。
+- 被验证的代码提交是 `85bcf24919267a99e7d948a006fa5422de9bdd0e`；`2cb7f52` 添加最终验证记录。现有结果为 **138 项，137 通过、1 项 Windows symlink 权限跳过**，耗时 35.245 秒；46 条资料哈希校验通过，pip check 通过。这些是上一轮结果，本次交接未重跑。
+- 原始软件日志：`work/050-final-regression.txt`；隔离 wheel 检查：`work/050-wheel-verification.json` 与 `.log`，复现脚本 `work/verify-wheel-050.py`。它使用合成工程，真实 stdio 指 MCP 传输真实启动，不指真实 HCL guest。
+- wheel：`work/wheels-050-final/mcp_hcl-0.5.0-py3-none-any.whl`，SHA256 `f15f123c4f409b44a3ea39b5dce6422d593de13079bf687e28f27d69e815b797`。
+- 已准备的搬运目录：`work/lab-bundles/Hcl050/`。内含 wheel、依赖锁定清单、固定实验要求和指南；不含依赖 wheel，独立环境首次安装需要包源访问。所有 work/ 产物和 .venv 都不随 Git 搬运；换工作区后先确认文件存在，缺失时在新目录重新生成，不引用不存在的历史回执作为当前证据。
+
+### 安全的软件测试入口
+
+在当前工作区已有独立 .venv 时执行下面的命令。若在另一工作区测试，改为实际路径并建立自己的环境；不要修改 E:/MCP_HCL/.venv，也不要让它的 editable 安装加载旧 DSH 代码。
+
+```powershell
+Set-Location 'C:\Users\w8p1p\.codex\worktrees\ed66\MCP_HCL'
+git status --short --branch
+git rev-parse HEAD
+$env:PYTHONPATH = (Join-Path (Get-Location) 'src') + ';' + (Join-Path (Get-Location) 'tests')
+$env:PYTHONDONTWRITEBYTECODE = '1'
+$env:PYTHONIOENCODING = 'utf-8'
+$env:MCP_HCL_ALLOW_LIVE_WRITE = '0'
+# 清除本进程可能继承的私有资料入口，避免回归加载用户资料。
+Remove-Item Env:\MCP_HCL_PROFILE_ROOT -ErrorAction SilentlyContinue
+$testRun = [Guid]::NewGuid().ToString('N')
+$testLog = Join-Path (Get-Location) ('work\agent-test-' + $testRun + '.txt')
+.\.venv\Scripts\python.exe -B -X utf8 -c "import mcp_hcl; print(mcp_hcl.__version__, mcp_hcl.__file__)"
+.\.venv\Scripts\python.exe -B -X utf8 -m unittest discover -s tests *> $testLog
+$testExit = $LASTEXITCODE
+Get-Content -LiteralPath $testLog -Tail 20
+if ($testExit -ne 0) { throw "Regression failed; preserve $testLog" }
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -B -X utf8 scripts\verify_offline_reference.py `
+  --install-root 'D:\HCL' --output ('work\agent-reference-' + $testRun + '.json')
+.\.venv\Scripts\mcp-hcl-lab.exe audit `
+  --directory work\lab-bundles\Hcl050 --preparation-bundle
+```
+
+缺少 D:/HCL 或搬运产物时，仅运行可满足前提的软件检查，并分别报告缺失项。资料哈希不匹配不可改成跳过后宣称资料验收通过。不要为消除 symlink 权限跳过而改变本机系统设置。
+
+### 测试重点与预期拒绝
+
+- 核对真实 stdio 的 39 工具 / 6 资源、`docs/offline-contracts.json` 以及无线请求的 `$defs` 引用。保持外层参数错误与内部请求/计划业务 rejected 的既有分类，验证未知字段和布尔冒充整数没有被转换。
+- 独立覆盖九模板、DHCP/静态与 SVI 冲突、子接口、保留 PSK 意图；检查副本编辑后的双端链接、绑定计划及源文件不变。
+- 对证据包做搬运、版本/身份不符、路径越界、重复型号、哈希篡改、合成来源及伪造成功标志测试。导入同键并发、跨进程重试和失败写入必须保持来源与旧产物不变。
+- 核对原生采集仅发送三条 display 白名单命令；租约、分页、输出归因及不完整失败回执应使用测试通道验证。软件模拟不得提升 native/runtime 结论。
+- `accept-wireless` **预期返回 rejected、退出码 2**；Phone 安全关联和设置序列化缺证据导致完整生成拒绝是当前硬门槛。开放计划的结构可通过，不代表配置、工程或安全无线已完整生成。
+- 控制台和部署故障测试覆盖备份不可用、中途失败、断连、恢复所有已修改设备、恢复失败及禁止重放。只使用合成设备/管道；不要为了检查恢复行为而在本机调用真实配置命令。
+
+### 真实验收前置条件与交付报告
+
+当前没有独立 HCL 实验环境。最后的只读环境回执 `work/050-environment.json` 记录 Hypervisor=true、VirtualBox 6.0.14、GUI/Wrapper 未运行、running guests 为空；客户端版本资源读不到，状态 unknown。该回执是历史观察，接手需要时可重新只读预检；未知值与进程存在均不能判为 runtime_ready。
+
+真实 GUI 打开、guest 启动、控制台配置和可能超过一分钟的网络验收须由使用者在独立环境明确触发。步骤及固定门槛只引用 [实时验收指南](docs/live-acceptance.md)，不要使用 docs/history 的旧重启或 BCD 指令，也不要自动运行 `accept-wired` 或开启实时写开关。
+
+测试结束报告：被测提交与解释器来源、通过/失败/跳过数、新日志路径、最小复现、源工程/历史产物是否改变，以及未具备条件的真实门槛。保留首次失败证据；若修复，记录修复提交并用新回执复测，不覆盖旧失败。测试通过不能增加 implemented 数量或修改无线/实时 Incomplete 结论，除非有对应层次的真实证据。
+
+### Suggested skills
+
+- `code-review-and-quality`：需要独立检查具体代码差异或调查测试发现时使用。
+- `api-and-interface-design`：检查 Schema、错误分类或接口兼容性时使用。
+- `handoff`：测试结束后整理新的交接，引用原始回执并保留尚未验证的门槛。
