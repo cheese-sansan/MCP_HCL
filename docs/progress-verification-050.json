@@ -1,0 +1,160 @@
+{
+  "version": "0.5.0",
+  "date": "2026-10-02",
+  "branch": "codex/hcl-live-parity",
+  "code_commit": "85bcf24919267a99e7d948a006fa5422de9bdd0e",
+  "upstream_revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+  "tool_count": 39,
+  "resource_count": 6,
+  "tests": {
+    "run": 138,
+    "passed": 137,
+    "skipped": 1,
+    "skip_reason": "Windows symlink privilege",
+    "duration_seconds": 35.245,
+    "log": "work/050-final-regression.txt",
+    "fixtures": "synthetic offline projects and console mocks; no real guests"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "dependency_pins": [
+      "annotated-types==0.8.0",
+      "anyio==4.15.1",
+      "attrs==26.1.0",
+      "certifi==2026.7.22",
+      "cffi==2.1.1",
+      "click==8.5.0",
+      "cryptography==50.0.2",
+      "h11==0.16.0",
+      "httpcore==1.0.9",
+      "httpx==0.28.1",
+      "httpx-sse==0.4.3",
+      "idna==3.20",
+      "jsonschema==4.26.0",
+      "jsonschema-specifications==2025.9.1",
+      "mcp==1.30.0",
+      "packaging==26.3",
+      "pycparser==3.0",
+      "pydantic==2.13.5",
+      "pydantic-core==2.46.5",
+      "pydantic-settings==2.15.0",
+      "pyjwt==2.15.1",
+      "python-dotenv==1.2.4",
+      "python-multipart==0.0.32",
+      "pywin32==312",
+      "referencing==0.37.0",
+      "rpds-py==2026.6.3",
+      "sse-starlette==3.5.0",
+      "starlette==1.7.0",
+      "typing-extensions==4.16.0",
+      "typing-inspection==0.4.4",
+      "uvicorn==0.54.0"
+    ],
+    "pip_check": "passed",
+    "workspace_venv": "C:\\Users\\w8p1p\\.codex\\worktrees\\ed66\\MCP_HCL\\.venv",
+    "original_workspace_dependencies": "not_modified"
+  },
+  "reference_checks": {
+    "records": 46,
+    "all_match": true,
+    "runtime_verified": false
+  },
+  "wheel": {
+    "path": "C:\\Users\\w8p1p\\.codex\\worktrees\\ed66\\MCP_HCL\\work\\wheels-050-final\\mcp_hcl-0.5.0-py3-none-any.whl",
+    "sha256": "f15f123c4f409b44a3ea39b5dce6422d593de13079bf687e28f27d69e815b797",
+    "isolation_checks": {
+      "wheel_import": "C:\\Users\\w8p1p\\.codex\\worktrees\\ed66\\MCP_HCL\\work\\wheel-050-isolated\\mcp_hcl\\__init__.py",
+      "tool_count": 39,
+      "resource_count": 6,
+      "real_stdio": true,
+      "offline_plan_stage_export_reload": true,
+      "idempotent_retries": true,
+      "source_unchanged": true,
+      "default_live_write_gate": true,
+      "schema_resolution": true,
+      "wheel_source_bytes_match": true,
+      "preparation_bundle": "C:\\Users\\w8p1p\\.codex\\worktrees\\ed66\\MCP_HCL\\work\\lab-bundles\\Hcl050",
+      "hardware_actions": "not_run",
+      "full_live_gate_passed": false
+    }
+  },
+  "preparation_bundle": {
+    "path": "C:\\Users\\w8p1p\\.codex\\worktrees\\ed66\\MCP_HCL\\work\\lab-bundles\\Hcl050",
+    "manifest_sha256": "43a44270d5b2f1251a5dca6dd3abf948d708a833c4da652832e99389d07d3521",
+    "hash_audit": "passed",
+    "includes_dependency_wheels": false,
+    "runtime_ready": false
+  },
+  "environment_observations": {
+    "scope": "read_only_environment_observations",
+    "changes_applied": false,
+    "runtime_ready": false,
+    "full_live_gate_passed": false,
+    "observations": {
+      "gui_running": false,
+      "hypervisor_present": true,
+      "virtualbox_version": "6.0.14",
+      "wrapper_running": false,
+      "external_console_present": false,
+      "virtualbox_directory": "C:\\Program Files\\Oracle\\VirtualBox\\",
+      "running_guests": [],
+      "guest_observation_complete": true,
+      "installation": {
+        "path": "D:\\HCL",
+        "models": [
+          "F1060",
+          "F1090",
+          "MSR36-20",
+          "PC",
+          "S5820V2-54QS-GE",
+          "S6850",
+          "vpcs",
+          "VSR-88",
+          "AC",
+          "AP",
+          "Phone"
+        ],
+        "missing_cli_defaults": [
+          "vpcs",
+          "AC",
+          "AP",
+          "Phone"
+        ],
+        "hcl_version": {
+          "value": null,
+          "status": "unknown"
+        }
+      }
+    },
+    "errors": [],
+    "status": "observed",
+    "remaining": [
+      "Exact staged-project GUI identity",
+      "Expected guest identities",
+      "Exclusive complete native console readbacks",
+      "Model and mapping evidence"
+    ]
+  },
+  "boot_policy": {
+    "active_mutation_scripts": "retired",
+    "historical_scripts": "archived",
+    "bcd_writes_this_implementation": false,
+    "reboot_performed": false,
+    "prior_authorized_cleanup": "verified by BCD readback only, not boot tested"
+  },
+  "completion": {
+    "software_and_preparation_bundle_delivered": true,
+    "wireless_stage_complete": false,
+    "live_stage_complete": false,
+    "overall_upstream_parity_complete": false,
+    "full_live_gate_passed": false
+  },
+  "remaining": [
+    "AC/AP real configuration and independent CLI/scene/radio mappings",
+    "Phone native setting serialization and backup/restore capability",
+    "Phone WPA2-PSK association, DHCP and ping acceptance",
+    "Independent HCL environment and real three-router OSPF/DHCP/configuration/recovery/network acceptance"
+  ],
+  "hardware_actions": "not_run",
+  "push_pr_release": "not_run"
+}

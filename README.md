@@ -120,3 +120,5 @@ LICENSE：MIT。本轮没有 push、PR、发布、重启、BCD 写入或真实�
 **软件与验收包可以交付，无线阶段仍 Incomplete**：5.10.1 手册中的 Phone 只支持 DHCP 和未加密 Wi-Fi；5.10.3 安全关联、原生设置保存及恢复均未实测。开放网络只用于诊断，完整生成和无线部署保持拒绝，不能宣称安全终端用例通过。三路由器 OSPF/DHCP 实时验收也未执行。
 
 本轮使用当前工作区独立 .venv，不修改 E:/MCP_HCL 的依赖。安装包不包含厂商镜像、完整手册或用户配置；准备包携带经过测试的依赖锁定清单，需要使用者在独立 Windows 环境安装。
+
+已生成并审计的本机准备包：`work/lab-bundles/Hcl050/`；wheel、依赖、实验请求和操作指南均在其中。它是准备产物，runtime_ready=false。验收与打包摘要见 [0.5.0 验证记录](docs/progress-verification-050.json)。
