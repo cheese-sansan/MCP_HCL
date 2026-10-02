@@ -13,7 +13,7 @@ class Evidence040Tests(unittest.TestCase):
             paths=configure_fixture(Path(temporary));profile=Path(temporary)/'profiles';profile.mkdir()
             net=next(paths['project'].glob('*.net'));cfg=paths['install']/'devicecfgs/MSR36-20.cfg'
             record={'schema_version':1,'model':'MSR36-20','interfaces':['GigabitEthernet0/0','GigabitEthernet0/1','GigabitEthernet0/2','Serial1/0','NULL0'],
-                    'firmware':'captured-test','evidence':[{'source':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in (net,cfg)]}
+                    'firmware':__import__('re').search(r'^\s*version\s+(.+)$', cfg.read_text(), __import__('re').M)[1].strip(),'evidence':[{'source':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in (net,cfg)]}
             (profile/'model.json').write_text(json.dumps(record),encoding='utf-8')
             catalog=HclCatalog(paths['install'],profile)
             model=catalog.device_details('MSR36-20')['device']

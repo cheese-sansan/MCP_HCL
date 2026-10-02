@@ -36,7 +36,18 @@ class HclCatalog:
         if self.profile_root is None: return []
         root = self.profile_root.resolve()
         result = []
+        from mcp_hcl.evidence import audit_evidence
+        manifests = ([root / 'manifest.json'] if (root / 'manifest.json').is_file() else []) + sorted(root.glob('*/evidence/manifest.json'))
+        for manifest in manifests:
+            try:
+                audited = audit_evidence(manifest.parent)
+                if audited['origin']['capture_method'] == 'test_fixture':
+                    raise CatalogError('Synthetic evidence cannot become catalog profiles')
+                result.extend(audited['profiles'])
+            except (ValueError, OSError) as exc:
+                raise CatalogError(str(exc)) from exc
         for path in sorted(root.glob('*.json')):
+            if path.name in {'manifest.json', 'import-report.json'}: continue
             if path.is_symlink() or path.stat().st_size > 65536: raise CatalogError('Invalid captured profile record')
             record = json.loads(path.read_text(encoding='utf-8-sig'))
             if record.get('schema_version') != 1 or len(record.get('evidence', [])) != 2:
@@ -55,10 +66,13 @@ class HclCatalog:
             text = sources[1][1].decode('utf-8-sig')
             interfaces = re.findall(r'^interface\s+([A-Za-z][\w/.-]*)\s*$', text, re.M)
             if interfaces != record.get('interfaces') or not interfaces: raise CatalogError('Captured interfaces do not match configuration evidence')
+            version = re.search(r'^\s*version\s+(.+)$', text, re.M)
+            if not version or record.get('firmware') != version[1].strip(): raise CatalogError('Captured firmware does not match configuration evidence')
             result.append({'model':record['model'], 'default_interfaces':interfaces,
                            'default_firmware':record.get('firmware'), 'runtime_verified':False,
                            'interface_evidence_scope':'captured_configuration_only',
                            'factory_defaults_verified':False,'evidence':record['evidence'][1]})
+        if len({row['model'] for row in result}) != len(result): raise CatalogError('Duplicate captured model profiles')
         return result
 
     def _read(self, path: Path) -> tuple[str, dict[str, str]]:
@@ -99,7 +113,15 @@ class HclCatalog:
                                    'runtime_verified': False, 'default_configuration_available': False,
                                    'evidence': ports['evidence'][0],
                                    'limitation': 'Installed port family and image presence only; CLI interface mapping and guest firmware unverified.'})
+            if 'Phone' in ports['families'] and 'Phone' not in {row['model'] for row in models}:
+                models.append({'model':'Phone','control_kind':'native_gui','default_interfaces':[],
+                    'native_interfaces':[f"WLAN-Radio_0/{p['index']}" for p in ports['families']['Phone'] if p['kind']=='WLAN-Radio'],
+                    'default_firmware':None,'native_settings_supported':False,'runtime_verified':False,
+                    'capabilities':{'ipv4_modes':['dhcp'],'ipv6_modes':['none'],'wireless_security':['open'],
+                                    'security_evidence_scope':'5.10.1_manual_only_5.10.3_security_unverified'},
+                    'evidence':ports['evidence'][0]})
             for model in models:
+                model.setdefault('control_kind','comware')
                 family = MODEL_FAMILIES.get(model['model'], model['model'])
                 model['port_family'] = family if family in ports['families'] else None
                 model['scene_ports'] = []
