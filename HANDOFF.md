@@ -98,3 +98,12 @@ if ($testExit -ne 0) { throw "Regression failed; preserve $testLog" }
 - `code-review-and-quality`：需要独立检查具体代码差异或调查测试发现时使用。
 - `api-and-interface-design`：检查 Schema、错误分类或接口兼容性时使用。
 - `handoff`：测试结束后整理新的交接，引用原始回执并保留尚未验证的门槛。
+
+
+## 2026-10-05：新会话先读 dsh-2 的机器试验问题清单
+
+当前文档的 0.5.0 代码/测试基线不变，**没有合并 dsh-2**。E:/MCP_HCL 现在已在 dsh-2，之前“detached 1200f30”的描述仅属历史。用户另行授权后，共享 VirtualBox 已升级为 6.1.50；已用 Computer Use 在单台 MSR36-20 副本验证创建和 VM 启动进入 guest 系统阶段，CLI/配置/网络仍未通过。
+
+下一会话应读 [E:/MCP_HCL/HANDOFF.md](E:/MCP_HCL/HANDOFF.md) **§17–18** 及 [GUI 实测记录](E:/MCP_HCL/docs/plan-b-gui-probe-20261005.json)。重点问题是：HCL 共享 topo1 运行目录会清理历史文件与 Base 注册；原生管道 PermissionError 原因未定；关闭阶段存在厂商镜像 UUID 冲突警告。旧 COM 缓存错绑已通过定点备份/隔离修正。
+
+试验已停止，原 52 文件和 Base 注册已恢复、原工程哈希保持一致。不要把工程副本当作运行时隔离，不重复成功的单机启动来掩盖控制台缺口，不改 BCD/安全设置或厂商原镜像。新会话先只读分析解决方案，新的真实测试按用户当次指令执行。详细条件、证据路径和排查顺序集中于 dsh-2 交接的问题清单，本处仅作入口指引。
