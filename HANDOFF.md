@@ -670,3 +670,53 @@ HCL 关闭日志还有 closeAllDisk 针对不同厂商镜像的重复 UUID 警�
 **方案 B 已在本机证明“修正旧缓存后，单台 MSR36-20 可由 HCL 创建并启动进入 guest 系统阶段”。** 不等于全版本/全型号兼容，不等于原生 CLI 已可独占回读，更不等于 OSPF/DHCP 或无线闭环完成。full_live_gate_passed=false；本轮没有配置下发、网络验收、BCD 写入、安全设置变更、重启、push 或发布。
 
 后续优先解决实际控制台的权限/占用/共享语义和 runtime VM 目录隔离，再考虑三路由器验收；保留两次 GUI 试验及失败读取回执。不得终止别人的 PuTTY/MultiCC，也不得关闭系统安全功能。真实长时验收仍由使用者明确触发。dsh-2 仍未合入 Codex 0.5.0；本次没有增加工具数量或上游 implemented 计数。
+
+
+## 18. 新会话的问题清单与排查顺序（2026-10-05）
+
+**新会话先阅读 §17 和本节，再查看解决方案。** 本节不授予新的系统修改、镜像修改、设备启动或长时测试权限。当前只有单台 MSR36-20 创建/启动进入系统阶段的证据；CLI、配置、连通性和无线均未完成。详细过程与回执集中在 [GUI 实测记录](docs/plan-b-gui-probe-20261005.json)，避免重跑已通过的启动来掩盖下面的缺口。
+
+### P0：工程副本没有隔离 HCL 运行时目录（尚未解决）
+
+- 条件：GUI 打开不同的阶段目录，仍分配运行拓扑名 topo1，使用同一用户的 HCL VMs。初始化/正常退出会清理旧目录和 Simware_Base 注册。
+- 实际影响：本次出现 47 个历史运行时文件缺失，发生过两次恢复。最终 52 文件哈希全部一致，原 Base UUID 与注册恢复、原工程 .net 哈希不变，当前无运行 guest。恢复只证明文件/注册，不证明设备配置恢复或 VirtualBox 降级回退。
+- 先查：HCL 的运行时根、拓扑名分配、tryCleanLeftVMs/normal_close 的清理边界。只读检查是否有受支持的隔离入口；没有证据前，不猜启动参数、修改用户环境根或直接调用未知 create/delete 动词。
+- 修复验收：一次打开/创建/启动/停止/退出只触及本次独立 VM 命名空间，历史注册、磁盘及回执保持不变。仅 .net/workingdir 分开不足以通过。解决或明确保护这项之前，不开展混合型号或三路由器批量实测。
+- 证据：GUI 实测记录的 cleanup；本机 `work/feasibility/plan-b-20261002/gui-runtime-restoration-1.json`、`cleanup-final-pointer.json`、`registration-restoration-20261005.json`；完整备份路径在 `backup-receipt.json`。
+
+### P1：原生命名管道读取 PermissionError（尚未解决）
+
+- 条件：唯一测试 VM topo1-device6 已 RUNNING，普通权限 HCL 会话存在 SimwareMultiCC；原生 ConsoleSession 尝试打开实际日志给出的管道，返回 PermissionError，收到 0 字节，未发送任何控制台命令。
+- 不确定点：CRT 的 PermissionError 没有保存底层 Win32 错误码，不能区分真正访问拒绝与 busy/share 情况。管理员上下文、ACL、已有客户端和单实例语义都是候选，尚未定因；不要直接说“管道不可用”或“管理员就能解决”。
+- 先查：实际 .vbox UART 角色、管道创建/连接时序、服务与客户端进程、原生错误码。记录 ACL/占用等观察，不终止别人的 PuTTY/MultiCC，不改 ACL/安全设置，不并发消费同一个流。
+- 当时 UART0 是 RawFile 指向阶段工程 SerialFile/Gui61RouterB.txt，UART1 是 server=true 的 HostPipe；串口文件也曾访问拒绝，后被 HCL 清理，不能把它说成已取得的 CLI 回读。
+- 修复验收：绑定本次设备身份，取得独占、有回显/提示符归因的真实只读输出；陈旧、截断、超时和占用仍拒绝。VM 图标绿色、BIOS、OS 自动配置画面均不替代这个合同。
+- 证据：`work/feasibility/plan-b-20261002/gui-attempt-2/boot-console-receipt-2.json`、`running-topo1-device6.vbox`、`running-VBox.log`、`running-ui.txt`。首个 boot-console-receipt.json 记录的是探针误把 PipeLease 当上下文管理器的错误，不是产品管道失败，须与第二份分开。
+
+### P2：关闭阶段出现厂商镜像重复 UUID（尚未解决/影响未确认）
+
+- 位置：SimwareWrapper 的 closeAllDisk 调用 OpenMedium，部分 ap/diy/f1090 等镜像与已登记的 msr36_b75.vmdk 报同一 UUID 冲突。
+- 目前只观测到关闭阶段警告，没有混合型号创建结果，也没有证明这是升级新引入的回归。应先与 6.0.14 历史日志、镜像头及媒体登记信息作只读对照。
+- 不修改厂商原镜像 UUID，不批量 unregister/delete 原介质，不据此猜测 AC/AP 一定可用或不可用。若方案需要修改独立副本，先明确原件保护、引用关系和回退方式。
+- 证据：`gui-attempt-2/final-wrapper-log.txt` 及 GUI 实测记录 known_shutdown_warning；厂商文件没有被补丁化。
+
+### 已解决但必须延续的注意项
+
+- **旧 COM 生成缓存**：确认过 FindMachine/CreateMachine 旧 DISPID 与 6.1 不符；只隔离 VirtualBox 对应类型库在 Python 3.8 下的两份 .py/.pyc，HCL 自动重建后创建设备成功。旧/新缓存与哈希已保留；不要清空整个 gen_py 或改 HCL 二进制。证据为 `cache-quarantine-receipt.json`、`gui-attempt-1/result.json`、`gui-attempt-2/regenerated-typelib-cache.py.txt`。
+- **管理员 GUI 输入边界**：管理员 HCL 的鼠键输入未产生可靠效果；用户手动关闭并允许普通权限重开后继续。用 Computer Use 当前返回的窗口与新截图；Qt 模态中 UIA 焦点文字曾与实际文件名输入框不一致，必须核对输入实际位置和结果，不盲打、不绕过权限隔离、不用 PowerShell UIA 替代。
+- **新 stop 观察**：GUI 实际发出 stop 6 0 并收到 100，仅记录这一次形状；第二参数语义未补齐，不能自动开放 MCP stop。
+
+### 新会话起点、权限及交付要求
+
+1. 先复核实际 branch/HEAD、运行中的 HCL/guest、VirtualBox 版本和备份存在性。2026-10-05 收口时 dsh-2 为 c9b4eca，源代码/工具仍是旧 DSH 基线；本次下一提交只更新交接。Codex 工作区为 a6a4f78、0.5.0、39 工具/6 资源，两分支未合并。不要把 dsh-2 的 69 项测试当作 Codex 的 138 项回归。
+2. 第一轮以只读定位与修复设计为主：先 runtime 隔离，再控制台错误归因，最后媒体 UUID/混合型号。优先利用已有回执；work/ 被忽略，换机器或新工作区可能缺失，须明确报告。
+3. 原 Windows 启动项方案已撤销，BCD/安全功能/自动重启不在后续操作范围；一次性升级授权已经执行完，不能解释成允许继续更换版本或改镜像。Computer Use 的历史授权仅记录已经完成的这次试验；新的设备操作依照新会话用户指令和适用规则执行。
+4. 保留每次失败；新复测使用新工程、目录和 operation_id，不覆盖或改写已有负面结果。逐层报告“发现 / 修复 / 软件验证 / 真实回读”，全绿之前 full_live_gate_passed=false。
+
+### Suggested skills（面向问题排查）
+
+- `api-and-interface-design`：控制台输入/输出、错误码和证据合同。
+- `tool-failure-handling`：独占租约、超时、失败停止与恢复边界。
+- `code-review-and-quality`：具体修复差异的独立审查。
+- `computer-use:computer-use`：仅在新会话明确需要并允许 GUI 操作时使用。
+- `handoff`：收口时更新已验证范围和剩余问题，引用原始回执。
