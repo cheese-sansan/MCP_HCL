@@ -89,27 +89,33 @@ def _absolute_directory(value: Any, field_name: str) -> str:
 
 
 def _build_create_topology(arguments: dict[str, Any]) -> str:
-    return " ".join((
-        _name(arguments.get("topology"), "topology"),
-        _absolute_directory(arguments.get("working_directory"), "working_directory"),
-        _name(arguments.get("project_name"), "project_name"),
-        _integer(arguments.get("udp_port"), "udp_port", low=1024, high=65535),
-    ))
+    return " ".join(
+        (
+            _name(arguments.get("topology"), "topology"),
+            _absolute_directory(arguments.get("working_directory"), "working_directory"),
+            _name(arguments.get("project_name"), "project_name"),
+            _integer(arguments.get("udp_port"), "udp_port", low=1024, high=65535),
+        )
+    )
 
 
 def _build_delete_udp(arguments: dict[str, Any]) -> str:
-    return " ".join((
-        _integer(arguments.get("device"), "device", low=1, high=1024),
-        "0",
-        "0",
-    ))
+    return " ".join(
+        (
+            _integer(arguments.get("device"), "device", low=1, high=1024),
+            "0",
+            "0",
+        )
+    )
 
 
 def _build_start(arguments: dict[str, Any]) -> str:
-    return " ".join((
-        _integer(arguments.get("device"), "device", low=1, high=1024),
-        "0",
-    ))
+    return " ".join(
+        (
+            _integer(arguments.get("device"), "device", low=1, high=1024),
+            "0",
+        )
+    )
 
 
 def _build_normal_close(arguments: dict[str, Any]) -> str:
@@ -152,9 +158,17 @@ class VerbSpec:
         }
 
 
-def _verb(verb: str, service: str, kind: str, evidence: str, writes: bool, invocable: bool,
-          summary: str, build: Callable[[dict[str, Any]], str] | None = None,
-          note: str = "") -> VerbSpec:
+def _verb(
+    verb: str,
+    service: str,
+    kind: str,
+    evidence: str,
+    writes: bool,
+    invocable: bool,
+    summary: str,
+    build: Callable[[dict[str, Any]], str] | None = None,
+    note: str = "",
+) -> VerbSpec:
     return VerbSpec(verb, service, kind, evidence, writes, invocable, summary, build, note)
 
 
@@ -162,52 +176,176 @@ def _verb(verb: str, service: str, kind: str, evidence: str, writes: bool, invoc
 #: logs but its field semantics are not understood well enough to reproduce it
 #: safely; it is listed for introspection only.
 OBSERVED_VERBS: dict[str, VerbSpec] = {
-    spec.verb: spec for spec in (
-        _verb("version", "simwarewrapper", "read", "verified", False, True,
-              "Backend version string.", None,
-              "Used by hcl_bridge_status."),
-        _verb("system_memory", "simwarewrapper", "read", "verified", False, True,
-              "Reported system memory in MB.", None,
-              "Used by hcl_bridge_status."),
-        _verb("create_topology", "simware", "topology", "observed", True, True,
-              "Bind a backend topology context to a project directory.",
-              _build_create_topology,
-              "Argument order confirmed from HCL's own request line; field meanings beyond "
-              "the directory are still inferred."),
-        _verb("start", "simware", "power", "observed", True, True,
-              "Power on one device (device index).", _build_start,
-              "Observed exactly once, as the command HCL sent when 启动 was invoked. That "
-              "attempt failed for a hypervisor reason (VERR_NEM_VM_CREATE_FAILED), so the "
-              "verb itself is not disproven but is NOT verified to boot a guest."),
-        _verb("start_recover", "simware", "power", "observed", True, True,
-              "Recover/start the topology's devices.", None,
-              "No arguments observed."),
-        _verb("delete_udp", "simware", "console", "observed", True, True,
-              "Tear down one device's console/UDP channel.", _build_delete_udp,
-              "Trailing flags reproduced from observation."),
-        _verb("normal_close", "simware", "lifecycle", "observed", True, True,
-              "Ask the backend wrapper to close normally.", _build_normal_close),
-        _verb("set_hcl_tcp", "simware", "lifecycle", "observed", True, True,
-              "Tell the backend which TCP port HCL listens on.", _build_set_hcl_tcp,
-              "18600 was the only observed value."),
-        _verb("set_hcl_normal_close", "simware", "lifecycle", "observed", True, True,
-              "Set the normal-close policy.", _build_set_hcl_normal_close),
-        _verb("create_udp", "simware", "console", "inferred", True, False,
-              "Allocate a device console; the reply carries the pipe name.", None,
-              "Reply shape is known (a pipe path plus a boolean) but the UDP port arguments "
-              "are only partly understood. Not needed: the pipe name is deterministic once "
-              "HCL has loaded the topology."),
-        _verb("create", "simware", "device", "inferred", True, False,
-              "Create one device VM. 14 positional fields, six of them unexplained.", None,
-              "Refused on purpose: guessing memory/slot/flag fields could create broken VMs."),
-        _verb("delete", "simware", "device", "inferred", True, False,
-              "Delete one device VM.", None, "Argument shape not fully sampled."),
-        _verb("set_memory", "simware", "device", "inferred", True, False,
-              "Adjust a device's memory.", None, "Not sampled."),
-        _verb("set_version_path", "simware", "device", "inferred", True, False,
-              "Point a device at a firmware image.", None, "Not sampled."),
-        _verb("save", "simware", "lifecycle", "inferred", True, False,
-              "Persist backend state.", None, "Not sampled."),
+    spec.verb: spec
+    for spec in (
+        _verb(
+            "version",
+            "simwarewrapper",
+            "read",
+            "verified",
+            False,
+            True,
+            "Backend version string.",
+            None,
+            "Used by hcl_bridge_status.",
+        ),
+        _verb(
+            "system_memory",
+            "simwarewrapper",
+            "read",
+            "verified",
+            False,
+            True,
+            "Reported system memory in MB.",
+            None,
+            "Used by hcl_bridge_status.",
+        ),
+        _verb(
+            "create_topology",
+            "simware",
+            "topology",
+            "observed",
+            True,
+            True,
+            "Bind a backend topology context to a project directory.",
+            _build_create_topology,
+            "Argument order confirmed from HCL's own request line; field meanings beyond "
+            "the directory are still inferred.",
+        ),
+        _verb(
+            "start",
+            "simware",
+            "power",
+            "observed",
+            True,
+            True,
+            "Power on one device (device index).",
+            _build_start,
+            "Observed exactly once, as the command HCL sent when 启动 was invoked. That "
+            "attempt failed for a hypervisor reason (VERR_NEM_VM_CREATE_FAILED), so the "
+            "verb itself is not disproven but is NOT verified to boot a guest.",
+        ),
+        _verb(
+            "start_recover",
+            "simware",
+            "power",
+            "observed",
+            True,
+            True,
+            "Recover/start the topology's devices.",
+            None,
+            "No arguments observed.",
+        ),
+        _verb(
+            "delete_udp",
+            "simware",
+            "console",
+            "observed",
+            True,
+            True,
+            "Tear down one device's console/UDP channel.",
+            _build_delete_udp,
+            "Trailing flags reproduced from observation.",
+        ),
+        _verb(
+            "normal_close",
+            "simware",
+            "lifecycle",
+            "observed",
+            True,
+            True,
+            "Ask the backend wrapper to close normally.",
+            _build_normal_close,
+        ),
+        _verb(
+            "set_hcl_tcp",
+            "simware",
+            "lifecycle",
+            "observed",
+            True,
+            True,
+            "Tell the backend which TCP port HCL listens on.",
+            _build_set_hcl_tcp,
+            "18600 was the only observed value.",
+        ),
+        _verb(
+            "set_hcl_normal_close",
+            "simware",
+            "lifecycle",
+            "observed",
+            True,
+            True,
+            "Set the normal-close policy.",
+            _build_set_hcl_normal_close,
+        ),
+        _verb(
+            "create_udp",
+            "simware",
+            "console",
+            "inferred",
+            True,
+            False,
+            "Allocate a device console; the reply carries the pipe name.",
+            None,
+            "Reply shape is known (a pipe path plus a boolean) but the UDP port arguments "
+            "are only partly understood. Not needed: the pipe name is deterministic once "
+            "HCL has loaded the topology.",
+        ),
+        _verb(
+            "create",
+            "simware",
+            "device",
+            "inferred",
+            True,
+            False,
+            "Create one device VM. 14 positional fields, six of them unexplained.",
+            None,
+            "Refused on purpose: guessing memory/slot/flag fields could create broken VMs.",
+        ),
+        _verb(
+            "delete",
+            "simware",
+            "device",
+            "inferred",
+            True,
+            False,
+            "Delete one device VM.",
+            None,
+            "Argument shape not fully sampled.",
+        ),
+        _verb(
+            "set_memory",
+            "simware",
+            "device",
+            "inferred",
+            True,
+            False,
+            "Adjust a device's memory.",
+            None,
+            "Not sampled.",
+        ),
+        _verb(
+            "set_version_path",
+            "simware",
+            "device",
+            "inferred",
+            True,
+            False,
+            "Point a device at a firmware image.",
+            None,
+            "Not sampled.",
+        ),
+        _verb(
+            "save",
+            "simware",
+            "lifecycle",
+            "inferred",
+            True,
+            False,
+            "Persist backend state.",
+            None,
+            "Not sampled.",
+        ),
     )
 }
 
@@ -254,8 +392,9 @@ class _Wire:
         self.sent_commands: list[str] = []
         self._connection.settimeout(timeout)
 
-    def exchange(self, command: str, *,
-                 accepted_codes: frozenset[int] | None = _SUCCESS_CODES) -> dict[str, Any]:
+    def exchange(
+        self, command: str, *, accepted_codes: frozenset[int] | None = _SUCCESS_CODES
+    ) -> dict[str, Any]:
         request_id = secrets.randbelow(900_000_000) + 100_000_000
         self._connection.sendall(f"{request_id} {command}\n".encode("ascii"))
         self.sent_commands.append(" ".join(command.split()[:2]))
@@ -263,8 +402,9 @@ class _Wire:
         deadline = time.monotonic() + self._timeout
         match: dict[str, Any] | None = None
         while True:
-            match = next((frame for frame in _frames(bytes(response))
-                          if frame["id"] == request_id), None)
+            match = next(
+                (frame for frame in _frames(bytes(response)) if frame["id"] == request_id), None
+            )
             if match is not None:
                 break
             remaining = deadline - time.monotonic()
@@ -291,23 +431,35 @@ class _Wire:
         if accepted_codes is not None and code not in accepted_codes:
             raise BackendError(f"Backend rejected the read-only probe with code {code}")
         return {
-            "request_id": request_id, "command": command,
-            "response_code": code, "value": match["value"],
+            "request_id": request_id,
+            "command": command,
+            "response_code": code,
+            "value": match["value"],
             "extra_frames": max(len(frames) - 1, 0),
             "observed_at": datetime.now(timezone.utc).isoformat(),
             "layer": "backend_protocol",
         }
 
 
-def _invoke(exchange: Callable[[str], dict[str, Any]], verb: str,
-            arguments: dict[str, Any] | None, *, writes_enabled: bool) -> dict[str, Any]:
+def _invoke(
+    exchange: Callable[[str], dict[str, Any]],
+    verb: str,
+    arguments: dict[str, Any] | None,
+    *,
+    writes_enabled: bool,
+) -> dict[str, Any]:
     """Shared body for one registry verb over any exchange callable."""
     arguments = dict(arguments or {})
     operation_id = uuid4().hex
     result: dict[str, Any] = {
-        "status": "rejected", "operation": "backend_invoke", "operation_id": operation_id,
-        "verb": verb, "target_project": None, "evidence": [],
-        "runtime_verified": False, "full_live_gate_passed": False,
+        "status": "rejected",
+        "operation": "backend_invoke",
+        "operation_id": operation_id,
+        "verb": verb,
+        "target_project": None,
+        "evidence": [],
+        "runtime_verified": False,
+        "full_live_gate_passed": False,
         "live_canvas_verified": False,
     }
     spec = OBSERVED_VERBS.get(verb)
@@ -315,18 +467,22 @@ def _invoke(exchange: Callable[[str], dict[str, Any]], verb: str,
         result["errors"] = [{"code": "unknown_verb", "message": f"Verb is not observed: {verb}"}]
         return result
     if not spec.invocable:
-        result["errors"] = [{
-            "code": "verb_not_invocable",
-            "message": f"{verb} was observed but its field semantics are not understood; "
-                       f"it is introspection-only.",
-        }]
+        result["errors"] = [
+            {
+                "code": "verb_not_invocable",
+                "message": f"{verb} was observed but its field semantics are not understood; "
+                f"it is introspection-only.",
+            }
+        ]
         return result
     if spec.writes and not writes_enabled:
-        result["errors"] = [{
-            "code": "writes_disabled",
-            "message": "This verb changes HCL state. Start the server with "
-                       "MCP_HCL_ALLOW_LIVE_WRITE=1 after an explicit decision.",
-        }]
+        result["errors"] = [
+            {
+                "code": "writes_disabled",
+                "message": "This verb changes HCL state. Start the server with "
+                "MCP_HCL_ALLOW_LIVE_WRITE=1 after an explicit decision.",
+            }
+        ]
         return result
     try:
         payload = spec.build(arguments) if spec.build else ""
@@ -348,10 +504,12 @@ def _invoke(exchange: Callable[[str], dict[str, Any]], verb: str,
         result["status"] = "accepted"
         result["verified_scope"] = "backend_accepted_the_command_only"
     else:
-        result["errors"] = [{
-            "code": "backend_error_code",
-            "message": f"Backend answered with code {reply['response_code']}",
-        }]
+        result["errors"] = [
+            {
+                "code": "backend_error_code",
+                "message": f"Backend answered with code {reply['response_code']}",
+            }
+        ]
     return result
 
 
@@ -380,16 +538,26 @@ class BackendSession:
                 return self.wire.exchange(command, accepted_codes=None)
             finally:
                 self.commands_sent.extend(self.wire.sent_commands[before:])
-        result = _invoke(exchange,
-                         verb, arguments, writes_enabled=self.writes_enabled)
+
+        result = _invoke(exchange, verb, arguments, writes_enabled=self.writes_enabled)
         return result
 
-    def open_topology(self, topology: str, working_directory: str,
-                      project_name: str | None = None, udp_port: int = 10000) -> dict[str, Any]:
-        result = self.invoke("create_topology", {
-            "topology": topology, "working_directory": working_directory,
-            "project_name": project_name, "udp_port": udp_port,
-        })
+    def open_topology(
+        self,
+        topology: str,
+        working_directory: str,
+        project_name: str | None = None,
+        udp_port: int = 10000,
+    ) -> dict[str, Any]:
+        result = self.invoke(
+            "create_topology",
+            {
+                "topology": topology,
+                "working_directory": working_directory,
+                "project_name": project_name,
+                "udp_port": udp_port,
+            },
+        )
         if result.get("status") == "accepted":
             self.topology = topology
             self.project_directory = working_directory
@@ -422,12 +590,17 @@ class HclBackend:
             raise ValueError("Invalid backend port or timeout")
 
     # ------------------------------------------------------------------ wire
-    def _exchange(self, command: str, *,
-                  accepted_codes: frozenset[int] | None = _SUCCESS_CODES) -> dict[str, Any]:
+    def _exchange(
+        self, command: str, *, accepted_codes: frozenset[int] | None = _SUCCESS_CODES
+    ) -> dict[str, Any]:
         """Open one connection, send one command, parse the framed reply."""
         try:
-            with socket.create_connection((self.host, self.port), timeout=self.timeout) as connection:
-                return _Wire(connection, self.timeout).exchange(command, accepted_codes=accepted_codes)
+            with socket.create_connection(
+                (self.host, self.port), timeout=self.timeout
+            ) as connection:
+                return _Wire(connection, self.timeout).exchange(
+                    command, accepted_codes=accepted_codes
+                )
         except OSError as exc:
             raise BackendError(f"Backend connection failed: {exc.__class__.__name__}") from exc
 
@@ -440,8 +613,10 @@ class HclBackend:
     # ------------------------------------------------------------- verb API
     def verbs(self) -> list[dict[str, Any]]:
         """Introspection for ``hcl_backend_capabilities``; never touches the network."""
-        return [spec.describe(writes_enabled=self.allow_writes)
-                for spec in sorted(OBSERVED_VERBS.values(), key=lambda item: (item.service, item.verb))]
+        return [
+            spec.describe(writes_enabled=self.allow_writes)
+            for spec in sorted(OBSERVED_VERBS.values(), key=lambda item: (item.service, item.verb))
+        ]
 
     def invoke(self, verb: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
         """Call one registry verb on a **one-shot** connection.
@@ -451,8 +626,12 @@ class HclBackend:
         needs :meth:`connect`, because the wrapper keys the topology to the
         connection.
         """
-        return _invoke(lambda command: self._exchange(command, accepted_codes=None),
-                       verb, arguments, writes_enabled=self.allow_writes)
+        return _invoke(
+            lambda command: self._exchange(command, accepted_codes=None),
+            verb,
+            arguments,
+            writes_enabled=self.allow_writes,
+        )
 
     def connect(self) -> BackendSession:
         """Open a persistent connection for topology-scoped verbs."""

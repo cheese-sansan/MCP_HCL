@@ -13,27 +13,32 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_hcl import __version__
 from mcp_hcl import console as hcl_console
-from mcp_hcl.contracts import StrictFastMCP
 from mcp_hcl.artifact_store import ArtifactRetries
 from mcp_hcl.backend import BackendError, HclBackend
-from mcp_hcl.catalog import CatalogError, HclCatalog
-from mcp_hcl.project import ProjectError, ProjectStore
-from mcp_hcl.parity import REGISTERED_RESOURCES, REGISTERED_TOOLS, parity_report
-from mcp_hcl.topology import validate_plan
-from mcp_hcl.offline_tools import register_offline
-from mcp_hcl.gui_relay import HclGuiRelay, register_gui_tools
 from mcp_hcl.build_pipeline import register_build_tool
-from mcp_hcl.project_edit import register_edit_tools
+from mcp_hcl.catalog import CatalogError, HclCatalog
+from mcp_hcl.contracts import StrictFastMCP
 from mcp_hcl.deployment import Deployment, register_deployment_tools
-from mcp_hcl.inspection import Inspection,register_inspection_tools
-from mcp_hcl.reconciliation import Reconciliation,register_reconciliation_tools
-from mcp_hcl.security_audit import SecurityAudit,register_security_audit_tool
-from mcp_hcl.policy import Policy,register_policy_tools
+from mcp_hcl.gui_relay import HclGuiRelay, register_gui_tools
+from mcp_hcl.inspection import Inspection, register_inspection_tools
+from mcp_hcl.offline_tools import register_offline
+from mcp_hcl.parity import REGISTERED_RESOURCES, REGISTERED_TOOLS, parity_report
+from mcp_hcl.policy import Policy, register_policy_tools
+from mcp_hcl.project import ProjectError, ProjectStore
+from mcp_hcl.project_edit import register_edit_tools
+from mcp_hcl.reconciliation import Reconciliation, register_reconciliation_tools
+from mcp_hcl.security_audit import SecurityAudit, register_security_audit_tool
+from mcp_hcl.topology import validate_plan
 
 
 def live_writes_enabled() -> bool:
     """Single master switch for every action that changes HCL or device state."""
-    return os.environ.get("MCP_HCL_ALLOW_LIVE_WRITE", "").strip().lower() in {"1", "true", "yes", "on"}
+    return os.environ.get("MCP_HCL_ALLOW_LIVE_WRITE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def create_store() -> ProjectStore:
@@ -45,19 +50,30 @@ def create_store() -> ProjectStore:
     return ProjectStore(project_roots=project_roots, output_root=output_root)
 
 
-def create_server(store: ProjectStore | None = None, backend: HclBackend | None = None,
-                  catalog: HclCatalog | None = None, console: hcl_console.HclConsole | None = None) -> FastMCP:
+def create_server(
+    store: ProjectStore | None = None,
+    backend: HclBackend | None = None,
+    catalog: HclCatalog | None = None,
+    console: hcl_console.HclConsole | None = None,
+) -> FastMCP:
     store = store or create_store()
     writes = live_writes_enabled()
-    backend = backend or HclBackend(port=int(os.environ.get("MCP_HCL_BACKEND_PORT", "16600")),
-                                    allow_writes=writes)
+    backend = backend or HclBackend(
+        port=int(os.environ.get("MCP_HCL_BACKEND_PORT", "16600")), allow_writes=writes
+    )
     catalog = catalog or HclCatalog(Path(os.environ.get("MCP_HCL_INSTALL_ROOT", "D:/HCL")))
-    console = console or hcl_console.HclConsole(writes_enabled=writes,lease_root=store.output_root/'.console-leases')
+    console = console or hcl_console.HclConsole(
+        writes_enabled=writes, lease_root=store.output_root / ".console-leases"
+    )
     # The wrapper keys a topology to the TCP connection, so at most one backend
     # session is held at a time: the one hcl_backend_topology opened.
     session_lock = threading.Lock()
-    session_state: dict[str, Any] = {"session": None, "topology": None, "project": None,
-                                     "commands": []}
+    session_state: dict[str, Any] = {
+        "session": None,
+        "topology": None,
+        "project": None,
+        "commands": [],
+    }
     mcp = StrictFastMCP(
         name="mcp-hcl",
         instructions=(
@@ -92,10 +108,23 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                 "state-changing action is disabled unless MCP_HCL_ALLOW_LIVE_WRITE=1"
             ),
             "catalog": "local model defaults and port families; runtime firmware unverified",
-            "offline_layer": {"typed_service_generators": ["dhcp", "ospf", "rip", "vlan", "acl", "nat", "security", "wireless", "qos", "netstream"],
-                              "file_executor": "hcl_stage_plan",
-                              "operation_manifests_executable": False,
-                              "full_p1_acceptance": "incomplete: AC/AP default CLI mappings and per-model NIC mode compatibility are unverified"},
+            "offline_layer": {
+                "typed_service_generators": [
+                    "dhcp",
+                    "ospf",
+                    "rip",
+                    "vlan",
+                    "acl",
+                    "nat",
+                    "security",
+                    "wireless",
+                    "qos",
+                    "netstream",
+                ],
+                "file_executor": "hcl_stage_plan",
+                "operation_manifests_executable": False,
+                "full_p1_acceptance": "incomplete: AC/AP default CLI mappings and per-model NIC mode compatibility are unverified",
+            },
         }
 
     @mcp.resource("hcl://capabilities")
@@ -107,8 +136,14 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         try:
             return action()
         except (CatalogError, OSError, UnicodeError) as exc:
-            return {"status": "partial", "operation_id": uuid4().hex, "target_project": None,
-                    "error": str(exc), "runtime_verified": False, "evidence": []}
+            return {
+                "status": "partial",
+                "operation_id": uuid4().hex,
+                "target_project": None,
+                "error": str(exc),
+                "runtime_verified": False,
+                "evidence": [],
+            }
 
     @mcp.tool()
     def hcl_list_devices() -> dict[str, Any]:
@@ -121,15 +156,16 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         return catalog_read(lambda: catalog.device_details(model))
 
     @mcp.tool()
-    def hcl_validate_plan(plan: dict[str, Any],
-                          validation_level: Literal['topology','configuration'] = 'topology') -> dict[str, Any]:
+    def hcl_validate_plan(
+        plan: dict[str, Any], validation_level: Literal["topology", "configuration"] = "topology"
+    ) -> dict[str, Any]:
         """Validate intent and, by default, require a connected declared wired topology.
 
         Use Comware interface names, not .net scene port keys. Validation does
         not prove firmware support, deployment or actual network connectivity.
         configuration checks individual intents without requiring one wired component.
         """
-        return validate_plan(plan, catalog,validation_level=validation_level)
+        return validate_plan(plan, catalog, validation_level=validation_level)
 
     @mcp.resource("hcl://catalog/devices")
     def devices_resource() -> str:
@@ -150,16 +186,27 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         return backend.status()
 
     @mcp.tool()
-    def hcl_stage_copy(project_path: str, stage_name: str, idempotency_key: str | None = None) -> dict[str, Any]:
+    def hcl_stage_copy(
+        project_path: str, stage_name: str, idempotency_key: str | None = None
+    ) -> dict[str, Any]:
         """Create an isolated HCL project for safe live-gate verification."""
         try:
             result = store.stage_copy(project_path, stage_name)
-            return {**result, "operation_id": uuid4().hex, "target_project": result["project_file"],
-                    "evidence": [{"source": result["project_file"], "layer": "saved_project"}],
-                    "full_live_gate_passed": False}
+            return {
+                **result,
+                "operation_id": uuid4().hex,
+                "target_project": result["project_file"],
+                "evidence": [{"source": result["project_file"], "layer": "saved_project"}],
+                "full_live_gate_passed": False,
+            }
         except (ProjectError, OSError) as exc:
-            return {"status": "rejected", "error": str(exc), "operation_id": uuid4().hex,
-                    "target_project": project_path, "evidence": []}
+            return {
+                "status": "rejected",
+                "error": str(exc),
+                "operation_id": uuid4().hex,
+                "target_project": project_path,
+                "evidence": [],
+            }
 
     @mcp.tool()
     def hcl_list_projects() -> dict[str, Any]:
@@ -190,8 +237,15 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         """Copy a project, add a device cloned from a known model, and optionally link it."""
         try:
             return store.stage_add_device(
-                project_path, stage_name, template_device, new_name, x, y,
-                connect_to, connect_to_port, new_port,
+                project_path,
+                stage_name,
+                template_device,
+                new_name,
+                x,
+                y,
+                connect_to,
+                connect_to_port,
+                new_port,
             )
         except (ProjectError, OSError) as exc:
             return {"status": "rejected", "error": str(exc)}
@@ -218,10 +272,16 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     # exists here.  All state-changing actions need MCP_HCL_ALLOW_LIVE_WRITE=1.
 
     def _rejected(code: str, message: str, operation: str) -> dict[str, Any]:
-        return {"status": "rejected", "operation": operation, "operation_id": uuid4().hex,
-                "target_project": None, "evidence": [],
-                "errors": [{"code": code, "message": message}],
-                "runtime_verified": False, "full_live_gate_passed": False}
+        return {
+            "status": "rejected",
+            "operation": operation,
+            "operation_id": uuid4().hex,
+            "target_project": None,
+            "evidence": [],
+            "errors": [{"code": code, "message": message}],
+            "runtime_verified": False,
+            "full_live_gate_passed": False,
+        }
 
     @mcp.tool()
     def hcl_backend_capabilities() -> dict[str, Any]:
@@ -257,7 +317,7 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
 
     @mcp.tool()
     def hcl_backend_topology(
-        action: Literal['open', 'close', 'status'],
+        action: Literal["open", "close", "status"],
         topology: str | None = None,
         working_directory: str | None = None,
         project_name: str | None = None,
@@ -273,19 +333,31 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         ``topology`` and a ``working_directory`` inside a configured project root.
         """
         with session_lock:
-            if action in {"close", "status"} and any(v is not None for v in (topology, working_directory, project_name)):
-                return _rejected("invalid_arguments", "close/status do not accept topology, working_directory or project_name", "backend_topology")
+            if action in {"close", "status"} and any(
+                v is not None for v in (topology, working_directory, project_name)
+            ):
+                return _rejected(
+                    "invalid_arguments",
+                    "close/status do not accept topology, working_directory or project_name",
+                    "backend_topology",
+                )
             if action in {"close", "status"} and udp_port != 10000:
-                return _rejected("invalid_arguments", "udp_port belongs to action=open", "backend_topology")
+                return _rejected(
+                    "invalid_arguments", "udp_port belongs to action=open", "backend_topology"
+                )
             if action == "status":
-                return {"status": "verified" if session_state["session"] else "unverified",
-                        "operation": "backend_topology_status", "operation_id": uuid4().hex,
-                        "target_project": session_state["project"],
-                        "topology": session_state["topology"],
-                        "session_open": session_state["session"] is not None,
-                        "commands_sent": list(session_state.get("commands", [])),
-                        "evidence": [], "runtime_verified": False,
-                        "full_live_gate_passed": False}
+                return {
+                    "status": "verified" if session_state["session"] else "unverified",
+                    "operation": "backend_topology_status",
+                    "operation_id": uuid4().hex,
+                    "target_project": session_state["project"],
+                    "topology": session_state["topology"],
+                    "session_open": session_state["session"] is not None,
+                    "commands_sent": list(session_state.get("commands", [])),
+                    "evidence": [],
+                    "runtime_verified": False,
+                    "full_live_gate_passed": False,
+                }
             if not backend.allow_writes:
                 # The master switch is checked before any state, so a disabled
                 # server can never look like it merely lacks a session.
@@ -298,8 +370,9 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
             if action == "close":
                 session = session_state["session"]
                 if session is None:
-                    return _rejected("no_open_session", "No backend topology session is open",
-                                     "backend_topology")
+                    return _rejected(
+                        "no_open_session", "No backend topology session is open", "backend_topology"
+                    )
                 try:
                     result = session.close_topology()
                 finally:
@@ -307,40 +380,59 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
                     session_state.update(session=None, topology=None, project=None, commands=[])
                 return result
             if action != "open":
-                return _rejected("unknown_action", "action must be 'open', 'close' or 'status'",
-                                 "backend_topology")
+                return _rejected(
+                    "unknown_action",
+                    "action must be 'open', 'close' or 'status'",
+                    "backend_topology",
+                )
             if session_state["session"] is not None:
-                return _rejected("session_already_open",
-                                 "Close the current backend topology session first",
-                                 "backend_topology")
+                return _rejected(
+                    "session_already_open",
+                    "Close the current backend topology session first",
+                    "backend_topology",
+                )
             if not topology or not working_directory:
-                return _rejected("missing_argument",
-                                 "action='open' needs topology and working_directory",
-                                 "backend_topology")
+                return _rejected(
+                    "missing_argument",
+                    "action='open' needs topology and working_directory",
+                    "backend_topology",
+                )
             try:
                 resolved = Path(working_directory).resolve()
             except (OSError, ValueError) as exc:
-                return _rejected("invalid_argument", f"Cannot resolve working_directory: {exc}",
-                                 "backend_topology")
+                return _rejected(
+                    "invalid_argument",
+                    f"Cannot resolve working_directory: {exc}",
+                    "backend_topology",
+                )
             if not any(resolved.is_relative_to(root) for root in store.project_roots):
-                return _rejected("outside_configured_roots",
-                                 "working_directory must be inside a configured project root",
-                                 "backend_topology")
+                return _rejected(
+                    "outside_configured_roots",
+                    "working_directory must be inside a configured project root",
+                    "backend_topology",
+                )
             try:
                 session = backend.connect()
             except BackendError as exc:
                 return _rejected("backend_unreachable", str(exc), "backend_topology")
-            result = session.open_topology(topology, str(resolved),
-                                           project_name or resolved.name, udp_port)
+            result = session.open_topology(
+                topology, str(resolved), project_name or resolved.name, udp_port
+            )
             if result.get("status") != "accepted":
                 session.close()
                 return result
-            session_state.update(session=session, topology=topology, project=str(resolved),
-                                 commands=list(session.commands_sent))
-            result['target_project'] = str(resolved)
+            session_state.update(
+                session=session,
+                topology=topology,
+                project=str(resolved),
+                commands=list(session.commands_sent),
+            )
+            result["target_project"] = str(resolved)
             result["session_open"] = True
-            result["next_step"] = ("Topology verbs must use this session; the wrapper keys the "
-                                   "topology to the connection.")
+            result["next_step"] = (
+                "Topology verbs must use this session; the wrapper keys the "
+                "topology to the connection."
+            )
             return result
 
     @mcp.tool()
@@ -371,12 +463,14 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         with session_lock:
             session = session_state["session"]
             if session is None:
-                return _rejected("no_open_session",
-                                 "Open a backend topology session first: hcl_backend_topology "
-                                 "action='open' (the topology context is per connection)",
-                                 "device_power")
+                return _rejected(
+                    "no_open_session",
+                    "Open a backend topology session first: hcl_backend_topology "
+                    "action='open' (the topology context is per connection)",
+                    "device_power",
+                )
             result = session.invoke("start", {"device": device})
-            result['target_project'] = session.project_directory
+            result["target_project"] = session.project_directory
             session_state["commands"] = list(session.commands_sent)
             result["topology"] = session.topology
             return result
@@ -397,13 +491,18 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         cannot be mistaken for this request's answer.
         """
         if pipe is not None and (topology is not None or device is not None):
-            return _rejected("invalid_arguments", "pipe and topology/device are mutually exclusive", "console_exec")
+            return _rejected(
+                "invalid_arguments",
+                "pipe and topology/device are mutually exclusive",
+                "console_exec",
+            )
         if not console.writes_enabled:
             return _rejected("writes_disabled", "Live writes are disabled", "console_exec")
         if pipe is None:
             if topology is None or device is None:
-                return _rejected("missing_argument",
-                                 "Supply either pipe, or topology and device", "console_exec")
+                return _rejected(
+                    "missing_argument", "Supply either pipe, or topology and device", "console_exec"
+                )
             try:
                 pipe = hcl_console.endpoint(topology, device)
             except hcl_console.ConsoleError as exc:
@@ -416,10 +515,10 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
     register_build_tool(mcp, store, catalog, relay)
     register_edit_tools(mcp, store, catalog)
     register_deployment_tools(mcp, Deployment(store, catalog=catalog, writes_enabled=writes))
-    register_inspection_tools(mcp, Inspection(store,writes_enabled=writes))
-    register_reconciliation_tools(mcp, Reconciliation(store,catalog,writes_enabled=writes))
-    register_security_audit_tool(mcp, SecurityAudit(store,writes_enabled=writes))
-    register_policy_tools(mcp,Policy(store,catalog,writes_enabled=writes))
+    register_inspection_tools(mcp, Inspection(store, writes_enabled=writes))
+    register_reconciliation_tools(mcp, Reconciliation(store, catalog, writes_enabled=writes))
+    register_security_audit_tool(mcp, SecurityAudit(store, writes_enabled=writes))
+    register_policy_tools(mcp, Policy(store, catalog, writes_enabled=writes))
     return mcp
 
 

@@ -31,16 +31,17 @@ import unittest
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable
 
+from contract_inventory import RESOURCES as EXPECTED_RESOURCES
+from contract_inventory import TOOLS as EXPECTED_TOOLS
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.shared.exceptions import McpError
 from pydantic import AnyUrl
 
-from contract_inventory import TOOLS as EXPECTED_TOOLS, RESOURCES as EXPECTED_RESOURCES
-
 # Any tool whose name suggests live canvas, power, console or capture control.
-LIVE_TOOL_NAME = re.compile(r"deploy|start|stop|power|cli|console|ping|capture|canvas|packet",
-                            re.IGNORECASE)
+LIVE_TOOL_NAME = re.compile(
+    r"deploy|start|stop|power|cli|console|ping|capture|canvas|packet", re.IGNORECASE
+)
 
 MSR_CFG = """ version 7.1.064, Release 0427P22
 interface GigabitEthernet0/0
@@ -102,12 +103,19 @@ def write_project(directory: Path, *, project_name: str = "Lab One") -> Path:
     metadata = {
         "projectInfo": {"name": project_name, "path": directory.name},
         "deviceInfoList": [
-            {"resourceName": name, "resourceCategory": "router", "resourceModel": "MSR36-20",
-             "resourceVersion": "test", "configPath": f"DeviceConfig\\{name}.cfg"}
+            {
+                "resourceName": name,
+                "resourceCategory": "router",
+                "resourceModel": "MSR36-20",
+                "resourceVersion": "test",
+                "configPath": f"DeviceConfig\\{name}.cfg",
+            }
             for name in ("R1", "R2")
         ],
     }
-    (directory / "project.json").write_text(json.dumps(metadata, ensure_ascii=False), encoding="utf-8")
+    (directory / "project.json").write_text(
+        json.dumps(metadata, ensure_ascii=False), encoding="utf-8"
+    )
     (directory / f"{directory.name}.net").write_bytes(
         NET_TEMPLATE.format(workingdir=directory).replace("\n", "\r\n").encode("utf-8")
     )
@@ -142,17 +150,21 @@ def build_fixture(root: Path) -> dict[str, Any]:
 @contextlib.asynccontextmanager
 async def mcp_session(paths: dict[str, Any]) -> AsyncIterator[ClientSession]:
     environment = dict(os.environ)
-    environment.update({
-        "MCP_HCL_PROJECT_ROOTS": f"{paths['root']};{paths['other_root']}",
-        "MCP_HCL_OUTPUT_ROOT": str(paths["output"]),
-        "MCP_HCL_INSTALL_ROOT": str(paths["install"]),
-        # a port nothing listens on: these tests never assert backend state
-        "MCP_HCL_BACKEND_PORT": "16666",
-        "MCP_HCL_ALLOW_LIVE_WRITE": "0",
-    })
+    environment.update(
+        {
+            "MCP_HCL_PROJECT_ROOTS": f"{paths['root']};{paths['other_root']}",
+            "MCP_HCL_OUTPUT_ROOT": str(paths["output"]),
+            "MCP_HCL_INSTALL_ROOT": str(paths["install"]),
+            # a port nothing listens on: these tests never assert backend state
+            "MCP_HCL_BACKEND_PORT": "16666",
+            "MCP_HCL_ALLOW_LIVE_WRITE": "0",
+        }
+    )
     params = StdioServerParameters(
-        command=sys.executable, args=["-m", "mcp_hcl.server"],
-        env=environment, cwd=str(paths["root"]),
+        command=sys.executable,
+        args=["-m", "mcp_hcl.server"],
+        env=environment,
+        cwd=str(paths["root"]),
     )
     async with stdio_client(params) as (reader, writer):
         async with ClientSession(reader, writer) as session:
@@ -188,9 +200,13 @@ def base_plan() -> dict[str, Any]:
             {"id": "r1", "name": "R1", "model": "MSR36-20", "x": 0, "y": 0},
             {"id": "r2", "name": "R2", "model": "MSR36-20", "x": 200, "y": 0},
         ],
-        "links": [{"a": {"device": "r1", "interface": "GigabitEthernet0/0"},
-                   "b": {"device": "r2", "interface": "GigabitEthernet0/0"},
-                   "medium": "ethernet"}],
+        "links": [
+            {
+                "a": {"device": "r1", "interface": "GigabitEthernet0/0"},
+                "b": {"device": "r2", "interface": "GigabitEthernet0/0"},
+                "medium": "ethernet",
+            }
+        ],
         "addresses": [],
         "routes": [],
         "services": [],
@@ -211,57 +227,96 @@ def semantic_cases() -> list[tuple[str, Callable[[dict], None], str]]:
         plan["addresses"].append({"device": device, "interface": interface, "cidr": cidr})
 
     return [
-        ("duplicate_device_id",
-         lambda p: p["devices"][1].update({"id": "r1"}), "duplicate_device_id"),
-        ("duplicate_device_name",
-         lambda p: p["devices"][1].update({"name": "R1"}), "duplicate_device_name"),
-        ("unknown_model",
-         lambda p: p["devices"][0].update({"model": "NOPE-1"}), "unknown_model"),
-        ("unknown_device_in_link",
-         lambda p: set_link(p, 0, b={"device": "r9", "interface": "GigabitEthernet0/0"}),
-         "unknown_device"),
-        ("unknown_physical_interface",
-         lambda p: set_link(p, 0, b={"device": "r2", "interface": "GigabitEthernet9/9"}),
-         "unknown_physical_interface"),
-        ("null0_is_not_connectable",
-         lambda p: set_link(p, 0, b={"device": "r2", "interface": "NULL0"}),
-         "unknown_physical_interface"),
-        ("duplicate_port",
-         lambda p: add_link(p, a={"device": "r1", "interface": "GigabitEthernet0/0"},
-                            b={"device": "r2", "interface": "GigabitEthernet0/1"},
-                            medium="ethernet"),
-         "duplicate_port"),
-        ("self_link",
-         lambda p: set_link(p, 0, b={"device": "r1", "interface": "GigabitEthernet0/0"}),
-         "self_link"),
-        ("medium_mismatch_serial_on_ethernet",
-         lambda p: set_link(p, 0, a={"device": "r1", "interface": "Serial1/0"},
-                            medium="ethernet"),
-         "medium_mismatch"),
-        ("duplicate_ip",
-         lambda p: (add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.1/30"),
-                    add_address(p, "r2", "GigabitEthernet0/0", "10.0.0.1/30")),
-         "duplicate_ip"),
-        ("second_address_same_family",
-         lambda p: (add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.1/30"),
-                    add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.5/30")),
-         "duplicate_interface_address_family"),
-        ("reserved_network_address",
-         lambda p: add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.0/30"),
-         "reserved_host_address"),
-        ("reserved_broadcast_address",
-         lambda p: add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.3/30"),
-         "reserved_host_address"),
-        ("route_address_family_mismatch",
-         lambda p: p["routes"].append({"device": "r1", "network": "10.9.0.0/24",
-                                       "next_hop": "2001:db8::1"}),
-         "route_address_family_mismatch"),
+        (
+            "duplicate_device_id",
+            lambda p: p["devices"][1].update({"id": "r1"}),
+            "duplicate_device_id",
+        ),
+        (
+            "duplicate_device_name",
+            lambda p: p["devices"][1].update({"name": "R1"}),
+            "duplicate_device_name",
+        ),
+        ("unknown_model", lambda p: p["devices"][0].update({"model": "NOPE-1"}), "unknown_model"),
+        (
+            "unknown_device_in_link",
+            lambda p: set_link(p, 0, b={"device": "r9", "interface": "GigabitEthernet0/0"}),
+            "unknown_device",
+        ),
+        (
+            "unknown_physical_interface",
+            lambda p: set_link(p, 0, b={"device": "r2", "interface": "GigabitEthernet9/9"}),
+            "unknown_physical_interface",
+        ),
+        (
+            "null0_is_not_connectable",
+            lambda p: set_link(p, 0, b={"device": "r2", "interface": "NULL0"}),
+            "unknown_physical_interface",
+        ),
+        (
+            "duplicate_port",
+            lambda p: add_link(
+                p,
+                a={"device": "r1", "interface": "GigabitEthernet0/0"},
+                b={"device": "r2", "interface": "GigabitEthernet0/1"},
+                medium="ethernet",
+            ),
+            "duplicate_port",
+        ),
+        (
+            "self_link",
+            lambda p: set_link(p, 0, b={"device": "r1", "interface": "GigabitEthernet0/0"}),
+            "self_link",
+        ),
+        (
+            "medium_mismatch_serial_on_ethernet",
+            lambda p: set_link(
+                p, 0, a={"device": "r1", "interface": "Serial1/0"}, medium="ethernet"
+            ),
+            "medium_mismatch",
+        ),
+        (
+            "duplicate_ip",
+            lambda p: (
+                add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.1/30"),
+                add_address(p, "r2", "GigabitEthernet0/0", "10.0.0.1/30"),
+            ),
+            "duplicate_ip",
+        ),
+        (
+            "second_address_same_family",
+            lambda p: (
+                add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.1/30"),
+                add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.5/30"),
+            ),
+            "duplicate_interface_address_family",
+        ),
+        (
+            "reserved_network_address",
+            lambda p: add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.0/30"),
+            "reserved_host_address",
+        ),
+        (
+            "reserved_broadcast_address",
+            lambda p: add_address(p, "r1", "GigabitEthernet0/0", "10.0.0.3/30"),
+            "reserved_host_address",
+        ),
+        (
+            "route_address_family_mismatch",
+            lambda p: p["routes"].append(
+                {"device": "r1", "network": "10.9.0.0/24", "next_hop": "2001:db8::1"}
+            ),
+            "route_address_family_mismatch",
+        ),
     ]
 
 
 def snapshot(directory: Path) -> dict[str, bytes]:
-    return {str(path.relative_to(directory)): path.read_bytes()
-            for path in directory.rglob("*") if path.is_file()}
+    return {
+        str(path.relative_to(directory)): path.read_bytes()
+        for path in directory.rglob("*")
+        if path.is_file()
+    }
 
 
 class McpContractTests(unittest.IsolatedAsyncioTestCase):
@@ -285,14 +340,18 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             resources = await session.list_resources()
             self.assertEqual({str(item.uri) for item in resources.resources}, EXPECTED_RESOURCES)
             templates = await session.list_resource_templates()
-            self.assertEqual([item.uriTemplate for item in templates.resourceTemplates], [],
-                             "aliases/cables/templates catalog resources are still unimplemented")
+            self.assertEqual(
+                [item.uriTemplate for item in templates.resourceTemplates],
+                [],
+                "aliases/cables/templates catalog resources are still unimplemented",
+            )
 
             _, report = await call(session, "hcl_parity_report", {})
             self.assertEqual(len(report["tools"]), 61)
             self.assertEqual(len(report["resources"]), 5)
-            self.assertEqual(report["tool_state_counts"],
-                             {"implemented": 12, "planned": 46, "unverified": 3})
+            self.assertEqual(
+                report["tool_state_counts"], {"implemented": 12, "planned": 46, "unverified": 3}
+            )
             self.assertEqual(report["completion"], "incomplete")
             self.assertFalse(report["full_live_gate_passed"])
             self.assertEqual(set(report["registered_tools"]), names)
@@ -302,9 +361,14 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         """Live-looking tools may exist, but they must be inert until opted in."""
         async with mcp_session(self.paths) as session:
             listed = await session.list_tools()
-            suspects = sorted(tool.name for tool in listed.tools if LIVE_TOOL_NAME.search(tool.name))
-            self.assertEqual(suspects, ["hcl_console_exec", "hcl_device_power", "hcl_live_deploy"],
-                             "the only live-looking tools are the two gated control-plane ones")
+            suspects = sorted(
+                tool.name for tool in listed.tools if LIVE_TOOL_NAME.search(tool.name)
+            )
+            self.assertEqual(
+                suspects,
+                ["hcl_console_exec", "hcl_device_power", "hcl_live_deploy"],
+                "the only live-looking tools are the two gated control-plane ones",
+            )
 
             _, capabilities = await call(session, "hcl_capabilities", {})
             self.assertEqual(capabilities["live_canvas_api"], "not verified and not exposed")
@@ -322,8 +386,10 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
 
             for tool, arguments in (
                 ("hcl_device_power", {"device": 1, "on": True}),
-                ("hcl_console_exec", {"command": "display version", "topology": "topo1",
-                                      "device": 1}),
+                (
+                    "hcl_console_exec",
+                    {"command": "display version", "topology": "topo1", "device": 1},
+                ),
                 ("hcl_backend_topology", {"action": "close"}),
             ):
                 with self.subTest(tool=tool):
@@ -380,8 +446,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             {"device": "r2", "interface": "GigabitEthernet0/0", "cidr": "192.168.77.1/24"},
         ]
         no_route = copy.deepcopy(base_plan())
-        no_route["routes"] = [{"device": "r1", "network": "172.16.0.0/24",
-                               "next_hop": "203.0.113.1"}]
+        no_route["routes"] = [
+            {"device": "r1", "network": "172.16.0.0/24", "next_hop": "203.0.113.1"}
+        ]
         dual_stack = copy.deepcopy(base_plan())
         dual_stack["addresses"] = [
             {"device": "r1", "interface": "GigabitEthernet0/0", "cidr": "10.0.0.1/30"},
@@ -389,19 +456,24 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         ]
 
         async with mcp_session(self.paths) as session:
-            for label, plan in (("subnets_never_checked", reachability),
-                                ("next_hop_reachability_never_checked", no_route),
-                                ("dual_stack_same_interface_allowed", dual_stack)):
+            for label, plan in (
+                ("subnets_never_checked", reachability),
+                ("next_hop_reachability_never_checked", no_route),
+                ("dual_stack_same_interface_allowed", dual_stack),
+            ):
                 with self.subTest(label=label):
                     body = await plan_result(session, plan)
                     self.assertEqual(body["status"], "verified")
                     self.assertTrue(body["valid"])
-                    self.assertEqual(body["verified_scope"],
-                                     "offline_plan_wired_graph_and_configuration_semantics_only")
+                    self.assertEqual(
+                        body["verified_scope"],
+                        "offline_plan_wired_graph_and_configuration_semantics_only",
+                    )
 
             services = copy.deepcopy(base_plan())
-            services["services"] = [{"device": "r1", "feature": "ospf",
-                                     "parameters": {"area": "0.0.0.0"}}]
+            services["services"] = [
+                {"device": "r1", "feature": "ospf", "parameters": {"area": "0.0.0.0"}}
+            ]
             body = await plan_result(session, services)
             self.assertFalse(body["valid"])
             self.assertEqual(body["status"], "rejected")
@@ -418,7 +490,8 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         for name in ("a.net", "b.net"):
             (two_net / name).write_bytes((self.paths["project"] / "lab1.net").read_bytes())
         (two_net / "project.json").write_bytes(
-            (self.paths["project"] / "project.json").read_bytes())
+            (self.paths["project"] / "project.json").read_bytes()
+        )
 
         async with mcp_session(self.paths) as session:
             for label, path, token in (
@@ -426,16 +499,22 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                 ("missing_directory", self.paths["root"] / "ghost", "does not exist"),
                 ("directory_without_project_json", not_a_project, "project.json"),
                 ("directory_with_two_net_files", two_net, "exactly one .net file"),
-                ("net_file_instead_of_directory",
-                 self.paths["project"] / "lab1.net", "does not exist"),
+                (
+                    "net_file_instead_of_directory",
+                    self.paths["project"] / "lab1.net",
+                    "does not exist",
+                ),
             ):
                 with self.subTest(label=label):
                     body = await inspect(session, path)
                     self.assertEqual(body["status"], "rejected")
                     self.assertIn(token, body["error"])
 
-            result, body = await call(session, "hcl_stage_copy",
-                                      {"project_path": str(outside), "stage_name": "OutsideCopy"})
+            result, body = await call(
+                session,
+                "hcl_stage_copy",
+                {"project_path": str(outside), "stage_name": "OutsideCopy"},
+            )
             self.assertFalse(result.isError)
             self.assertEqual(body["status"], "rejected")
             self.assertIn("outside configured roots", body["error"])
@@ -462,56 +541,106 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             listed = {Path(row["directory"]).resolve() for row in listing["projects"]}
             self.assertIn(self.paths["project"].resolve(), listed)
             self.assertIn(self.paths["second_project"].resolve(), listed)
-            self.assertNotIn(self.paths["nested_project"].resolve(), listed,
-                             "list_projects must not recurse below the configured root")
+            self.assertNotIn(
+                self.paths["nested_project"].resolve(),
+                listed,
+                "list_projects must not recurse below the configured root",
+            )
 
     # -------------------------------------------------------- staging rules
     async def test_stage_name_and_device_name_grammar(self) -> None:
         async with mcp_session(self.paths) as session:
-            for label, stage_name in (("leading_digit", "1abc"), ("hyphen", "Text-Copy"),
-                                      ("twenty_one_chars", "a" * 21), ("non_ascii", "文本"),
-                                      ("empty", "")):
+            for label, stage_name in (
+                ("leading_digit", "1abc"),
+                ("hyphen", "Text-Copy"),
+                ("twenty_one_chars", "a" * 21),
+                ("non_ascii", "文本"),
+                ("empty", ""),
+            ):
                 with self.subTest(stage_name=label):
-                    _, body = await call(session, "hcl_stage_copy",
-                                         {"project_path": self.source, "stage_name": stage_name})
+                    _, body = await call(
+                        session,
+                        "hcl_stage_copy",
+                        {"project_path": self.source, "stage_name": stage_name},
+                    )
                     self.assertEqual(body["status"], "rejected")
                     self.assertIn("stage_name", body["error"])
 
-            _, body = await call(session, "hcl_stage_copy",
-                                 {"project_path": self.source, "stage_name": "a" * 20})
+            _, body = await call(
+                session, "hcl_stage_copy", {"project_path": self.source, "stage_name": "a" * 20}
+            )
             self.assertEqual(body["status"], "staged", "20 characters is the documented maximum")
 
-            for label, new_name in (("leading_digit", "1R9"), ("thirty_three_chars", "R" + "a" * 32),
-                                    ("non_ascii", "文本R"), ("duplicate_case_insensitive", "r2")):
+            for label, new_name in (
+                ("leading_digit", "1R9"),
+                ("thirty_three_chars", "R" + "a" * 32),
+                ("non_ascii", "文本R"),
+                ("duplicate_case_insensitive", "r2"),
+            ):
                 with self.subTest(device_name=label):
-                    _, body = await call(session, "hcl_stage_add_device",
-                                         {"project_path": self.source, "stage_name": f"Dev{label[:6]}",
-                                          "template_device": "R1", "new_name": new_name,
-                                          "x": 10, "y": 10})
+                    _, body = await call(
+                        session,
+                        "hcl_stage_add_device",
+                        {
+                            "project_path": self.source,
+                            "stage_name": f"Dev{label[:6]}",
+                            "template_device": "R1",
+                            "new_name": new_name,
+                            "x": 10,
+                            "y": 10,
+                        },
+                    )
                     self.assertEqual(body["status"], "rejected")
                     self.assertIn("New device name", body["error"])
 
-            _, body = await call(session, "hcl_stage_add_device",
-                                 {"project_path": self.source, "stage_name": "DevHyphen",
-                                  "template_device": "R1", "new_name": "Text-R9",
-                                  "x": 300, "y": 300})
-            self.assertEqual(body["status"], "staged", "hyphens are allowed after the first character")
+            _, body = await call(
+                session,
+                "hcl_stage_add_device",
+                {
+                    "project_path": self.source,
+                    "stage_name": "DevHyphen",
+                    "template_device": "R1",
+                    "new_name": "Text-R9",
+                    "x": 300,
+                    "y": 300,
+                },
+            )
+            self.assertEqual(
+                body["status"], "staged", "hyphens are allowed after the first character"
+            )
 
             for label, x in (("positive", 10001), ("negative", -10001)):
                 with self.subTest(coordinate=label):
-                    _, body = await call(session, "hcl_stage_add_device",
-                                         {"project_path": self.source, "stage_name": f"Coord{label[:3]}",
-                                          "template_device": "R1", "new_name": f"Coord{label[:3]}R",
-                                          "x": x, "y": 0})
+                    _, body = await call(
+                        session,
+                        "hcl_stage_add_device",
+                        {
+                            "project_path": self.source,
+                            "stage_name": f"Coord{label[:3]}",
+                            "template_device": "R1",
+                            "new_name": f"Coord{label[:3]}R",
+                            "x": x,
+                            "y": 0,
+                        },
+                    )
                     self.assertEqual(body["status"], "rejected")
                     self.assertIn("Coordinates exceed", body["error"])
 
     async def test_link_arguments_must_be_complete_and_unused(self) -> None:
         async with mcp_session(self.paths) as session:
-            _, body = await call(session, "hcl_stage_add_device",
-                                 {"project_path": self.source, "stage_name": "LinkPartial",
-                                  "template_device": "R1", "new_name": "PartialR",
-                                  "x": 1, "y": 1, "connect_to": "R2"})
+            _, body = await call(
+                session,
+                "hcl_stage_add_device",
+                {
+                    "project_path": self.source,
+                    "stage_name": "LinkPartial",
+                    "template_device": "R1",
+                    "new_name": "PartialR",
+                    "x": 1,
+                    "y": 1,
+                    "connect_to": "R2",
+                },
+            )
             self.assertEqual(body["status"], "rejected")
             self.assertIn("must be supplied together", body["error"])
 
@@ -522,42 +651,71 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                 ("malformed_port", {"a": "R1", "a_port": "0/0", "b": "R2", "b_port": "GE_0/1"}),
             ):
                 with self.subTest(case=label):
-                    _, body = await call(session, "hcl_stage_link",
-                                         {"project_path": self.source,
-                                          "stage_name": f"Link{label[:8]}", **arguments})
+                    _, body = await call(
+                        session,
+                        "hcl_stage_link",
+                        {
+                            "project_path": self.source,
+                            "stage_name": f"Link{label[:8]}",
+                            **arguments,
+                        },
+                    )
                     self.assertEqual(body["status"], "rejected")
 
-            _, body = await call(session, "hcl_stage_copy",
-                                 {"project_path": self.source, "stage_name": "LinkOk"})
+            _, body = await call(
+                session, "hcl_stage_copy", {"project_path": self.source, "stage_name": "LinkOk"}
+            )
             staged = body["project_directory"]
-            _, body = await call(session, "hcl_stage_link",
-                                 {"project_path": staged, "stage_name": "LinkOk2",
-                                  "a": "R1", "a_port": "GE_0/1", "b": "R2", "b_port": "GE_0/1"})
+            _, body = await call(
+                session,
+                "hcl_stage_link",
+                {
+                    "project_path": staged,
+                    "stage_name": "LinkOk2",
+                    "a": "R1",
+                    "a_port": "GE_0/1",
+                    "b": "R2",
+                    "b_port": "GE_0/1",
+                },
+            )
             self.assertEqual(body["status"], "staged")
             self.assertEqual((body["device_count"], body["link_count"]), (2, 2))
 
     async def test_staging_never_rewrites_the_source_project(self) -> None:
         before = snapshot(self.paths["project"])
         async with mcp_session(self.paths) as session:
-            _, copy_body = await call(session, "hcl_stage_copy",
-                                      {"project_path": self.source, "stage_name": "IntegrityCopy"})
+            _, copy_body = await call(
+                session,
+                "hcl_stage_copy",
+                {"project_path": self.source, "stage_name": "IntegrityCopy"},
+            )
             self.assertEqual(copy_body["status"], "staged")
             self.assertEqual((copy_body["device_count"], copy_body["link_count"]), (2, 1))
-            _, add_body = await call(session, "hcl_stage_add_device",
-                                     {"project_path": copy_body["project_directory"],
-                                      "stage_name": "IntegrityAdd", "template_device": "R1",
-                                      "new_name": "NewR", "x": 5, "y": 5})
+            _, add_body = await call(
+                session,
+                "hcl_stage_add_device",
+                {
+                    "project_path": copy_body["project_directory"],
+                    "stage_name": "IntegrityAdd",
+                    "template_device": "R1",
+                    "new_name": "NewR",
+                    "x": 5,
+                    "y": 5,
+                },
+            )
             self.assertEqual(add_body["status"], "staged")
         self.assertEqual(snapshot(self.paths["project"]), before)
         self.assertFalse((self.paths["project"] / "DeviceConfig" / "NewR.cfg").exists())
 
     # ------------------------------------------------------- copy fidelity
-    def write_variant(self, label: str, mutate: Callable[[str], str], *,
-                      raw: bytes | None = None) -> Path:
+    def write_variant(
+        self, label: str, mutate: Callable[[str], str], *, raw: bytes | None = None
+    ) -> Path:
         directory = self.paths["root"] / label
         directory.mkdir()
         (directory / "project.json").write_bytes(
-            (self.paths["project"] / "project.json").read_bytes())
+            (self.paths["project"] / "project.json").read_bytes()
+        )
         text = (self.paths["project"] / "lab1.net").read_bytes().decode("utf-8")
         payload = raw if raw is not None else mutate(text).encode("utf-8")
         (directory / "lab1.net").write_bytes(payload)
@@ -566,22 +724,29 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
     async def test_stage_copy_preserves_every_other_field_byte_for_byte(self) -> None:
         net_path = self.paths["project"] / "lab1.net"
         text = net_path.read_bytes().decode("utf-8")
-        text = text.replace("        slot0 = MSR36 384",
-                            "        slot0 = MSR36 384\r\n        custom_attr = keep-me", 1)
+        text = text.replace(
+            "        slot0 = MSR36 384",
+            "        slot0 = MSR36 384\r\n        custom_attr = keep-me",
+            1,
+        )
         text += '    [[NOTE 1]]\r\n        text = "保留中文注释"\r\n'
         net_path.write_bytes(text.encode("utf-8"))
         source_text = net_path.read_text(encoding="utf-8")
 
         async with mcp_session(self.paths) as session:
-            _, body = await call(session, "hcl_stage_copy",
-                                 {"project_path": self.source, "stage_name": "FidelityCopy"})
+            _, body = await call(
+                session,
+                "hcl_stage_copy",
+                {"project_path": self.source, "stage_name": "FidelityCopy"},
+            )
             self.assertEqual(body["status"], "staged")
             staged_net = Path(body["project_file"])
             staged_text = staged_net.read_text(encoding="utf-8")
 
         # the only rewrite is the workingdir line, so normalise it and compare
-        normalised = staged_text.replace(f"workingdir = {body['project_directory']}",
-                                         f"workingdir = {self.paths['project']}")
+        normalised = staged_text.replace(
+            f"workingdir = {body['project_directory']}", f"workingdir = {self.paths['project']}"
+        )
         self.assertEqual(normalised, source_text)
         self.assertIn("custom_attr = keep-me", staged_text)
         self.assertIn('text = "保留中文注释"', staged_text)
@@ -597,13 +762,15 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         async with mcp_session(self.paths) as session:
             source = await inspect(session, self.paths["project"])
             self.assertEqual(source["status"], "ok")
-            _, body = await call(session, "hcl_stage_copy",
-                                 {"project_path": self.source, "stage_name": "BomCopy"})
+            _, body = await call(
+                session, "hcl_stage_copy", {"project_path": self.source, "stage_name": "BomCopy"}
+            )
             self.assertEqual(body["status"], "staged")
             staged_bytes = Path(body["project_file"]).read_bytes()
 
-        self.assertFalse(staged_bytes.startswith(b"\xef\xbb\xbf"),
-                         "the staged .net is written without a BOM")
+        self.assertFalse(
+            staged_bytes.startswith(b"\xef\xbb\xbf"), "the staged .net is written without a BOM"
+        )
         self.assertIn("MSR36-20 R1", staged_bytes.decode("utf-8"))
 
     async def test_corrupt_projects_never_report_ok(self) -> None:
@@ -617,10 +784,12 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         structural = {
             "no_vbox_section": lambda t: t.replace("[vbox 127.0.0.1:16600]\r\n", ""),
             "two_vbox_sections": lambda t: t.replace(
-                "[vbox 127.0.0.1:16600]\r\n", "[vbox 127.0.0.1:16600]\r\n[vbox 127.0.0.1:16600]\r\n"),
+                "[vbox 127.0.0.1:16600]\r\n", "[vbox 127.0.0.1:16600]\r\n[vbox 127.0.0.1:16600]\r\n"
+            ),
             "missing_device_id": lambda t: t.replace("        device_id = 1\r\n", ""),
             "duplicate_field": lambda t: t.replace(
-                "        slot0 = MSR36 384", "        slot0 = MSR36 384\r\n        x = 7.0", 1),
+                "        slot0 = MSR36 384", "        slot0 = MSR36 384\r\n        x = 7.0", 1
+            ),
             "asymmetric_link": lambda t: t.replace("GE_0/0 = R1 GE_0/0", "GE_0/0 = R1 GE_0/1"),
         }
         escaping = {
@@ -632,16 +801,19 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             for label, mutate in structural.items():
                 with self.subTest(case=label):
                     path = self.write_variant(label, mutate)
-                    result, body = await call(session, "hcl_inspect_project",
-                                              {"project_path": str(path)})
+                    result, body = await call(
+                        session, "hcl_inspect_project", {"project_path": str(path)}
+                    )
                     self.assertFalse(result.isError, f"{label} should be a business rejection")
                     self.assertEqual(body["status"], "rejected")
 
             with self.subTest(case="invalid_utf8"):
-                path = self.write_variant("invalid_utf8", lambda t: t,
-                                          raw=b"\xff\xfe\x00 not utf-8")
-                result, body = await call(session, "hcl_inspect_project",
-                                          {"project_path": str(path)})
+                path = self.write_variant(
+                    "invalid_utf8", lambda t: t, raw=b"\xff\xfe\x00 not utf-8"
+                )
+                result, body = await call(
+                    session, "hcl_inspect_project", {"project_path": str(path)}
+                )
                 self.assertFalse(result.isError)
                 self.assertEqual(body["status"], "rejected")
                 self.assertIn("not UTF-8", body["error"])
@@ -649,8 +821,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             for label, mutate in escaping.items():
                 with self.subTest(case=label):
                     path = self.write_variant(label, mutate)
-                    result, body = await call(session, "hcl_inspect_project",
-                                              {"project_path": str(path)})
+                    result, body = await call(
+                        session, "hcl_inspect_project", {"project_path": str(path)}
+                    )
                     # documented caveat: this shape escapes as a tool error
                     self.assertFalse(result.isError)
                     self.assertEqual(body["status"], "rejected")
@@ -671,7 +844,9 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
 
             result, _ = await call(session, "hcl_unknown_future_tool", {})
             self.assertTrue(result.isError)
-            self.assertEqual(json.loads(result.content[0].text)["errors"][0]["code"], "unknown_tool")
+            self.assertEqual(
+                json.loads(result.content[0].text)["errors"][0]["code"], "unknown_tool"
+            )
 
             with self.assertRaises(McpError):
                 await session.read_resource(AnyUrl("hcl://does-not-exist"))
@@ -682,9 +857,25 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
         async with mcp_session(self.paths) as session:
             for tool, arguments in (
                 ("hcl_capabilities", {"bogus": 1}),
-                ("hcl_stage_add_device", {"project_path": self.source, "stage_name": "CoerceStr",
-                                         "template_device": "R1", "new_name": "CoerceR", "x": "300", "y": 300}),
-                ("hcl_stage_copy", {"project_path": self.source, "stage_name": "IgnoreExtra", "not_a_real_argument": True}),
+                (
+                    "hcl_stage_add_device",
+                    {
+                        "project_path": self.source,
+                        "stage_name": "CoerceStr",
+                        "template_device": "R1",
+                        "new_name": "CoerceR",
+                        "x": "300",
+                        "y": 300,
+                    },
+                ),
+                (
+                    "hcl_stage_copy",
+                    {
+                        "project_path": self.source,
+                        "stage_name": "IgnoreExtra",
+                        "not_a_real_argument": True,
+                    },
+                ),
                 ("hcl_device_power", {"device": True}),
                 ("hcl_device_power", {"device": "1"}),
                 ("hcl_validate_plan", {"plan": json.dumps(base_plan())}),

@@ -40,8 +40,16 @@ ERROR_PIPE_CONNECTED = 535
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
 
 kernel32.CreateNamedPipeW.restype = wt.HANDLE
-kernel32.CreateNamedPipeW.argtypes = [wt.LPCWSTR, wt.DWORD, wt.DWORD, wt.DWORD,
-                                      wt.DWORD, wt.DWORD, wt.DWORD, ctypes.c_void_p]
+kernel32.CreateNamedPipeW.argtypes = [
+    wt.LPCWSTR,
+    wt.DWORD,
+    wt.DWORD,
+    wt.DWORD,
+    wt.DWORD,
+    wt.DWORD,
+    wt.DWORD,
+    ctypes.c_void_p,
+]
 kernel32.ConnectNamedPipe.restype = wt.BOOL
 kernel32.ConnectNamedPipe.argtypes = [wt.HANDLE, ctypes.c_void_p]
 kernel32.CloseHandle.restype = wt.BOOL
@@ -88,8 +96,14 @@ class NamedPipeServer:
 
     def start(self) -> None:
         handle = kernel32.CreateNamedPipeW(
-            self.name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            PIPE_UNLIMITED_INSTANCES, 4096, 4096, 0, None,
+            self.name,
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            PIPE_UNLIMITED_INSTANCES,
+            4096,
+            4096,
+            0,
+            None,
         )
         if not handle or handle == INVALID_HANDLE_VALUE:
             raise ctypes.WinError(ctypes.get_last_error())
@@ -142,20 +156,36 @@ class NamedPipeServer:
 class PipeNameTests(unittest.TestCase):
     def test_endpoint_builds_the_observed_shape(self) -> None:
         self.assertEqual(endpoint("topo1", 6), "\\\\.\\pipe\\topo1-device6")
-        self.assertEqual(describe("\\\\.\\pipe\\topo77-device12"),
-                         {"pipe": "\\\\.\\pipe\\topo77-device12", "topology": "topo77", "device": 12})
+        self.assertEqual(
+            describe("\\\\.\\pipe\\topo77-device12"),
+            {"pipe": "\\\\.\\pipe\\topo77-device12", "topology": "topo77", "device": 12},
+        )
 
     def test_only_hcl_console_pipes_are_accepted(self) -> None:
-        for bad in ("\\\\.\\pipe\\evil", "\\\\.\\pipe\\x", "\\\\server\\pipe\\topo1-device1",
-                    "topo1-device1", "/dev/ttyS0", "", None, "\\\\.\\pipe\\topo1-device",
-                    "\\\\.\\pipe\\topo1-device1x"):
+        for bad in (
+            "\\\\.\\pipe\\evil",
+            "\\\\.\\pipe\\x",
+            "\\\\server\\pipe\\topo1-device1",
+            "topo1-device1",
+            "/dev/ttyS0",
+            "",
+            None,
+            "\\\\.\\pipe\\topo1-device",
+            "\\\\.\\pipe\\topo1-device1x",
+        ):
             with self.subTest(pipe=bad):
                 with self.assertRaises(ConsoleError):
                     describe(bad)
 
     def test_endpoint_argument_validation(self) -> None:
-        for topology, device in (("topo 1", 1), ("", 1), ("topo1", 0), ("topo1", 2000),
-                                 ("topo1", True), ("topo1", "1")):
+        for topology, device in (
+            ("topo 1", 1),
+            ("", 1),
+            ("topo1", 0),
+            ("topo1", 2000),
+            ("topo1", True),
+            ("topo1", "1"),
+        ):
             with self.subTest(topology=topology, device=device):
                 with self.assertRaises(ConsoleError):
                     endpoint(topology, device)
@@ -178,11 +208,19 @@ class ConsoleGatingTests(unittest.TestCase):
                 self.assertEqual(result["errors"][0]["code"], "invalid_request")
 
     def test_environment_master_switch(self) -> None:
-        for value, expected in (("1", True), ("true", True), ("YES", True), ("on", True),
-                                ("", False), ("0", False), ("no", False)):
+        for value, expected in (
+            ("1", True),
+            ("true", True),
+            ("YES", True),
+            ("on", True),
+            ("", False),
+            ("0", False),
+            ("no", False),
+        ):
             with self.subTest(value=value):
-                self.assertIs(writes_enabled_from_environment({"MCP_HCL_ALLOW_LIVE_WRITE": value}),
-                              expected)
+                self.assertIs(
+                    writes_enabled_from_environment({"MCP_HCL_ALLOW_LIVE_WRITE": value}), expected
+                )
 
 
 class ConsoleSessionTests(unittest.TestCase):
@@ -233,12 +271,14 @@ class ConsoleSessionTests(unittest.TestCase):
 class RealNamedPipeTests(unittest.TestCase):
     def test_round_trip_over_a_real_named_pipe(self) -> None:
         name = "\\\\.\\pipe\\mcphcltest-device1"
-        server = NamedPipeServer(name, banner=b"<HCL> booting\r\n",
-                                 reply=b"Version 7.1.064, Release 0427P22\r\n<HCL>")
+        server = NamedPipeServer(
+            name, banner=b"<HCL> booting\r\n", reply=b"Version 7.1.064, Release 0427P22\r\n<HCL>"
+        )
         server.start()
         try:
-            console = HclConsole(open_timeout=3.0, idle_gap=0.3, read_timeout=6.0,
-                                 writes_enabled=True)
+            console = HclConsole(
+                open_timeout=3.0, idle_gap=0.3, read_timeout=6.0, writes_enabled=True
+            )
             result = console.run(name, "display version", expect="Version")
         finally:
             server.close()
@@ -248,8 +288,11 @@ class RealNamedPipeTests(unittest.TestCase):
         self.assertEqual(result["device"], 1)
         self.assertIn("Version 7.1.064", result["output"])
         self.assertTrue(result["expect_found"])
-        self.assertGreaterEqual(result["discarded_stale_bytes"], 1,
-                                "the banner written before the command must be drained")
+        self.assertGreaterEqual(
+            result["discarded_stale_bytes"],
+            1,
+            "the banner written before the command must be drained",
+        )
         self.assertNotIn("booting", result["output"])
         self.assertEqual(result["verified_scope"], "console_channel_text_readback_only")
         self.assertFalse(result["guest_boot_verified"])
@@ -264,8 +307,9 @@ class RealNamedPipeTests(unittest.TestCase):
         server = NamedPipeServer(name, reply=b"Unknown command\r\n<HCL>")
         server.start()
         try:
-            console = HclConsole(open_timeout=3.0, idle_gap=0.3, read_timeout=6.0,
-                                 writes_enabled=True)
+            console = HclConsole(
+                open_timeout=3.0, idle_gap=0.3, read_timeout=6.0, writes_enabled=True
+            )
             result = console.run(name, "display nosuchthing", expect="Version")
         finally:
             server.close()

@@ -54,10 +54,12 @@ def responding_backend(replies: list[tuple[str, str]]):
 
 class BackendProtocolTests(unittest.TestCase):
     def test_real_socket_roundtrip_and_verification_scope(self) -> None:
-        with responding_backend([
-            ("simwarewrapper version", "{id}-101-1.0.0&6.0.14\r\n/end"),
-            ("simwarewrapper system_memory", "{id}-101-14708\r\n/end"),
-        ]) as backend:
+        with responding_backend(
+            [
+                ("simwarewrapper version", "{id}-101-1.0.0&6.0.14\r\n/end"),
+                ("simwarewrapper system_memory", "{id}-101-14708\r\n/end"),
+            ]
+        ) as backend:
             result = backend.status()
         self.assertEqual(result["status"], "verified")
         self.assertEqual(result["backend_version"], "1.0.0&6.0.14")
@@ -68,19 +70,23 @@ class BackendProtocolTests(unittest.TestCase):
         self.assertEqual(len(result["evidence"]), 2)
 
     def test_response_for_another_request_is_rejected(self) -> None:
-        with responding_backend([
-            ("simwarewrapper version", "0-101-1.0.0&6.0.14\r\n/end"),
-        ]) as backend:
+        with responding_backend(
+            [
+                ("simwarewrapper version", "0-101-1.0.0&6.0.14\r\n/end"),
+            ]
+        ) as backend:
             result = backend.status()
         self.assertEqual(result["status"], "unverified")
         self.assertIn("different request ID", result["error"])
         self.assertNotIn("backend_version", result)
 
     def test_valid_version_does_not_mask_invalid_memory(self) -> None:
-        with responding_backend([
-            ("simwarewrapper version", "{id}-101-1.0.0&6.0.14\r\n/end"),
-            ("simwarewrapper system_memory", "{id}-101-not-a-number\r\n/end"),
-        ]) as backend:
+        with responding_backend(
+            [
+                ("simwarewrapper version", "{id}-101-1.0.0&6.0.14\r\n/end"),
+                ("simwarewrapper system_memory", "{id}-101-not-a-number\r\n/end"),
+            ]
+        ) as backend:
             result = backend.status()
         self.assertEqual(result["status"], "partial")
         self.assertIn("memory response is invalid", result["error"])

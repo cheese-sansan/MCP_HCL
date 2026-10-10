@@ -9,7 +9,9 @@ import unittest
 from pathlib import Path
 
 
-@unittest.skipUnless(os.name == "nt" and shutil.which("powershell.exe"), "Windows PowerShell required")
+@unittest.skipUnless(
+    os.name == "nt" and shutil.which("powershell.exe"), "Windows PowerShell required"
+)
 class GateScriptPreflightTests(unittest.TestCase):
     def test_utf8_metadata_and_failed_receipts_survive_retry(self) -> None:
         workspace = Path(__file__).resolve().parents[1]
@@ -21,17 +23,29 @@ class GateScriptPreflightTests(unittest.TestCase):
             configs = project / "DeviceConfig"
             configs.mkdir(parents=True)
             net = project / "test.net"
-            net.write_text(f"version = 5.10.3\n[vbox 127.0.0.1:16600]\n    workingdir = {project}\n", encoding="utf-8")
+            net.write_text(
+                f"version = 5.10.3\n[vbox 127.0.0.1:16600]\n    workingdir = {project}\n",
+                encoding="utf-8",
+            )
             original_net = net.read_bytes()
             (configs / "核心交换机.cfg").write_text("sysname 核心交换机\n", encoding="utf-8")
             metadata = project / "project.json"
             metadata.write_text("invalid JSON", encoding="utf-8")
             output = root / "receipts"
             command = [
-                shutil.which("powershell.exe"), "-NoProfile", "-ExecutionPolicy", "Bypass",
-                "-File", str(workspace / "scripts/hcl_open_gate.ps1"),
-                "-HclPid", "0", "-ProjectFile", str(net),
-                "-OutputDirectory", str(output), "-ValidateOnly",
+                shutil.which("powershell.exe"),
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(workspace / "scripts/hcl_open_gate.ps1"),
+                "-HclPid",
+                "0",
+                "-ProjectFile",
+                str(net),
+                "-OutputDirectory",
+                str(output),
+                "-ValidateOnly",
             ]
             failed = subprocess.run(command, capture_output=True, timeout=15)
             self.assertEqual(failed.returncode, 0, failed.stderr)
@@ -40,10 +54,21 @@ class GateScriptPreflightTests(unittest.TestCase):
             self.assertEqual(first["error"], "Project metadata is not valid UTF-8 JSON")
             first_path = Path(first["receipt_directory"]) / "result.json"
             failure_bytes = first_path.read_bytes()
-            metadata.write_text(json.dumps({
-                "projectInfo": {"name": "中文隔离工程"},
-                "deviceInfoList": [{"resourceName": "核心交换机", "configPath": "DeviceConfig\\核心交换机.cfg"}],
-            }, ensure_ascii=False), encoding="utf-8")
+            metadata.write_text(
+                json.dumps(
+                    {
+                        "projectInfo": {"name": "中文隔离工程"},
+                        "deviceInfoList": [
+                            {
+                                "resourceName": "核心交换机",
+                                "configPath": "DeviceConfig\\核心交换机.cfg",
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
             passed = subprocess.run(command, capture_output=True, timeout=15)
             self.assertEqual(passed.returncode, 0, passed.stderr)
             latest = json.loads((output / "result.json").read_text(encoding="utf-8"))

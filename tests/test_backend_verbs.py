@@ -79,7 +79,9 @@ class VerbRegistryTests(unittest.TestCase):
         self.assertEqual(len(by_name), len(OBSERVED_VERBS))
         for row in verbs:
             self.assertIn(row["evidence"], {"verified", "observed", "inferred"})
-            self.assertIn(row["kind"], {"read", "lifecycle", "topology", "console", "power", "device"})
+            self.assertIn(
+                row["kind"], {"read", "lifecycle", "topology", "console", "power", "device"}
+            )
             self.assertIsInstance(row["writes"], bool)
         self.assertTrue(by_name["version"]["enabled"])
         self.assertTrue(by_name["system_memory"]["enabled"])
@@ -108,14 +110,42 @@ class VerbRegistryTests(unittest.TestCase):
     def test_arguments_cannot_break_the_line_framing(self) -> None:
         backend = HclBackend(allow_writes=True)
         for label, arguments in (
-            ("newline_injection", {"topology": "topo1", "working_directory": "E:\\a\nsimware start 1 0",
-                                   "project_name": "p", "udp_port": 10000}),
-            ("space_in_name", {"topology": "topo 1", "working_directory": "E:\\a",
-                               "project_name": "p", "udp_port": 10000}),
-            ("relative_path", {"topology": "topo1", "working_directory": "work\\a",
-                               "project_name": "p", "udp_port": 10000}),
-            ("port_out_of_range", {"topology": "topo1", "working_directory": "E:\\a",
-                                   "project_name": "p", "udp_port": 70000}),
+            (
+                "newline_injection",
+                {
+                    "topology": "topo1",
+                    "working_directory": "E:\\a\nsimware start 1 0",
+                    "project_name": "p",
+                    "udp_port": 10000,
+                },
+            ),
+            (
+                "space_in_name",
+                {
+                    "topology": "topo 1",
+                    "working_directory": "E:\\a",
+                    "project_name": "p",
+                    "udp_port": 10000,
+                },
+            ),
+            (
+                "relative_path",
+                {
+                    "topology": "topo1",
+                    "working_directory": "work\\a",
+                    "project_name": "p",
+                    "udp_port": 10000,
+                },
+            ),
+            (
+                "port_out_of_range",
+                {
+                    "topology": "topo1",
+                    "working_directory": "E:\\a",
+                    "project_name": "p",
+                    "udp_port": 70000,
+                },
+            ),
             ("missing_arguments", {}),
         ):
             with self.subTest(case=label):
@@ -128,9 +158,15 @@ class VerbRegistryTests(unittest.TestCase):
 
         with fake_wrapper(lambda command: (101, "done")) as (port, recorded):
             backend = HclBackend(port=port, timeout=0.5, allow_writes=True)
-            backend.invoke("create_topology", {"topology": "topo1",
-                                               "working_directory": "E:\\MCP_HCL\\work\\staged\\s1",
-                                               "project_name": "s1", "udp_port": 10000})
+            backend.invoke(
+                "create_topology",
+                {
+                    "topology": "topo1",
+                    "working_directory": "E:\\MCP_HCL\\work\\staged\\s1",
+                    "project_name": "s1",
+                    "udp_port": 10000,
+                },
+            )
             backend.invoke("start", {"device": 6})
             backend.invoke("delete_udp", {"device": 6})
             backend.invoke("normal_close", {"normal": True})
@@ -139,15 +175,18 @@ class VerbRegistryTests(unittest.TestCase):
             backend.invoke("start_recover", {})
             seen.extend(recorded)
 
-        self.assertEqual(seen, [
-            "simware create_topology topo1 E:\\MCP_HCL\\work\\staged\\s1 s1 10000",
-            "simware start 6 0",
-            "simware delete_udp 6 0 0",
-            "simware normal_close True",
-            "simware set_hcl_tcp 18600",
-            "simware set_hcl_normal_close False",
-            "simware start_recover",
-        ])
+        self.assertEqual(
+            seen,
+            [
+                "simware create_topology topo1 E:\\MCP_HCL\\work\\staged\\s1 s1 10000",
+                "simware start 6 0",
+                "simware delete_udp 6 0 0",
+                "simware normal_close True",
+                "simware set_hcl_tcp 18600",
+                "simware set_hcl_normal_close False",
+                "simware start_recover",
+            ],
+        )
 
     def test_backend_error_codes_are_reported_not_raised(self) -> None:
         with fake_wrapper(lambda command: (204, "")) as (port, _):
@@ -174,8 +213,9 @@ class VerbRegistryTests(unittest.TestCase):
             backend._request("simware create_topology topo1 E:\\a a 10000")
 
     def test_status_never_claims_live_control(self) -> None:
-        with fake_wrapper(lambda command: (
-                101, "1.0.0&6.0.14" if command.endswith("version") else "14708")) as (port, _):
+        with fake_wrapper(
+            lambda command: (101, "1.0.0&6.0.14" if command.endswith("version") else "14708")
+        ) as (port, _):
             result = HclBackend(port=port, timeout=0.5).status()
         self.assertEqual(result["status"], "verified")
         self.assertEqual(result["verified_scope"], "version_and_memory_protocol_readback")
@@ -311,8 +351,10 @@ class WireFramingTests(unittest.TestCase):
         from mcp_hcl.backend import _frames
 
         payload = b"7-100-ok\r\n/end999-200-bogus\r\n/end7-101-partial"
-        self.assertEqual([(frame["id"], frame["code"], frame["value"]) for frame in _frames(payload)],
-                         [(7, 100, "ok"), (999, 200, "bogus")])
+        self.assertEqual(
+            [(frame["id"], frame["code"], frame["value"]) for frame in _frames(payload)],
+            [(7, 100, "ok"), (999, 200, "bogus")],
+        )
         self.assertEqual(_frames(b"7-100-unterminated\r\n/en"), [])
         self.assertEqual(_frames(b""), [])
 
@@ -322,9 +364,13 @@ class WireFramingTests(unittest.TestCase):
         #   b'333333333-228\r\n/end'   (start on a connection with no topology)
         from mcp_hcl.backend import _frames
 
-        self.assertEqual([(frame["id"], frame["code"], frame["value"])
-                          for frame in _frames(b"222222222-100\r\n/end333333333-228\r\n/end")],
-                         [(222222222, 100, ""), (333333333, 228, "")])
+        self.assertEqual(
+            [
+                (frame["id"], frame["code"], frame["value"])
+                for frame in _frames(b"222222222-100\r\n/end333333333-228\r\n/end")
+            ],
+            [(222222222, 100, ""), (333333333, 228, "")],
+        )
 
     def test_exchange_accepts_a_reply_without_parameters(self) -> None:
         def builder(command: str, identifier: str):
@@ -344,8 +390,11 @@ class WireFramingTests(unittest.TestCase):
 
         with raw_wrapper(builder) as (port, _):
             result = HclBackend(port=port, timeout=0.5)._exchange("simwarewrapper version")
-        self.assertEqual(result["value"], "1.0.0&6.0.14",
-                         "the reply must be matched by request id, not by position")
+        self.assertEqual(
+            result["value"],
+            "1.0.0&6.0.14",
+            "the reply must be matched by request id, not by position",
+        )
         self.assertEqual(result["response_code"], 100)
         self.assertIn(result["extra_frames"], (0, 1))  # coalescing dependent
 
@@ -355,8 +404,9 @@ class BackendSessionTests(unittest.TestCase):
         with stateful_wrapper(hcl_like) as (port, recorded):
             backend = HclBackend(port=port, timeout=0.5, allow_writes=True)
             one_shot = backend.invoke("start", {"device": 1})
-            self.assertEqual(one_shot["response_code"], 228,
-                             "a one-shot connection has no topology context")
+            self.assertEqual(
+                one_shot["response_code"], 228, "a one-shot connection has no topology context"
+            )
             self.assertEqual(one_shot["errors"][0]["code"], "backend_error_code")
 
             session = backend.connect()
@@ -367,15 +417,20 @@ class BackendSessionTests(unittest.TestCase):
                 started = session.invoke("start", {"device": 1})
                 self.assertEqual(started["status"], "accepted")
                 self.assertEqual(started["response_code"], 100)
-                self.assertEqual(session.commands_sent, ["simware create_topology", "simware start"])
+                self.assertEqual(
+                    session.commands_sent, ["simware create_topology", "simware start"]
+                )
             finally:
                 session.close()
 
-        self.assertEqual(recorded, [
-            "simware start 1 0",
-            "simware create_topology mcphcl1 E:\\MCP_HCL\\work\\staged\\s1 s1 10000",
-            "simware start 1 0",
-        ])
+        self.assertEqual(
+            recorded,
+            [
+                "simware start 1 0",
+                "simware create_topology mcphcl1 E:\\MCP_HCL\\work\\staged\\s1 s1 10000",
+                "simware start 1 0",
+            ],
+        )
 
     def test_gated_session_sends_nothing(self) -> None:
         with stateful_wrapper(hcl_like) as (port, recorded):

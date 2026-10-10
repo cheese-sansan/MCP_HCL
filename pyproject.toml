@@ -20,3 +20,23 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 mcp_hcl = ["data/*.json", "data/*.ps1"]
+
+[project.optional-dependencies]
+dev = ["ruff==0.17.0", "jsonschema>=4.26,<5"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["docs/history", "work", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F811", "F821", "F822", "F823", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# These entry points bind the tested package before importing it.
+"scripts/run_software_verification.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

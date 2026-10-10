@@ -15,10 +15,10 @@ import re
 import secrets
 import shutil
 import tempfile
-from uuid import uuid4
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 
 class ProjectError(ValueError):
@@ -62,7 +62,9 @@ class ProjectDocument:
             except (ValueError, KeyError, OverflowError) as exc:
                 raise ProjectError(f"Invalid device ID or coordinate: {section.name}") from exc
             if device_id <= 0 or device_id in ids or not all(math.isfinite(v) for v in coordinates):
-                raise ProjectError(f"Duplicate/invalid device ID or nonfinite coordinate: {section.name}")
+                raise ProjectError(
+                    f"Duplicate/invalid device ID or nonfinite coordinate: {section.name}"
+                )
             ids.add(device_id)
         links: set[tuple[tuple[str, str], tuple[str, str]]] = set()
         for section in self.sections.values():
@@ -88,8 +90,7 @@ class ProjectDocument:
                 for section in self.sections.values()
             ],
             "links": [
-                {"a": a[0], "a_port": a[1], "b": b[0], "b_port": b[1]}
-                for a, b in sorted(links)
+                {"a": a[0], "a_port": a[1], "b": b[0], "b_port": b[1]} for a, b in sorted(links)
             ],
         }
 
@@ -175,7 +176,9 @@ def _read_document(directory: Path) -> ProjectDocument:
             if peer_name in sections and _PORT.fullmatch(peer_port):
                 if sections[peer_name].fields.get(peer_port) != f"{section.name} {port}":
                     raise ProjectError(f"Asymmetric link: {section.name}/{port}")
-    return ProjectDocument(directory, net_path, metadata, lines, sections, vbox_start, vbox_end, newline)
+    return ProjectDocument(
+        directory, net_path, metadata, lines, sections, vbox_start, vbox_end, newline
+    )
 
 
 def _insert_field(block: list[str], key: str, value: str, newline: str) -> list[str]:
@@ -228,7 +231,9 @@ class ProjectStore:
                         continue
                     projects.append(
                         {
-                            "name": str(doc.metadata.get("projectInfo", {}).get("name", child.name)),
+                            "name": str(
+                                doc.metadata.get("projectInfo", {}).get("name", child.name)
+                            ),
                             "directory": str(child),
                         }
                     )
@@ -236,7 +241,7 @@ class ProjectStore:
 
     def _stage(self, doc: ProjectDocument, stage_name: str) -> tuple[Path, Path]:
         if self.output_root.is_relative_to(doc.directory):
-            raise ProjectError('Stage output root must not be inside the source project')
+            raise ProjectError("Stage output root must not be inside the source project")
         if not _STAGE_NAME.fullmatch(stage_name):
             raise ProjectError("stage_name must be 1-20 ASCII letters, digits or underscores")
         final_root = self.output_root / stage_name
@@ -255,18 +260,32 @@ class ProjectStore:
             shutil.copy2(doc.net_path, temp_project / doc.net_path.name)
             for dirname in ("ConfigDisk", "DeviceConfig"):
                 source = doc.directory / dirname
-                if not source.is_dir() or source.is_symlink() or getattr(source, "is_junction", lambda: False)():
+                if (
+                    not source.is_dir()
+                    or source.is_symlink()
+                    or getattr(source, "is_junction", lambda: False)()
+                ):
                     raise ProjectError(f"Missing project directory: {dirname}")
-                if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in source.rglob("*")):
+                if any(
+                    path.is_symlink() or getattr(path, "is_junction", lambda: False)()
+                    for path in source.rglob("*")
+                ):
                     raise ProjectError(f"Linked files are not accepted in {dirname}")
                 shutil.copytree(source, temp_project / dirname)
-            for optional_name in ('SerialFile', 'MCPArtifacts'):
+            for optional_name in ("SerialFile", "MCPArtifacts"):
                 optional = doc.directory / optional_name
                 if optional.exists():
-                    if not optional.is_dir() or optional.is_symlink() or getattr(optional, "is_junction", lambda: False)():
-                        raise ProjectError(f'Linked or invalid {optional_name} directory')
-                    if any(path.is_symlink() or getattr(path, "is_junction", lambda: False)() for path in optional.rglob('*')):
-                        raise ProjectError(f'Linked files are not accepted in {optional_name}')
+                    if (
+                        not optional.is_dir()
+                        or optional.is_symlink()
+                        or getattr(optional, "is_junction", lambda: False)()
+                    ):
+                        raise ProjectError(f"Linked or invalid {optional_name} directory")
+                    if any(
+                        path.is_symlink() or getattr(path, "is_junction", lambda: False)()
+                        for path in optional.rglob("*")
+                    ):
+                        raise ProjectError(f"Linked files are not accepted in {optional_name}")
                     shutil.copytree(optional, temp_project / optional_name)
             return temp_root, final_root
         except Exception:
@@ -301,7 +320,7 @@ class ProjectStore:
             for relative, content in (additional_files or {}).items():
                 target = temp_project / relative
                 if not target.resolve().is_relative_to(temp_project.resolve()):
-                    raise ProjectError('Additional staged file escaped the project')
+                    raise ProjectError("Additional staged file escaped the project")
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(content)
             checked = _read_document(temp_project)
@@ -309,12 +328,22 @@ class ProjectStore:
                 raise ProjectError("Staged .net and project.json device counts disagree")
             summary = checked.summary()
             operation_id = uuid4().hex
-            marker = temp_project / 'MCPArtifacts' / 'stage-receipt.json'
+            marker = temp_project / "MCPArtifacts" / "stage-receipt.json"
             marker.parent.mkdir(parents=True, exist_ok=True)
-            marker.write_text(json.dumps({'schema_version': 1, 'operation_id': operation_id,
-                                         'source_directory': str(doc.directory),
-                                         'project_file': str(final_project / doc.net_path.name),
-                                         'stage_name': stage_name, 'runtime_verified': False}, indent=2), encoding='utf-8')
+            marker.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "operation_id": operation_id,
+                        "source_directory": str(doc.directory),
+                        "project_file": str(final_project / doc.net_path.name),
+                        "stage_name": stage_name,
+                        "runtime_verified": False,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
             os.rename(temp_root, final_root)
             return {
                 "status": "staged",
@@ -358,7 +387,9 @@ class ProjectStore:
             raise ProjectError("Coordinates exceed supported planning range")
         if any(value is not None for value in (connect_to, connect_to_port, new_port)):
             if not all(value is not None for value in (connect_to, connect_to_port, new_port)):
-                raise ProjectError("connect_to, connect_to_port and new_port must be supplied together")
+                raise ProjectError(
+                    "connect_to, connect_to_port and new_port must be supplied together"
+                )
             if connect_to not in doc.sections:
                 raise ProjectError(f"Unknown peer device: {connect_to}")
             _check_port(connect_to_port)
@@ -367,7 +398,9 @@ class ProjectStore:
                 raise ProjectError(f"Peer port is already used: {connect_to}/{connect_to_port}")
         template = doc.sections[template_device]
         new_id = max(int(section.fields["device_id"]) for section in doc.sections.values()) + 1
-        existing_macs = {section.fields.get("bridge_mac", "").lower() for section in doc.sections.values()}
+        existing_macs = {
+            section.fields.get("bridge_mac", "").lower() for section in doc.sections.values()
+        }
         while True:
             mac = "64-52-" + "-".join(f"{byte:02x}" for byte in secrets.token_bytes(4))
             if mac not in existing_macs:
@@ -383,14 +416,18 @@ class ProjectStore:
                 new_block.append(f"        {key} = {value}{newline}")
         if connect_to is not None:
             new_block.append(f"        {new_port} = {connect_to} {connect_to_port}{newline}")
-        new_block.extend((f"        x = {x}{newline}", f"        y = {y}{newline}", f"        z = 5.0{newline}"))
+        new_block.extend(
+            (f"        x = {x}{newline}", f"        y = {y}{newline}", f"        z = 5.0{newline}")
+        )
         lines = list(doc.lines)
         if connect_to is not None:
             peer = doc.sections[connect_to]
             lines[peer.start : peer.end] = _insert_field(
                 lines[peer.start : peer.end], connect_to_port, f"{new_name} {new_port}", newline
             )
-        vbox_end = next((i for i, line in enumerate(lines) if line.startswith("[Non-vBox-DATA]")), len(lines))
+        vbox_end = next(
+            (i for i, line in enumerate(lines) if line.startswith("[Non-vBox-DATA]")), len(lines)
+        )
         lines[vbox_end:vbox_end] = new_block
         metadata = copy.deepcopy(doc.metadata)
         template_meta = next(
@@ -419,7 +456,10 @@ class ProjectStore:
         if a_port in doc.sections[a].fields or b_port in doc.sections[b].fields:
             raise ProjectError("One or both link ports are already used")
         lines = list(doc.lines)
-        changes = ((doc.sections[a], a_port, f"{b} {b_port}"), (doc.sections[b], b_port, f"{a} {a_port}"))
+        changes = (
+            (doc.sections[a], a_port, f"{b} {b_port}"),
+            (doc.sections[b], b_port, f"{a} {a_port}"),
+        )
         for section, port, value in sorted(changes, key=lambda item: item[0].start, reverse=True):
             lines[section.start : section.end] = _insert_field(
                 lines[section.start : section.end], port, value, doc.newline

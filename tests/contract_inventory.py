@@ -1,5 +1,7 @@
 """Independent acceptance inventory; never derive expected names from the server."""
-TOOLS = frozenset('''
+
+TOOLS = frozenset(
+    """
 hcl_capabilities hcl_list_projects hcl_inspect_project hcl_stage_add_device
 hcl_stage_link hcl_stage_copy hcl_parity_report hcl_bridge_status hcl_list_devices
 hcl_get_device_details hcl_validate_plan hcl_backend_capabilities hcl_backend_topology
@@ -12,8 +14,17 @@ hcl_live_deploy hcl_verify_connectivity hcl_inspect_ports hcl_read_vlans hcl_rea
 hcl_apply_acl hcl_apply_vlan hcl_apply_vlan_network hcl_remove_acl hcl_apply_nat
 hcl_remove_nat hcl_apply_interface_tuning hcl_apply_stp hcl_apply_port_security
 hcl_diff hcl_health_check hcl_audit_security hcl_apply_netstream
-'''.split())
-RESOURCES = frozenset('hcl://'+name for name in (
-    'capabilities', 'catalog/devices', 'catalog/ports', 'catalog/aliases',
-    'catalog/cables', 'catalog/templates'))
+""".split()
+)
+RESOURCES = frozenset(
+    "hcl://" + name
+    for name in (
+        "capabilities",
+        "catalog/devices",
+        "catalog/ports",
+        "catalog/aliases",
+        "catalog/cables",
+        "catalog/templates",
+    )
+)
 assert len(TOOLS) == 55 and len(RESOURCES) == 6

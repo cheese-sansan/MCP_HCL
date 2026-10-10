@@ -70,8 +70,15 @@ class ProjectStoreTests(unittest.TestCase):
         self.assertEqual(len(before["devices"]), 2)
         self.assertEqual(len(before["links"]), 1)
         result = self.store.stage_add_device(
-            str(self.project), "MCP_Test_1", "R1", "MCP_R3", 200, 50,
-            "R2", "GE_0/1", "GE_0/0",
+            str(self.project),
+            "MCP_Test_1",
+            "R1",
+            "MCP_R3",
+            200,
+            50,
+            "R2",
+            "GE_0/1",
+            "GE_0/0",
         )
         self.assertEqual(result["status"], "staged")
         staged_dir = Path(result["project_directory"])
@@ -86,31 +93,40 @@ class ProjectStoreTests(unittest.TestCase):
         self.assertFalse((self.project / "DeviceConfig" / "MCP_R3.cfg").exists())
 
     def test_stage_link_requires_unused_ports(self) -> None:
-        result = self.store.stage_link(str(self.project), "MCP_Test_2", "R1", "GE_0/1", "R2", "GE_0/1")
+        result = self.store.stage_link(
+            str(self.project), "MCP_Test_2", "R1", "GE_0/1", "R2", "GE_0/1"
+        )
         self.assertEqual(result["link_count"], 2)
         with self.assertRaises(ProjectError):
             self.store.stage_link(str(self.project), "MCP_Test_3", "R1", "GE_0/0", "R2", "GE_0/1")
 
     def test_copy_preserves_configs_notes_and_source(self) -> None:
         net_path = self.project / "lab1.net"
-        net_path.write_bytes(net_path.read_bytes() + b'    [[NOTE 1]]\r\n        text = "keep me"\r\n')
+        net_path.write_bytes(
+            net_path.read_bytes() + b'    [[NOTE 1]]\r\n        text = "keep me"\r\n'
+        )
         serial = self.project / "SerialFile"
         serial.mkdir()
         (serial / "R1.log").write_bytes(b"existing console record")
         before = {
             str(path.relative_to(self.project)): path.read_bytes()
-            for path in self.project.rglob("*") if path.is_file()
+            for path in self.project.rglob("*")
+            if path.is_file()
         }
         result = self.store.stage_copy(str(self.project), "Gate_Copy")
         copy_path = Path(result["project_directory"])
         self.assertEqual(result["status"], "staged")
         self.assertEqual((result["device_count"], result["link_count"]), (2, 1))
         self.assertIn('text = "keep me"', Path(result["project_file"]).read_text())
-        self.assertEqual((copy_path / "DeviceConfig/R1.cfg").read_bytes(), before[str(Path("DeviceConfig") / "R1.cfg")])
+        self.assertEqual(
+            (copy_path / "DeviceConfig/R1.cfg").read_bytes(),
+            before[str(Path("DeviceConfig") / "R1.cfg")],
+        )
         self.assertEqual((copy_path / "SerialFile/R1.log").read_bytes(), b"existing console record")
         after = {
             str(path.relative_to(self.project)): path.read_bytes()
-            for path in self.project.rglob("*") if path.is_file()
+            for path in self.project.rglob("*")
+            if path.is_file()
         }
         self.assertEqual(before, after)
 
