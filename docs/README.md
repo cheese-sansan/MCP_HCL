@@ -1,23 +1,15 @@
 # 文档入口
 
-当前源码与验收状态以仓库根 [HANDOFF.md](../HANDOFF.md) 为准。
+仓库仅维护以下使用、开发与验收文档：
 
-## 使用与合同
+| 文档 | 用途 |
+|---|---|
+| [README](../README.md) | 安装、运行与能力概览 |
+| [HANDOFF](../HANDOFF.md) | 当前版本、验证结果与下一步 |
+| [开发说明](development.md) | 模块职责、代码风格和统一检查 |
+| [合同 v2](contract-v2.md) | 严格参数、结果、恢复和功能边界 |
+| [API 指南](offline-api.md) | 工具分组、规划和调用方式 |
+| [参数 Schema](offline-contracts.json) | 机器可读字段、类型和范围 |
+| [测试指南](live-acceptance.md) | 软件与原生验收的必要步骤 |
 
-- [项目说明与运行](../README.md)
-- [严格合同 v2](contract-v2.md)、[离线 API](offline-api.md)、[参数 Schema](offline-contracts.json)
-- [统一测试与原生接手计划](live-acceptance.md)
-
-## 维护
-
-- [开发与检查约定](development.md)
-- [分支整合与规范化决策](decisions/0001-code-normalization.md)
-- [本轮整合验证](normalization-20261011.md)
-
-## 具名证据与历史
-
-- [新增软件验证](software-verification-20261011.md)
-- [单设备原生测试与账号清理](native-test-and-cleanup-20261011.md)
-- 日期化的实现、交付与验证文件记录其自身版本和范围，不能自动视为当前源码通过证明。
-- `history/` 保留旧交接、旧分支脚本、冲突文档及退役说明；不作为当前执行入口。
-- `work/` 保存私有回执、备份和原始恢复材料，不进入 Git 或 wheel。
+日期化报告、重复交接、旧决策和脚本快照已移出维护文档集合；历史仍在 Git 与仓库外备份中。原始验证日志、恢复材料和失败回执继续保存在各自私有证据目录，当前定位见 HANDOFF。

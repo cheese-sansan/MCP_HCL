@@ -13,7 +13,7 @@
 
 上游工具库存仍为 12 implemented / 46 planned / 3 unverified。原生完整设备/线缆库存、若干 IOS→Comware 行为映射、命名 exporter/monitor 与安全 Phone 关联等仍缺。
 
-2026-10-11 具名报告记录一次单设备隔离生命周期和账号清理；候选独占 CLI 被后台 MultiCC 保护拒绝，配置与网络验收未完成。详细事实与范围见 [原生测试记录](docs/native-test-and-cleanup-20261011.md)。
+2026-10-11 具名报告记录一次单设备隔离生命周期和账号清理；候选独占 CLI 被后台 MultiCC 保护拒绝，配置与网络验收未完成。证据位置与后续门槛见 [当前交接](HANDOFF.md) 和 [测试指南](docs/live-acceptance.md)。
 
 ## 安装与运行
 
@@ -37,6 +37,6 @@ stdio 服务等待协议输入；在 MCP 客户端配置相同解释器、工作
 .\.venv\Scripts\python.exe scripts\check_all.py
 ```
 
-该入口运行 Ruff 和全部软件检查，强制真实写开关为 0，并为每轮保存独立回执。历史成功与失败不覆盖。开发规范和模块职责见 [development.md](docs/development.md)，本轮分支与重构证据见 [normalization-20261011.md](docs/normalization-20261011.md)。
+该入口运行 Ruff 和全部软件检查，强制真实写开关为 0，并为每轮保存独立回执。历史成功与失败不覆盖。开发规范和模块职责见 [development.md](docs/development.md)。原始检查结果定位见 HANDOFF。
 
-参数见 [离线 API](docs/offline-api.md)、[严格合同 v2](docs/contract-v2.md) 和 [Schema](docs/offline-contracts.json)。旧文档与已退役宿主脚本保存在 `docs/history/`，不作为当前执行入口。
+参数见 [离线 API](docs/offline-api.md)、[严格合同 v2](docs/contract-v2.md) 和 [Schema](docs/offline-contracts.json)。日期化报告、重复交接与旧脚本快照已移出维护文档，保留 Git 历史和仓库外备份。
