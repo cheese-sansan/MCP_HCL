@@ -1,19 +1,19 @@
 # MCP_HCL 测试计划
 
-更新：2026-10-11（Asia/Tokyo）。本次软件验证和缺陷修复由用户明确授权 Codex 执行；随后用户授权 Codex 在此处执行必要原生测试并删除实验账号。源码和新 wheel 各 177 项：176 通过、1 权限跳过、0 失败/错误。本轮单设备隔离生命周期完成，CLI 阻塞；MCPHCLLab 已删除，profile/工程/证据保留。见 [本轮报告](native-test-and-cleanup-20261011.md)。
+更新：2026-10-11（Asia/Tokyo）。当前计划对应分支整合与代码规范化后的版本；完整软件回归 330 项、329 通过、1 权限跳过。参数和证据合同保持。旧软件及原生回执保留，账号清理和 CLI 阻塞事实见 [原生报告](native-test-and-cleanup-20261011.md)，本轮记录见 [规范化报告](normalization-20261011.md)。
 
 ## 1. 固定待测版本
 
 | 项目 | 权威定位 |
 |---|---|
-| 当前软件源码 | `C:/Users/w8p1p/.codex/worktrees/nat-transactions/MCP_HCL` |
-| 源码基线 | detached `9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62`；大量未提交改动，HEAD 不能单独确定版本 |
-| 固定候选 | `C:/Users/Public/Documents/MCP_HCL_Software_Verified_20261011_4589032f/mcp_hcl-0.5.0-py3-none-any.whl` |
-| wheel SHA256 | `3d3663ca1c65ffc9c93b5281a460469de3a0d1f39115307704e9775f33465f9a` |
+| 当前软件源码 | `C:/Users/w8p1p/.codex/worktrees/ddea/MCP_HCL` |
+| 源码基线 | 本地 main；合入原分支历史与已验证快照，实际版本由本轮 manifest 与 wheel SHA 固定 |
+| 固定候选 | `C:/Users/Public/Documents/MCP_HCL_Normalized_20261011_ccf9210a/mcp_hcl-0.5.0-py3-none-any.whl` |
+| wheel SHA256 | `2c57afcdf7b0f5234a738a255c5b904e15d52a000e6ab7f5f6aacd6af9e5880a` |
 | 声明/Schema 制品 | 55 工具、6 资源；源码及候选 SDK 发现已验证 |
 | 固定上游 | `846db381bc2c6ee0229d56e1d7ce8847eb6b213d`，61 工具、5 资源 |
 
-2026-10-11 本轮：新候选 56 个包文件与当前源码逐字节一致，源码/候选的软件合同、模拟事务和 SDK 验证均已执行，证据见 [软件验证报告](C:/Users/w8p1p/.codex/worktrees/nat-transactions/MCP_HCL/docs/software-verification-20261011.md)。旧候选及其历史 SHA 保留；本次软件结果不证明原生行为。旧 8a46 是历史测试/实测回执所在工作区；E:/MCP_HCL 的 dsh-2 是旧源码，不能用它评价本候选。旧版本 0.5.0 的版本号也不能代替 SHA。
+2026-10-11 规范化候选有 57 个包文件，与整合源码逐字节一致。软件回归、Ruff、完整 SDK 声明对比及候选专项见规范化报告。旧的 56 文件/177 项软件报告仍标识重构前的范围；它不是本候选的完整回归。各来源工作区和旧 wheel 保留，版本号 0.5.0 不能替代 SHA。
 
 本指南所在目录可能是入口副本。所有待测代码均以上表的软件源码或固定候选为准。
 
@@ -29,7 +29,7 @@
 
 在新的软件验证会话保持 `MCP_HCL_ALLOW_LIVE_WRITE=0`。使用隔离 Python 3.11+ 环境和项目依赖。8a46 的既有 venv 是旧源码 editable 安装；接手时验证实际 `mcp_hcl.__file__`，或明确设置当前源码 `src` 的 PYTHONPATH，不能混用包与源码。
 
-第一组：核对 SDK 发现 55 工具/6 资源、严格 JSON 类型、未知字段、参数 Schema、默认门控、错误封装。现有 `tests/test_mcp_contract.py`、`test_stdio.py`、`test_parity.py` 是入口，旧数量断言已维护为独立的明确名称清单；只改数量不能证明功能。本次九个新增工具的 Schema/合法调用/门控/错误封装已专项验证。
+第一组：核对 SDK 发现 55 工具/6 资源、严格 JSON 类型、未知字段、参数 Schema、默认门控、错误封装。现有 `tests/test_mcp_contract.py`、`test_stdio.py`、`test_parity.py` 是入口，数量断言维护为独立的明确名称清单；只改数量不能证明功能。本次九个新增工具的 Schema/合法调用/门控/错误封装已专项验证。
 
 第二组：下表新增功能的软件专项已补齐并执行，逐项结果见软件验证报告及 JSON。下表继续作为合同索引，未来变更仅执行受影响范围。
 
@@ -44,7 +44,7 @@
 | 安全审计 | 跨行 banner 伪命令、存储模式、未知算法/RBAC/AAA；成功和失败返回/文件不得有密码、密文、raw 控制台或配置哈希 | security-audit-20261007.md |
 | NetStream | 名字/VM/模拟元数据、共享版本/源接口、精确地址/端口/公共域、聚合拒绝、保存/元数据失败/恢复 | netstream-transactions-20261007.md |
 
-上述软件层已由 Codex 按本次明确授权执行，后续原生检查须先解决本轮 CLI 阻塞并准备新的隔离身份；模拟通过不提升原生结论。配置、原始回读、PSK、截图与备份放私有目录，不放入 Git/候选包或发送到外部。
+上述软件层已由 Codex 按明确授权执行并在规范化后复测，后续原生检查须先解决本轮 CLI 阻塞并准备新的隔离身份；模拟通过不提升原生结论。配置、原始回读、PSK、截图与备份放私有目录，不放入 Git/候选包或发送到外部。
 
 ## 4. 未实现与未验证必须分开
 

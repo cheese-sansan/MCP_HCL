@@ -4,3 +4,5 @@
 # Historical receipts and archived sources retain their original bytes.
 docs/history/** -text
 docs/*20*.json -text
+# Collector/script hashes and reference bytes must survive Git checkout.
+src/mcp_hcl/data/** -text

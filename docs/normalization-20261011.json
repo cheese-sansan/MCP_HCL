@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-11",
+  "timezone": "Asia/Tokyo",
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL",
+  "target_branch": "main",
+  "source_refs": [
+    "fec66955f068473f8f465365eb3c163640dc7a53 refs/codex/turn-diffs/captures/1791655313241/771acade-92c5-4908-ba6b-5ed6d14446f8/base",
+    "fec66955f068473f8f465365eb3c163640dc7a53 refs/codex/turn-diffs/checkpoints/2fd3c904151ffa490e0cebb3ce02f59f/92bd53e6fd1b4baf101cae9f9d206151/1791652372705/09c0d2c5-54c1-4502-96ac-032ebeae55ae",
+    "0b9f98544d1ccad72b29de1888555ade94518056 refs/codex/turn-diffs/checkpoints/6e3a9d208657f643f33b81facde1baa4/19532fefc551c75b45280ce237b5e6ed/1791655188160/e03002c4-6c2a-48b7-a536-fc0d592c29fc",
+    "724602cd28e98288257c81a7945b3860cd48ce86 refs/codex/turn-diffs/checkpoints/bfe5f74a271c65afbecc930fe724f031/808df629b21219f3961951092b1b9738/1791139808805/6ca3447e-2f94-4717-81bc-4e4fbd9040a7",
+    "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62 refs/heads/codex/hcl-live-parity",
+    "e7231a3b4139219910af2bb84901aedd71bae986 refs/heads/dsh-2",
+    "1005ac3fb455b69b4cbd07b4eaca4f16a3d94e8c refs/heads/main",
+    "1005ac3fb455b69b4cbd07b4eaca4f16a3d94e8c refs/remotes/origin/HEAD",
+    "1005ac3fb455b69b4cbd07b4eaca4f16a3d94e8c refs/remotes/origin/main"
+  ],
+  "source_snapshots": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\snapshots",
+  "bundle": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\all-refs.bundle",
+  "bundle_sha256": "c202b1ed627d07bbbf29aa1453d787aea484a05cfa6b79ea2beff1eb9f586519",
+  "baseline_result": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\baseline-runs\\e9b341d119584808b31c0eb0605d7601\\result.json",
+  "source_result": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\final-runs\\50d356d3e4914fa09271df2053b5a7ab\\result.json",
+  "candidate_result": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\candidate-runs\\86887248f6164daa80f6a858fae06544\\result.json",
+  "candidate": {
+    "wheel": "C:\\Users\\Public\\Documents\\MCP_HCL_Normalized_20261011_ccf9210a\\mcp_hcl-0.5.0-py3-none-any.whl",
+    "sha256": "2c57afcdf7b0f5234a738a255c5b904e15d52a000e6ab7f5f6aacd6af9e5880a",
+    "package_files": 57,
+    "source_byte_match": true,
+    "full_live_gate_passed": false
+  },
+  "source_counts": {
+    "tests_run": 330,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "candidate_counts": {
+    "tests_run": 177,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "sdk_contract_unchanged": true,
+  "sdk_counts": {
+    "tools": 55,
+    "resources": 6
+  },
+  "format_executable_ast_unchanged": true,
+  "transaction_helper_ast_unchanged": true,
+  "source_worktrees_unchanged": {
+    "entry": {
+      "changed_files": [],
+      "head_unchanged": true
+    },
+    "8a46": {
+      "changed_files": [],
+      "head_unchanged": true
+    },
+    "ed66": {
+      "changed_files": [],
+      "head_unchanged": true
+    },
+    "nat-transactions": {
+      "changed_files": [],
+      "head_unchanged": true
+    }
+  },
+  "historical_files_unchanged": {
+    "files": [
+      "docs/acl-extended-verification-20261005.json",
+      "docs/acl-named-verification-20261005.json",
+      "docs/acl-persistence-verification-20261006.json",
+      "docs/acl-removal-verification-20261006.json",
+      "docs/address-observation-delivery-20261007.json",
+      "docs/console-runtime-verification-20261005.json",
+      "docs/gui-identity-delivery-20261007.json",
+      "docs/history/20261011-ddec5b6b-HANDOFF.md",
+      "docs/history/20261011-ddec5b6b-live-acceptance.md",
+      "docs/history/20261011-native-c2f6bfc9/HANDOFF.md",
+      "docs/history/20261011-native-c2f6bfc9/docs/live-acceptance.md",
+      "docs/history/20261011-software-4589032f/HANDOFF.md",
+      "docs/history/20261011-software-4589032f/docs/live-acceptance.md",
+      "docs/history/codex-handoff-040.md",
+      "docs/history/codex-readme-040.md",
+      "docs/history/dsh-branch-retirement.json",
+      "docs/history/dsh-handoff-1200f30.md",
+      "docs/history/dsh-readme-1200f30.md",
+      "docs/history/dsh-receipt-index.json",
+      "docs/history/hcl_lab_boot-040.ps1",
+      "docs/history/hcl_lab_environment-040.ps1",
+      "docs/inspection-verification-20261005.json",
+      "docs/interface-tuning-delivery-20261006.json",
+      "docs/nat-modes-verification-20261006.json",
+      "docs/nat-transactions-delivery-20261006.json",
+      "docs/netstream-delivery-20261007.json",
+      "docs/planning-fidelity-verification-20261005.json",
+      "docs/reconciliation-delivery-20261007.json",
+      "docs/scoped-policy-verification-20261005.json",
+      "docs/security-audit-delivery-20261007.json",
+      "docs/software-verification-20261011.json",
+      "docs/switch-security-delivery-20261007.json",
+      "docs/topology-validation-verification-20261005.json",
+      "docs/vlan-network-verification-20261006.json"
+    ],
+    "unchanged": true
+  },
+  "source_manifest": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\final-runs\\50d356d3e4914fa09271df2053b5a7ab\\manifest.json",
+  "candidate_manifest": "C:\\Users\\w8p1p\\.codex\\worktrees\\ddea\\MCP_HCL\\work\\normalization-20261011\\ccf9210a95624f7ba9401fbb79e0dead\\candidate-runs\\86887248f6164daa80f6a858fae06544\\manifest.json",
+  "process_audit_scopes": {
+    "offline_cli": 3,
+    "software_script_test": 11,
+    "stdio_server": 31
+  },
+  "remote_heads_observed": {
+    "main": "1005ac3fb455b69b4cbd07b4eaca4f16a3d94e8c"
+  },
+  "pushed": false,
+  "source_branches_deleted": false,
+  "full_live_gate_passed": false,
+  "completion": "Incomplete",
+  "ruff_version": "0.17.0"
+}

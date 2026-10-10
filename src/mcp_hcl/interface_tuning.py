@@ -18,16 +18,16 @@ from mcp_hcl.contracts import validation_errors
 from mcp_hcl.deployment import config_text
 from mcp_hcl.gui_relay import rejected
 from mcp_hcl.models import StrictModel
-from mcp_hcl.nat_policy import (
+from mcp_hcl.policy import scopes
+from mcp_hcl.runtime_binding import unlinked
+from mcp_hcl.services import InterfaceName
+from mcp_hcl.transactions import (
     BudgetConsole,
     atomic_json,
     incomplete_operation,
     operation_json,
     unique_json,
 )
-from mcp_hcl.policy import scopes
-from mcp_hcl.runtime_binding import unlinked
-from mcp_hcl.services import InterfaceName
 
 SCALARS = {
     "bandwidth": "bandwidth",
