@@ -62,6 +62,8 @@ class Artifacts:
         if hashes!=manifest['hashes']: raise ValueError('Artifact hash mismatch or unexpected file')
         plan=json.loads((directory/'plan.json').read_text(encoding='utf-8'))
         from mcp_hcl.topology import validate_plan
-        result=validate_plan(plan,self.catalog)
+        # Reload the same configuration intent that export accepted. A hash-
+        # checked artifact is not a claim of a complete connected topology.
+        result=validate_plan(plan,self.catalog,validation_level='configuration')
         result.update(artifact_directory=str(directory),source_operation_id=manifest['operation_id'])
         return result

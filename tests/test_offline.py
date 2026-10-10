@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from pathlib import Path
+from contract_inventory import TOOLS
 from mcp_hcl.catalog import HclCatalog
 from mcp_hcl.planning import plan_topology,estimate_plan,fix_plan
 from mcp_hcl.generation import generate_configs,generate_operations
@@ -116,7 +117,7 @@ class OfflineStdioTests(unittest.IsolatedAsyncioTestCase):
             paths=build_fixture(Path(temporary))
             async with mcp_session(paths) as session:
                 tools={t.name:t for t in (await session.list_tools()).tools}
-                self.assertEqual(len(tools),39)
+                self.assertEqual(set(tools), TOOLS)
                 schema=tools['hcl_generate_configs'].inputSchema
                 self.assertFalse(schema['additionalProperties'])
                 self.assertIn('discriminator',schema['properties']['plan']['properties']['services']['items'])
@@ -139,3 +140,4 @@ class OfflineStdioTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(loaded['runtime_verified'])
                 self.assertNotEqual(exported['request_id'],loaded['request_id'])
                 self.assertEqual(len((await session.list_resources()).resources),6)
+

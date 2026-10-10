@@ -24,6 +24,8 @@ def clean_text(raw: bytes) -> str:
 class PipeLease:
     def __init__(self, root: Path, pipe: str):
         describe(pipe)
+        if any(path.is_symlink() or getattr(path,'is_junction',lambda:False)() for path in (root,*root.parents)):
+            raise ConsoleError('Pipe lease root cannot contain links',code='invalid_lease_root')
         root.mkdir(parents=True, exist_ok=True)
         path = root / (hashlib.sha256(pipe.casefold().encode()).hexdigest() + '.lock')
         if path.is_symlink(): raise ConsoleError('Pipe lease cannot be linked')
@@ -39,7 +41,9 @@ class PipeLease:
                 fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as exc:
             os.close(self.fd)
-            raise ConsoleError('Console channel is busy; release the other client') from exc
+            raise ConsoleError('Console channel is busy; release the other client',
+                               code='console_lease_busy', detail={'stage':'lease','errno':exc.errno,
+                               'winerror':getattr(exc,'winerror',None)}) from exc
 
     def close(self):
         if self.fd is not None:
@@ -48,10 +52,14 @@ class PipeLease:
 
 
 class PersistentConsole:
-    def __init__(self, pipe: str, lease_root: Path, *, session=None, timeout=12.0, max_bytes=1024*1024):
+    def __init__(self, pipe: str, lease_root: Path, *, session=None, timeout=12.0,
+                 max_bytes=1024*1024, open_timeout=2.0):
         self.pipe = pipe
         self.native_channel = session is None
-        self.lease = PipeLease(lease_root, pipe)
+        # Native consumers using different output directories still compete
+        # for the same per-user endpoint lock. Synthetic sessions stay local.
+        actual_lease_root = Path.home()/'.mcp_hcl'/'console-leases' if self.native_channel else lease_root
+        self.lease = PipeLease(actual_lease_root, pipe)
         self.timeout = timeout
         self.max_bytes = max_bytes
         try:
@@ -63,17 +71,30 @@ class PersistentConsole:
                        "Where-Object {$_.Name -in @('putty.exe','SimwareMultiCC.exe')}); "
                        "[bool](@($p | Where-Object {$_.Name -eq 'SimwareMultiCC.exe' -or "
                        "[string]::IsNullOrEmpty($_.CommandLine) -or $_.CommandLine.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0}).Count)")
-                checked=subprocess.run(['powershell.exe','-NoProfile','-Command',query],capture_output=True,timeout=10)
-                if checked.returncode != 0 or checked.stdout.strip().lower() != b'false':
-                    raise ConsoleError('PuTTY/MultiCC may own this console; release it before requesting an exclusive lease')
-            self.session = session or ConsoleSession(open_console_pipe(pipe))
+                try:
+                    checked=subprocess.run(['powershell.exe','-NoProfile','-Command',query],capture_output=True,timeout=10)
+                except (OSError,subprocess.TimeoutExpired) as exc:
+                    raise ConsoleError('Console ownership observation failed',code='console_owner_unknown',
+                                       detail={'stage':'ownership'}) from exc
+                if checked.returncode != 0 or checked.stdout.strip().lower() not in {b'false',b'true'}:
+                    raise ConsoleError('Console ownership observation is unknown',code='console_owner_unknown',
+                                       detail={'stage':'ownership'})
+                if checked.stdout.strip().lower() == b'true':
+                    raise ConsoleError('PuTTY/MultiCC may own this console; release it before requesting an exclusive lease',
+                                       code='external_console_present',detail={'stage':'ownership'})
+            self.session = session or ConsoleSession(open_console_pipe(pipe,timeout=open_timeout),max_bytes=max_bytes)
         except Exception:
             self.lease.close()
             raise
         self.prompt = None
         self.history = []
+        self.partial_output = b''
+        self.failed = False
 
     def _receive(self, *, confirmation=False, initial=b''):
+        answer='Y' if confirmation is True else confirmation
+        if confirmation is not False and (not isinstance(answer,str) or answer not in {'Y','N'}):
+            raise ConsoleError('Only explicit Y/N confirmations are supported',code='invalid_confirmation')
         output = bytearray(initial)
         deadline = time.monotonic() + self.timeout
         pager_count = 0
@@ -81,19 +102,22 @@ class PersistentConsole:
         confirmed = False
         while time.monotonic() < deadline:
             if len(output) > self.max_bytes:
-                raise ConsoleError('Console output exceeds the evidence limit; truncation is not accepted')
+                raise ConsoleError('Console output exceeds the evidence limit; truncation is not accepted',
+                                   code='output_limit',detail={'stage':'read','observed_bytes':len(output)})
             text = clean_text(bytes(output))
             if confirmation and not confirmed and re.search(r'\[(?:Y/N|y/n)\]:?\s*$', text):
-                self.session.send('Y')
+                self.session.send(answer)
                 confirmed = True
             if PAGER.search(text) and len(output) != last_pager_size:
                 # Space is the documented pager continuation, not a command line.
                 try: sent = os.write(self.session._write_fd, b' ')
-                except OSError as exc: raise ConsoleError('Pager continuation failed') from exc
-                if sent != 1: raise ConsoleError('Pager continuation write failed')
+                except OSError as exc:
+                    from mcp_hcl.console import _os_error
+                    raise _os_error(exc,stage='pager',api='os.write') from exc
+                if sent != 1: raise ConsoleError('Pager continuation write failed',code='pager_write_failed',detail={'stage':'pager'})
                 last_pager_size = len(output)
                 pager_count += 1
-                if pager_count > 256: raise ConsoleError('Console pagination exceeded the page limit')
+                if pager_count > 256: raise ConsoleError('Console pagination exceeded the page limit',code='pager_limit',detail={'stage':'read'})
             match = PROMPT.search(text)
             if match:
                 self.prompt = match[1]
@@ -103,33 +127,49 @@ class PersistentConsole:
                 output.extend(chunk)
                 self.partial_output = bytes(output)
             else: time.sleep(0.02)
-        raise ConsoleError('No complete console prompt before deadline')
+        raise ConsoleError('No complete console prompt before deadline',code='prompt_timeout',detail={'stage':'read'})
 
     def exchange(self, command: str, *, confirmation=False) -> dict:
-        stale = self.session.drain()
-        if len(stale) >= self.max_bytes: raise ConsoleError('Stale stream cannot be drained safely')
-        self.session.send(command)
         self.partial_output = b''
+        stale = b''
+        sent = False
         try:
+            if self.failed:
+                raise ConsoleError('Failed console transaction requires reconciliation and a new connection',
+                                   code='console_session_failed',detail={'stage':'precondition'})
+            if confirmation is not False and confirmation is not True and (not isinstance(confirmation,str) or confirmation not in {'Y','N'}):
+                raise ConsoleError('Only explicit Y/N confirmations are supported',code='invalid_confirmation',detail={'stage':'precondition'})
+            stale = self.session.drain()
+            if len(stale) >= self.max_bytes:
+                raise ConsoleError('Stale stream cannot be drained safely',code='stale_output_limit',detail={'stage':'drain'})
+            self.session.send(command)
+            sent = True
             raw = self._receive(confirmation=confirmation)
+            text = clean_text(raw)
+            lines = text.splitlines()
+            echo = any(line.strip() == command or line.strip().endswith('>' + command) or
+                       line.strip().endswith(']' + command) for line in lines)
+            if not echo:
+                raise ConsoleError('Console command echo is missing; response attribution failed',
+                                   code='command_echo_missing',detail={'stage':'attribution'})
+            if CLI_ERROR.search(text):
+                raise ConsoleError('Device rejected the console command',code='command_rejected',detail={'stage':'response'})
         except ConsoleError as exc:
+            self.failed = True
+            outcome = 'unknown' if sent or exc.detail.get('command_outcome') == 'unknown' else 'not_sent'
+            exc.detail['command_outcome'] = outcome
             self.history.append({'command': command, 'output': clean_text(self.partial_output),
                                  'raw_output_b64': base64.b64encode(self.partial_output).decode('ascii'),
-                                 'complete': False, 'error': str(exc)})
+                                 'output_sha256':hashlib.sha256(self.partial_output).hexdigest(),
+                                 'discarded_stale_bytes':len(stale),'command_outcome':outcome,
+                                 'complete': False, 'error': str(exc),'errors':[exc.as_error()]})
             raise
-        text = clean_text(raw)
-        lines = text.splitlines()
-        # An idle gap or a previous prompt cannot attribute output to this command.
-        echo = any(line.strip() == command or line.strip().endswith('>' + command) or
-                   line.strip().endswith(']' + command) for line in lines)
         result = {'command': command, 'output': text, 'prompt': self.prompt,
                   'raw_output_b64': base64.b64encode(raw).decode('ascii'),
                   'output_sha256': hashlib.sha256(raw).hexdigest(),
                   'request_sha256': hashlib.sha256(command.encode('ascii')).hexdigest(),
                   'discarded_stale_bytes': len(stale), 'complete': True}
         self.history.append(result)
-        if not echo: raise ConsoleError('Console command echo is missing; response attribution failed')
-        if CLI_ERROR.search(text): raise ConsoleError('Device rejected the console command')
         return result
 
     def close(self):

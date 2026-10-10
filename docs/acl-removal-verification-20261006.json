@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "acl_removal_software_contract_and_authorized_real_lab_initial_observation",
+  "required_targeted": {
+    "tests": 8,
+    "passed": 8,
+    "elapsed_seconds": 2.834,
+    "log": "work/acl-removal-required-tests-20261006.txt"
+  },
+  "discovery_dependencies": {
+    "tests": 3,
+    "passed": 3,
+    "elapsed_seconds": 5.053,
+    "log": "work/acl-removal-discovery-dependencies-20261006.txt"
+  },
+  "full_regression_repeated": false,
+  "upstream_revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+  "upstream_apply_acl_git_blob": "0d69483afaee2c466558165f7810541451392151",
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_discovery_removal_schema_and_default_gate_only",
+    "sha256": "f173376858f8467443fbfe74748b039b8b82bcb0c4bdd82f63741112f72ae62b",
+    "package_files_compared": 45,
+    "tools": 46,
+    "resources": 6,
+    "full_live_gate_passed": false
+  },
+  "public_packet": "C:/Users/Public/Documents/MCP_HCL_Lab_20261006_ACLRemoval",
+  "packet_operation_id": "ee27279486444b4e92c364676d31ec8c",
+  "tools": 46,
+  "resources": 6,
+  "real_lab_initial_observation": "work/lab-profile-observation-verification-20261006.json",
+  "native_removal_tested": false,
+  "native_persistence_tested": false,
+  "native_recovery_tested": false,
+  "runtime_isolation_verified": false,
+  "full_live_gate_passed": false,
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "completion": "incomplete",
+  "cleanup_authorized_after_required_real_tests": true,
+  "cleanup_executed": false,
+  "source_hashes": {
+    "src/mcp_hcl/acl_removal.py": "4c45ad06c06f6f1ea04c74952d92a989aaf75a7a5e6cc02f62c0937172be5694",
+    "src/mcp_hcl/policy.py": "f88e46bce4c62beae6e03d2d5a04de109eed29c8faa97c80b1016299d28c525b",
+    "src/mcp_hcl/contracts.py": "71dc019b07adaf07631f47763aeb5b4d08150731de96a56a77e2d0ab8e271cbb",
+    "src/mcp_hcl/parity.py": "2949b03a9817a30671392899c5b19f1819a3c76ce01ebe2d2a4f6362fa41de96",
+    "src/mcp_hcl/data/upstream_parity.json": "0248c20a18af01439c38f7dd14ccd2d68f841396778182c451f6f29d5207aad3",
+    "docs/offline-contracts.json": "39eca268fcc90cad2b42d3328881b5517e4b66c8bd367dc019c8ef0ed729ddbb",
+    "tests/test_acl_removal.py": "cb04fbd49abad4c8a669e0be2539147e19b9f877fb7eddea17de6967e5a4b4b2",
+    "scripts/hcl_lab_profile_observation.ps1": "7256d14fa55ea27f7e2edf283d55a71e78f2bee97190d20ea363eb4d0cb217eb",
+    "scripts/hcl_lab_observation_launch.ps1": "144f0a4cf5bdc2975e8803bf487efedd97a0c4e9369c2e64bc8db633574f881c"
+  }
+}

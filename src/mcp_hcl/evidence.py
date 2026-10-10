@@ -271,6 +271,9 @@ def collect_evidence(spec_data: dict, output: Path) -> dict:
                     add_bytes(json.dumps(history,indent=2).encode(),f'sources/{index}-failed-transcript.json','native_transcript',pipe)
                     failure={'status':'partial','error':str(exc),'device':section.name,'origin_host':socket.gethostname(),
                              'receipt_directory':str(output),'runtime_verified':False,'full_live_gate_passed':False}
+                    failure['errors']=[exc.as_error()] if isinstance(exc,ConsoleError) else [
+                        {'code':'native_capture_failed','message':str(exc),'detail':{
+                            'winerror':getattr(exc,'winerror',None),'errno':getattr(exc,'errno',None)}}]
                     (temp/'capture-failed.json').write_text(json.dumps(failure,indent=2),encoding='utf-8')
                     temp.rename(output)
                     return failure

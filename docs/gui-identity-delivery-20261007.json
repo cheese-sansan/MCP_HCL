@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-07",
+  "user_timezone": "Asia/Tokyo",
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL",
+  "functional_tests_executed": 0,
+  "sdk_discovery_tested": false,
+  "native_tested": false,
+  "native_observers_executed": 0,
+  "gui_actions_executed": 0,
+  "csharp_compiled": true,
+  "token_methods_called": false,
+  "full_live_gate_passed": false,
+  "runtime_isolation_verified": false,
+  "hcl_environment_verified": false,
+  "gui_backend_connection_verified": false,
+  "upstream_behavior_equivalent": false,
+  "expected_declared_tools": 53,
+  "resources": 6,
+  "upstream_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "wheel": {
+    "sha256": "f4c8bf3fd4bf10ad52691b78d0b87018122f0d8c05e31f73c72401ee63ed08fe",
+    "package_files_byte_compared": 54,
+    "source_byte_match": true,
+    "scope": "build_and_bytes_only"
+  },
+  "source_hashes": {
+    "src/mcp_hcl/gui_identity.py": "7821c48fabbbc55a9dd25e6ba6c155e69925552bd631f3203e8232602f09612a",
+    "src/mcp_hcl/gui_relay.py": "43e6a5fac320a3a7cb92897b47bf98dbdaad25c6b5cce1cff5e6a451c502c678",
+    "src/mcp_hcl/server.py": "46b9fedd6890355e6a790685cb25c7fb3a9412f70f5fd15e0c3cbb42f5e1d728",
+    "src/mcp_hcl/data/hcl_process_identity.ps1": "d0fa693a35240ad258fc03e7d2cea7895dcd8e09a0a41fd2ef4519988a51e5ee",
+    "src/mcp_hcl/data/hcl_open_gate.ps1": "771604d71b5c02789186050608c3e4d4820891f7d6cb6898626be765937d46a6",
+    "src/mcp_hcl/data/upstream_parity.json": "ae5896f8f8963f4619bac0314fd2d46c80c7876b5e287d950f7c33bbb9de09e5",
+    "docs/gui-identity-20261007.md": "48ada969b320218e031d985a4d1ceb3e0223b5a6184838d993f1aadb019b3a23"
+  },
+  "remaining_software_gaps": [
+    "remote_HCL_and_Wrapper_environment_observation",
+    "native_GUI_backend_connection_binding",
+    "protected_nonfresh_namespace_management",
+    "lease_recovery_after_server_restart",
+    "whole_native_device_and_cable_inventory",
+    "full_lifecycle_guards_for_other_native_APIs"
+  ],
+  "test_owner": "DeepSeek in DeepSeek Harness"
+}

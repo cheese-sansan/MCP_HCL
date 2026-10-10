@@ -65,7 +65,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Numbered/named Comware ACL software transaction covers wildcard/protocol/ICMP/port/flags/log/comment and directional binding replacement. Default implicit_deny adds a terminal deny without changing global packet-filter defaults. Unique saved result and selected main startup content are compared; originals and NULL/backup pointers are preserved and reconciled on failure. These are software contracts only: actual firmware, reboot/traffic and PT object functional equivalence remain unverified."
     },
     {
       "upstream_tool": "pt_apply_acl_object",
@@ -75,7 +75,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "The HCL equivalent is Comware ACL configuration and read-back; object-API performance is not a compatibility guarantee."
+      "note": "Numbered/named Comware ACL software transaction covers wildcard/protocol/ICMP/port/flags/log/comment and directional binding replacement. Default implicit_deny adds a terminal deny without changing global packet-filter defaults. Unique saved result and selected main startup content are compared; originals and NULL/backup pointers are preserved and reconciled on failure. These are software contracts only: actual firmware, reboot/traffic and PT object functional equivalence remain unverified."
     },
     {
       "upstream_tool": "pt_apply_hardening",
@@ -95,7 +95,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Interface bandwidth/OSPF transaction implementation added without tests. Serial clock and EIGRP delay mappings, encrypted plaintext-key equivalence and native/IOS behavior remain unverified.",
+      "software_verification": "pending_external_DeepSeek_testing"
     },
     {
       "upstream_tool": "pt_apply_nat",
@@ -105,7 +106,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Software transaction implementation added without tests in the isolated nat-transactions worktree. Runtime, persistence/recovery and IOS ingress-role/pool-mask equivalence remain unverified.",
+      "software_verification": "pending_external_DeepSeek_testing"
     },
     {
       "upstream_tool": "pt_apply_netflow",
@@ -115,7 +117,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Probe firmware support for NetStream exporter configuration and operational read-back."
+      "note": "Untested NetStream destination transactions use VM-bound local name metadata. Native named exporter/monitor objects, inert creation, per-exporter source/version and collector delivery remain incomplete or unverified."
     },
     {
       "upstream_tool": "pt_apply_port_security",
@@ -125,7 +127,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Software configuration transaction added without tests. Legacy PVST, IOS root priority selection, per-port guard scope and protect/restrict behavior remain incomplete/unverified.",
+      "software_verification": "pending_external_DeepSeek_testing"
     },
     {
       "upstream_tool": "pt_apply_stp",
@@ -135,17 +138,19 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Software configuration transaction added without tests. Legacy PVST, IOS root priority selection, per-port guard scope and protect/restrict behavior remain incomplete/unverified.",
+      "software_verification": "pending_external_DeepSeek_testing"
     },
     {
       "upstream_tool": "pt_apply_vlan",
       "category": "network_configuration",
       "hcl_targets": [
-        "hcl_apply_vlan"
+        "hcl_apply_vlan",
+        "hcl_apply_vlan_network"
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered single and multi-device Comware VLAN intent covers ASCII names, access/trunk all or ranged membership, PVID and routed 802.1Q subinterfaces. All selected VM identities and backups precede mutation; all running readbacks precede persistence. Scope checks and per-VM recovery are tested with synthetic channels only. Actual HCL firmware, tagged/untagged traffic, VLAN persistence after guest restart and complete PT equivalence remain unverified."
     },
     {
       "upstream_tool": "pt_audit_security",
@@ -155,7 +160,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Audit real Comware output; Cisco-specific password/config-register checks require explicit applicability mapping."
+      "note": "Untested bound configuration-posture audit prototype exports classified observations only. Cisco enable/encryption/config-register rules and Comware credential algorithms remain unmapped or unverified; full native inventory and upstream equivalence are incomplete."
     },
     {
       "upstream_tool": "pt_backup_config",
@@ -235,7 +240,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Untested hcl_diff prototype reads bound staged guests and reports address differences. Native missing/extra device inventory and positive in_sync remain unavailable; full upstream behavior is incomplete."
     },
     {
       "upstream_tool": "pt_estimate_plan",
@@ -346,7 +351,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Untested hcl_health_check prototype reports IPv4 and optional IPv6 observations and samples IPv4 VPN membership for repeated addresses. Native cable inventory, IPv6 routing domains, full-device coverage and a healthy verdict remain unavailable."
     },
     {
       "upstream_tool": "pt_inspect_ports",
@@ -356,7 +361,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered staged-device native CLI reader verifies running VM UUID/config-disk and pipe server identity before display interface. Reported interface fields only; live cable inventory and remaining PT-specific port fields are unverified, only_linked is refused. Real HCL acceptance pending."
     },
     {
       "upstream_tool": "pt_install_modules_batch",
@@ -448,7 +453,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Registered gated staged-project GUI relay verifies active caption and per-request receipts. Actual HCL execution on this host is not yet accepted."
+      "note": "Untested GUI identity/namespace guards precede the staged-project open relay; principal, token, listener and process-local freshness checks do not prove vendor runtime isolation or full live topology contents."
     },
     {
       "upstream_tool": "pt_plan_topology",
@@ -502,7 +507,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered staged-device native reader for user-defined traffic classifiers, behaviors and QoS policies. Running VM/config-disk/pipe identity and complete attributed transcripts required. Real HCL acceptance pending."
     },
     {
       "upstream_tool": "pt_read_vlans",
@@ -512,7 +517,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered staged-device native display vlan all reader with running VM/config-disk/pipe identity and request-local raw readback. Detailed VLAN fields are parsed; factory defaults and maximum capacity are not guessed. Real HCL acceptance pending."
     },
     {
       "upstream_tool": "pt_remove_acl",
@@ -522,7 +527,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Registered numbered/named ACL removal resolves actual IPv4 identity and optional interface/direction binding, backs up before mutation, protects unrelated views/bindings, verifies complete removal and unique saved startup content, and recovers only the original VM without replay. Software synthetic/stdio contracts only; actual firmware, applied-reference behavior and PT object equivalence remain unverified."
     },
     {
       "upstream_tool": "pt_remove_acl_object",
@@ -532,7 +537,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "The HCL equivalent is Comware ACL removal and read-back."
+      "note": "Registered numbered/named ACL removal resolves actual IPv4 identity and optional interface/direction binding, backs up before mutation, protects unrelated views/bindings, verifies complete removal and unique saved startup content, and recovers only the original VM without replay. Software synthetic/stdio contracts only; actual firmware, applied-reference behavior and PT object equivalence remain unverified."
     },
     {
       "upstream_tool": "pt_remove_nat",
@@ -542,7 +547,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "A live implementation requires the HCL gate and operation-specific read-back."
+      "note": "Software transaction implementation added without tests in the isolated nat-transactions worktree. Runtime, persistence/recovery and IOS ingress-role/pool-mask equivalence remain unverified.",
+      "software_verification": "pending_external_DeepSeek_testing"
     },
     {
       "upstream_tool": "pt_rename_device",
@@ -562,7 +568,7 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Registered gated GUI save relay requires active staged-project identity and file readback. Live topology contents, guests and CLI effects remain unverified."
+      "note": "Untested GUI save relay requires stable principal/token/process/listener identity and a matching in-memory namespace lease. Active caption and saved-file readback do not prove native whole-topology inventory, guests or CLI effects."
     },
     {
       "upstream_tool": "pt_screenshot",

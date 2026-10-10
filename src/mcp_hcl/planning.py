@@ -3,12 +3,26 @@ from __future__ import annotations
 from collections import deque
 from copy import deepcopy
 from ipaddress import IPv4Network, IPv6Network
-from typing import Literal
+from typing import Annotated, Literal
 from pydantic import Field, ValidationError, field_validator, model_validator
 from mcp_hcl.models import StrictModel
 from mcp_hcl.templates import TEMPLATES
 from mcp_hcl.topology import TopologyPlan, validate_plan
 from mcp_hcl.contracts import validation_errors
+
+HostCount = Annotated[int, Field(ge=0, le=64)]
+LanCounts = HostCount | Annotated[list[HostCount], Field(max_length=20)]
+
+
+def normalize_lan_counts(value: int | list[int], routers: int, *, empty_default: int) -> list[int]:
+    """Counts belong to each router's primary access LAN, as in the upstream request.
+
+    Scalars repeat. Short arrays repeat the last entry; empty arrays use the
+    documented category default. Unused trailing entries do not create routers.
+    """
+    if isinstance(value, int):
+        return [value] * routers
+    return [value[min(index, len(value)-1)] if value else empty_default for index in range(routers)]
 
 
 class WirelessSettings(StrictModel):
@@ -32,8 +46,8 @@ class TopologyRequest(StrictModel):
     template: Literal['single_lan','multi_lan','multi_lan_wan','star','hub_spoke','branch_office','router_on_a_stick','three_router_triangle','custom'] = 'multi_lan'
     routers: int | None = Field(default=None, ge=1, le=20)
     switches_per_router: int | None = Field(default=None, ge=0, le=4)
-    pcs_per_lan: int = Field(default=0, ge=0, le=64)
-    laptops_per_lan: int = Field(default=0, ge=0, le=64)
+    pcs_per_lan: LanCounts = Field(default=0, description='PC count on each router primary access LAN; scalar repeats, short lists repeat the last count, empty lists use 3.')
+    laptops_per_lan: LanCounts = Field(default=0, description='Laptop count on each router primary access LAN; scalar repeats, short lists repeat the last count, empty lists use 0.')
     servers: int = Field(default=0, ge=0, le=32)
     access_points: int = Field(default=0, ge=0, le=20)
     has_wan: bool = False
@@ -57,7 +71,7 @@ class TopologyRequest(StrictModel):
     dhcp: bool = False
     dual_stack: bool = False
     ipv6_base: str = '2001:db8::/32'
-    vlans: int = Field(default=2, ge=1, le=64)
+    vlans: int = Field(default=2, ge=0, le=64, description='Router-on-a-stick VLAN group count; 0 selects 2, bounded by a nonzero PC population. VLAN IDs are 10,20,...')
     custom_plan: dict | None = None
 
     @field_validator('lan_pool','transit_pool')
@@ -80,7 +94,8 @@ class TopologyRequest(StrictModel):
         elif self.custom_plan is not None: raise ValueError('custom_plan belongs to the custom template')
         if self.floating_routes and (self.routing != 'static' or self.template != 'three_router_triangle'):
             raise ValueError('Floating routes require static routing and the redundant triangle template')
-        if self.wireless_laptops and (not self.laptops_per_lan or not self.access_points):
+        has_laptops = bool(self.laptops_per_lan) if isinstance(self.laptops_per_lan,int) else any(self.laptops_per_lan)
+        if self.wireless_laptops and (not has_laptops or not self.access_points):
             raise ValueError('Wireless laptops require laptops and access points')
         if self.wireless_clients_per_lan:
             if self.wireless_laptops: raise ValueError('Wireless client and laptop groups cannot overlap')
@@ -107,15 +122,17 @@ def plan_topology(data,catalog):
     if request.template == 'custom': return validate_plan(deepcopy(request.custom_plan),catalog)
     defaults={'single_lan':1,'star':1,'router_on_a_stick':1,'three_router_triangle':3,'hub_spoke':4,'branch_office':3,'multi_lan_wan':3}
     nrouters=request.routers if request.routers is not None else defaults.get(request.template,2)
+    pc_counts=normalize_lan_counts(request.pcs_per_lan,nrouters,empty_default=3)
+    laptop_counts=normalize_lan_counts(request.laptops_per_lan,nrouters,empty_default=0)
     nswitches=request.switches_per_router if request.switches_per_router is not None else (3 if request.template=='star' else 1)
     spec=next(t for t in TEMPLATES if t['key']==request.template)
     if not spec['min_routers']<=nrouters<=spec['max_routers']: return rejection('template_router_count','Router count is incompatible with template')
     if request.template=='router_on_a_stick' and nswitches!=1: return rejection('template_switch_count','Single-arm routing requires exactly one switch')
     wan=request.has_wan or request.template in {'branch_office','multi_lan_wan'}
     for required,model,category in [(wan,request.wan_model,'WAN provider'),(request.servers,request.server_model,'server'),
-                                    (request.laptops_per_lan,request.laptop_model,'laptop')]:
+                                    (sum(laptop_counts),request.laptop_model,'laptop')]:
         if required and not model: return rejection('explicit_model_required',f'{category} requires a documented HCL model; no substitution is made')
-    if (request.pcs_per_lan or request.laptops_per_lan or request.servers or request.access_points or request.wireless_clients_per_lan) and not nswitches:
+    if (sum(pc_counts) or sum(laptop_counts) or request.servers or request.access_points or request.wireless_clients_per_lan) and not nswitches:
         return rejection('missing_access_switch','Endpoints require an access switch')
     models={m['model']:m for m in catalog.devices()['devices']}
     if request.wireless_clients_per_lan:
@@ -130,7 +147,7 @@ def plan_topology(data,catalog):
         for model in (request.ap_model,request.ac_model,request.laptop_model if request.wireless_laptops else request.ap_model):
             if model not in models or not models[model]['default_interfaces']:
                 return rejection('wireless_evidence_missing','Wireless model CLI defaults are missing; collect real model profiles before accepting this plan')
-    count=nrouters*(1+nswitches*(1+request.pcs_per_lan+request.laptops_per_lan+request.wireless_clients_per_lan))+request.servers+request.access_points+(1 if request.access_points else 0)+(1 if wan else 0)
+    count=nrouters*(1+nswitches*(1+request.wireless_clients_per_lan))+sum(pc_counts)+sum(laptop_counts)+request.servers+request.access_points+(1 if request.access_points else 0)+(1 if wan else 0)
     if count>256: return rejection('device_limit','Plan exceeds 256 devices')
     if request.access_points>nrouters*nswitches: return rejection('ap_count','At most one AP is allocated per LAN')
     lan=IPv4Network(request.lan_pool);transit=IPv4Network(request.transit_pool)
@@ -140,6 +157,14 @@ def plan_topology(data,catalog):
     ports={};graph={};lans=[];lan_ranges=iter(lan.subnets(new_prefix=24));transit_ranges=iter(transit.subnets(new_prefix=30))
     ipv6_ranges=iter(IPv6Network(request.ipv6_base).subnets(new_prefix=64))
     wireless_index=0
+    column_width=max(350,(max([*pc_counts,*laptop_counts,request.servers,request.wireless_clients_per_lan])+1)*55)
+    columns_per_row=max(1,10000//column_width)
+
+    def position(index):
+        return (index%columns_per_row)*column_width,(index//columns_per_row)*900
+    vlan_count=(request.vlans or 2) if request.template=='router_on_a_stick' else 1
+    if request.template=='router_on_a_stick' and pc_counts[0]:
+        vlan_count=min(vlan_count,pc_counts[0])
 
     def add(identifier,model,x,y):
         if model not in models: raise ValueError(f'Unknown installed model: {model}')
@@ -163,7 +188,7 @@ def plan_topology(data,catalog):
             v6=next(ipv6_ranges);assign(a,pa,v6.network_address+1,64);assign(b,pb,v6.network_address+2,64)
 
     def client(identifier,model,switch,network,gateway,v6,index,x,y,wireless=False):
-        native=models[model].get('control_kind')=='native_gui'
+        native=models.get(model,{}).get('control_kind')=='native_gui'
         if native:
             plan['devices'].append({'id':identifier,'name':identifier,'model':model,'x':float(x),'y':float(y)})
         else: add(identifier,model,x,y)
@@ -180,7 +205,8 @@ def plan_topology(data,catalog):
         plan['host_settings'].append(setting)
 
     try:
-        for i in range(nrouters): add(f'r{i+1}',request.router_model,i*350,0);graph[f'r{i+1}']={}
+        for i in range(nrouters):
+            x,y=position(i);add(f'r{i+1}',request.router_model,x,y);graph[f'r{i+1}']={}
         if request.template in {'hub_spoke','branch_office'}: edges=[(0,i) for i in range(1,nrouters)]
         elif request.template=='three_router_triangle': edges=[(0,1),(1,2),(2,0)]
         else: edges=[(i,i+1) for i in range(nrouters-1)]
@@ -192,11 +218,12 @@ def plan_topology(data,catalog):
         if request.access_points: add('ac1',request.ac_model,0,500)
         for i in range(nrouters):
             router=f'r{i+1}'
+            base_x,base_y=position(i)
             for j in range(nswitches):
-                switch=f's{i+1}_{j+1}';add(switch,request.switch_model,i*350+j*80,180)
+                switch=f's{i+1}_{j+1}';add(switch,request.switch_model,base_x+j*80,base_y+180)
                 physical,switch_uplink=connect(router,switch)
-                groups=request.vlans if request.template=='router_on_a_stick' else 1
-                vlan_ids=list(range(10,10+groups))
+                groups=vlan_count
+                vlan_ids=[10*(group+1) for group in range(groups)]
                 if request.template=='router_on_a_stick':
                     plan['services'].append({'device':switch,'feature':'vlan','parameters':{'vlans':vlan_ids,'ports':[{'interface':switch_uplink,'mode':'trunk','allowed_vlans':vlan_ids}]}})
                 for group in range(groups):
@@ -210,11 +237,13 @@ def plan_topology(data,catalog):
                     v6=next(ipv6_ranges) if request.dual_stack else None
                     if v6: assign(router,interface,v6.network_address+1,64);plan['ipv6_ra'].append({'device':router,'interface':interface})
                     if request.dhcp: plan['services'].append({'device':router,'feature':'dhcp','parameters':{'mode':'server','interface':interface,'pool':f'{switch}_{group}','network':str(network),'gateway':gateway,'excluded':[{'start':gateway,'end':gateway}]}})
-                    members=[('h',request.host_model,k) for k in range(request.pcs_per_lan) if k%groups==group]
-                    members += [('l',request.laptop_model,k) for k in range(request.laptops_per_lan) if k%groups==group]
+                    # Secondary access switches do not multiply the requested
+                    # PC/laptop population. Hosts use their router's first LAN.
+                    members=[('h',request.host_model,k) for k in range(pc_counts[i]) if j==0 and k%groups==group]
+                    members += [('l',request.laptop_model,k) for k in range(laptop_counts[i]) if j==0 and k%groups==group]
                     if i==0 and j==0: members += [('srv',request.server_model,k) for k in range(request.servers) if k%groups==group]
                     if request.access_points and wireless_index<request.access_points and group==0:
-                        wireless_index+=1;ap=f'ap{wireless_index}';add(ap,request.ap_model,i*350,450);ap_switch_port,_=connect(switch,ap)
+                        wireless_index+=1;ap=f'ap{wireless_index}';add(ap,request.ap_model,base_x+j*80,base_y+530);ap_switch_port,_=connect(switch,ap)
                         ac_switch_port=None
                         if wireless_index==1: ac_switch_port,_=connect(switch,'ac1')
                         settings=request.wireless_settings
@@ -231,9 +260,10 @@ def plan_topology(data,catalog):
                             if wireless_index==1:
                                 plan['services'].append({'device':'ac1','feature':'vlan','parameters':{'vlans':[1,settings.vlan],'svis':[{'vlan':1,'cidr':f'{network.network_address+201}/24'}]}})
                             for k in range(request.wireless_clients_per_lan):
-                                client(f'w{i+1}_{j+1}_{k+1}',request.wireless_client_model,switch,business,business_gateway,None,k+2,i*350+k*55,580,True)
+                                client(f'w{i+1}_{j+1}_{k+1}',request.wireless_client_model,switch,business,business_gateway,None,k+2,base_x+k*55,base_y+680+j*60,True)
                     for index,(kind,model,k) in enumerate(members,2):
-                        identifier=f'{kind}{i+1}_{j+1}_{k+1}';client(identifier,model,switch,network,gateway,v6,index,i*350+k*55,350+j*120,kind=='l' and request.wireless_laptops)
+                        y={'h':350,'l':430,'srv':590}[kind]
+                        identifier=f'{kind}{i+1}_{j+1}_{k+1}';client(identifier,model,switch,network,gateway,v6,index,base_x+k*55,base_y+y,kind=='l' and request.wireless_laptops)
                         if request.template=='router_on_a_stick':
                             port=plan['links'][-1]['a']['interface']
                             next(s for s in plan['services'] if s['device']==switch and s['feature']=='vlan')['parameters']['ports'].append({'interface':port,'mode':'access','vlan':vlan_ids[group]})
@@ -271,7 +301,11 @@ def plan_topology(data,catalog):
                 else: parameters={'version':2,'networks':sorted({str(IPv4Network(a['cidr'].split('/')[0]+'/'+str(8 if int(a['cidr'].split('.')[0])<128 else 16 if int(a['cidr'].split('.')[0])<192 else 24),strict=False)) for a in addresses})}
                 plan['services'].append({'device':origin,'feature':request.routing,'parameters':parameters})
     except (ValueError,StopIteration) as exc: return rejection('planning_failed',str(exc) or 'Address pool exhausted')
-    result=validate_plan(plan,catalog);result['request']=request.model_dump(mode='json');return result
+    result=validate_plan(plan,catalog);result['request']=request.model_dump(mode='json')
+    result['allocation']={'pcs_per_router':pc_counts,'laptops_per_router':laptop_counts,
+                          'wired_endpoint_distribution':'primary_access_switch_only',
+                          'effective_vlan_count':vlan_count if request.template=='router_on_a_stick' else None}
+    return result
 
 def estimate_plan(request,catalog):
     result=plan_topology(request,catalog)

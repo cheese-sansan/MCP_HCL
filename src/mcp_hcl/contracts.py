@@ -11,6 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import CallToolResult, TextContent
 from pydantic import ConfigDict, ValidationError, create_model
+from mcp_hcl.console import ConsoleError
 
 
 def validation_errors(exc: ValidationError) -> list[dict[str, Any]]:
@@ -72,6 +73,17 @@ class StrictFastMCP(FastMCP):
                 schema = TopologyRequest.model_json_schema()
                 tool.parameters.setdefault('$defs', {}).update(schema.pop('$defs', {}))
                 tool.parameters['properties']['request'] = schema
+            if 'parameters' in model.model_fields and tool.name in {'hcl_apply_acl','hcl_apply_vlan','hcl_apply_vlan_network','hcl_remove_acl','hcl_apply_nat','hcl_remove_nat','hcl_apply_interface_tuning','hcl_apply_stp','hcl_apply_port_security','hcl_apply_netstream'}:
+                from mcp_hcl.services import Acl,Vlan
+                from mcp_hcl.vlan_network import VlanNetworkRequest
+                from mcp_hcl.acl_removal import AclRemoval
+                from mcp_hcl.nat_models import NatApplication,NatRemoval
+                from mcp_hcl.interface_tuning import InterfaceTuning
+                from mcp_hcl.switch_security import StpRequest,PortSecurityRequest
+                from mcp_hcl.netstream_policy import NetstreamRequest
+                schema=({'hcl_apply_acl':Acl,'hcl_apply_vlan':Vlan,'hcl_apply_vlan_network':VlanNetworkRequest,'hcl_remove_acl':AclRemoval,'hcl_apply_nat':NatApplication,'hcl_remove_nat':NatRemoval,'hcl_apply_interface_tuning':InterfaceTuning,'hcl_apply_stp':StpRequest,'hcl_apply_port_security':PortSecurityRequest,'hcl_apply_netstream':NetstreamRequest}[tool.name]).model_json_schema()
+                tool.parameters.setdefault('$defs',{}).update(schema.pop('$defs',{}))
+                tool.parameters['properties']['parameters']=schema
             self._strict_models[tool.name] = model
         return self._strict_models[tool.name]
 
@@ -111,6 +123,8 @@ class StrictFastMCP(FastMCP):
                         body = await tool.fn_metadata.call_fn_with_arg_validation(
                             tool.fn, tool.is_async, validated,
                             {tool.context_kwarg: context} if tool.context_kwarg else None)
+                except ConsoleError as exc:
+                    body = {"status":"unverified","errors":[exc.as_error()]}
                 except (ValueError, OSError) as exc:
                     body = {"status": "rejected", "error": str(exc),
                             "errors": [{"code": "invalid_operation", "message": str(exc)}]}

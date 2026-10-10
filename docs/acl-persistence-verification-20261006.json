@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "acl_implicit_deny_saved_content_startup_pointers_and_recovery_software_contracts",
+  "regression": {
+    "tests": 238,
+    "passed": 237,
+    "skipped": 1,
+    "elapsed_seconds": 72.406,
+    "log": "work/acl-persistence-regression-20261006.txt",
+    "wheel_sha256_tested": "6a3a8389dc62dc7d650d05b2f3bab59931844b91b0acd0df9300f35b2ee55fbb",
+    "scope": "Full persistence snapshot before isolated runtime namespace guard"
+  },
+  "required_targeted": {
+    "tests": 11,
+    "passed": 11,
+    "log": "work/acl-persistence-required-tests-20261006.txt"
+  },
+  "existing_contract_targeted": "work/acl-persistence-compat-targeted-20261005.txt",
+  "initial_failure_receipt": "work/acl-persistence-initial-targeted-20261005.txt",
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_runtime_fix_import_and_unchanged_other_modules_only",
+    "sha256": "335511d9a0b016c1be4c29f3ca2cf4f0d463670f11b4513f03017355fcf5bea0",
+    "package_files_compared": 42,
+    "changed_package_files": [
+      "mcp_hcl/runtime.py"
+    ],
+    "prior_discovery_schema_and_gate": "work/acl-persistence-wheel-verification-20261006.json",
+    "tools": 44,
+    "resources": 6,
+    "full_live_gate_passed": false
+  },
+  "public_packet": "C:/Users/Public/Documents/MCP_HCL_Lab_20261006_ACLPersistenceRuntime",
+  "packet_operation_id": "c3fc56c776fe459b9134aa3cd9f319e1",
+  "tools": 44,
+  "resources": 6,
+  "lab_profile_observed": true,
+  "lab_profile_loaded": false,
+  "lab_runtime_inventory": "unknown_access_denied",
+  "runtime_observation": "work/lab-runtime-observation-fixed-20261006.json",
+  "cleanup_authorized_after_required_real_tests": true,
+  "cleanup_executed": false,
+  "necessary_tests_only": true,
+  "native_policy_tested": false,
+  "native_persistence_tested": false,
+  "native_recovery_tested": false,
+  "guest_reboot_tested": false,
+  "runtime_isolation_verified": false,
+  "full_live_gate_passed": false,
+  "completion": "incomplete",
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "source_hashes": {
+    "src/mcp_hcl/acl_values.py": "c38a875db13988fb1fe43b4c46db5d4bccbfa6dfae81456aac5699955667ccf4",
+    "src/mcp_hcl/acl_semantics.py": "12572c97fdaf9166f7c334d54d8d1ebd23a5df028dc52a52453f8ac7dca8e8bc",
+    "src/mcp_hcl/services.py": "34607d3b55bdb5cc7139403fc1e6913bcef170d0a7e13864ed51d45a9cec2101",
+    "src/mcp_hcl/generation.py": "73d7506aa4679b2841954d597e5e76372454a4e127bb56c5b382341eb00a6c3f",
+    "src/mcp_hcl/startup.py": "ac7b8ee1ec7da27ab926f9c9210ad1290bcc3bd94642e5b07973c415c23c807d",
+    "src/mcp_hcl/deployment.py": "2948565385ad5e0e01c50fdb292b058828ebf34602f302919eb0640dfb54cf91",
+    "src/mcp_hcl/policy.py": "3a4afe94321194ddf90be338acaf7e7583de5b1396c83b3d5e0d646af8baae32",
+    "src/mcp_hcl/cli_session.py": "f7f0cafe9a2316f7c0e058103fb43e98e65502b6d1808ed12d5c5e30241c882c",
+    "src/mcp_hcl/data/upstream_parity.json": "8004e87a3eee31029ddf11de369639a4a22eeb8e6cf9534fc038eee18c711ac3",
+    "docs/offline-contracts.json": "aad25f66b5eb7f066a37eb41115df7a53a19abe3610264a83ee8fd924929eb47",
+    "tests/test_acl_persistence.py": "d7a9959876e58396907ee7d23ee78cf41d9f2105a4b157e2a1919803b811672f",
+    "src/mcp_hcl/runtime.py": "b9c42bd575832dd67fd254dd7b953ce7202fb05a79892364015f1c2e677362a4",
+    "tests/test_runtime.py": "bb2368372da92296078f82c5c19770292672fe4a6809dc64456a4df5b6b66b16"
+  },
+  "runtime_guard_focused": {
+    "tests": 5,
+    "passed": 5,
+    "elapsed_seconds": 0.05,
+    "log": "work/runtime-namespace-focused-20261006.txt",
+    "full_regression_repeated": false
+  },
+  "prior_runtime_misclassification_receipt": "work/lab-runtime-observation-20261006.json"
+}

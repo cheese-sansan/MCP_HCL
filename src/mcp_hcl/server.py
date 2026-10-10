@@ -25,6 +25,10 @@ from mcp_hcl.gui_relay import HclGuiRelay, register_gui_tools
 from mcp_hcl.build_pipeline import register_build_tool
 from mcp_hcl.project_edit import register_edit_tools
 from mcp_hcl.deployment import Deployment, register_deployment_tools
+from mcp_hcl.inspection import Inspection,register_inspection_tools
+from mcp_hcl.reconciliation import Reconciliation,register_reconciliation_tools
+from mcp_hcl.security_audit import SecurityAudit,register_security_audit_tool
+from mcp_hcl.policy import Policy,register_policy_tools
 
 
 def live_writes_enabled() -> bool:
@@ -117,13 +121,15 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         return catalog_read(lambda: catalog.device_details(model))
 
     @mcp.tool()
-    def hcl_validate_plan(plan: dict[str, Any]) -> dict[str, Any]:
-        """Validate versioned intent, occupied ports and addresses against local HCL defaults.
+    def hcl_validate_plan(plan: dict[str, Any],
+                          validation_level: Literal['topology','configuration'] = 'topology') -> dict[str, Any]:
+        """Validate intent and, by default, require a connected declared wired topology.
 
         Use Comware interface names, not .net scene port keys. Validation does
-        not prove firmware support, deployment or network connectivity.
+        not prove firmware support, deployment or actual network connectivity.
+        configuration checks individual intents without requiring one wired component.
         """
-        return validate_plan(plan, catalog)
+        return validate_plan(plan, catalog,validation_level=validation_level)
 
     @mcp.resource("hcl://catalog/devices")
     def devices_resource() -> str:
@@ -405,11 +411,15 @@ def create_server(store: ProjectStore | None = None, backend: HclBackend | None 
         return console.run(pipe, command, expect=expect)
 
     register_offline(mcp, catalog, store, catalog_read)
-    relay = HclGuiRelay(store, writes_enabled=writes)
+    relay = HclGuiRelay(store, writes_enabled=writes, installation_root=catalog.installation)
     register_gui_tools(mcp, relay)
     register_build_tool(mcp, store, catalog, relay)
     register_edit_tools(mcp, store, catalog)
     register_deployment_tools(mcp, Deployment(store, catalog=catalog, writes_enabled=writes))
+    register_inspection_tools(mcp, Inspection(store,writes_enabled=writes))
+    register_reconciliation_tools(mcp, Reconciliation(store,catalog,writes_enabled=writes))
+    register_security_audit_tool(mcp, SecurityAudit(store,writes_enabled=writes))
+    register_policy_tools(mcp,Policy(store,catalog,writes_enabled=writes))
     return mcp
 
 

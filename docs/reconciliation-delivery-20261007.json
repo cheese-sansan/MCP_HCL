@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-07",
+  "user_timezone": "Asia/Tokyo",
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL",
+  "functional_tests_executed": 0,
+  "sdk_discovery_tested": false,
+  "native_tested": false,
+  "full_live_gate_passed": false,
+  "upstream_behavior_equivalent": false,
+  "expected_declared_tools": 53,
+  "resources": 6,
+  "wheel": {
+    "sha256": "20c2740e19b9e056a7378653b5abe5149a02621c5a538d2f86e1f3f8e7437894",
+    "package_files_byte_compared": 51,
+    "source_byte_match": true,
+    "scope": "build_and_bytes_only"
+  },
+  "source_hashes": {
+    "src/mcp_hcl/reconciliation.py": "4b297851295c90fccfa8fd2acf67de72137d23581721ea16b5e4daed5b33eb50",
+    "src/mcp_hcl/server.py": "cb3e638a6965c20d8b890d1371ec2772214b9976cc0c26158f52b6e99815e6c8",
+    "src/mcp_hcl/parity.py": "b6713ff485d4109edd453572ed507bcba3c2c5da8a8cee73c0eb79b39355ea92",
+    "src/mcp_hcl/data/upstream_parity.json": "3267df0d599ce8bf5cf02aea18836456456a814bbf49ac5d3d9d20cd0c52e2c5",
+    "docs/offline-contracts.json": "ccc10309d2835e693e5fae22885ea18a38fa4f1fd300017cb7e2be2313398665",
+    "docs/reconciliation-20261007.md": "a75354c7f8d14610b5112064b1d24485d0b811b86f5be7a332bcce8394fa8720"
+  },
+  "remaining_software_gaps": [
+    "native_complete_device_inventory",
+    "native_cable_and_peer_inventory",
+    "routing_domain_membership",
+    "IPv6_address_readback",
+    "full_upstream_behavior"
+  ],
+  "test_owner": "DeepSeek in DeepSeek Harness"
+}

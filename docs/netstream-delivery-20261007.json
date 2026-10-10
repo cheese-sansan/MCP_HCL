@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-07",
+  "user_timezone": "Asia/Tokyo",
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL",
+  "functional_tests_executed": 0,
+  "sdk_discovery_tested": false,
+  "native_tested": false,
+  "expected_declared_tools": 55,
+  "resources": 6,
+  "upstream_behavior_equivalent": false,
+  "named_exporter_equivalent": false,
+  "named_monitors_equivalent": false,
+  "collector_delivery_verified": false,
+  "full_live_gate_passed": false,
+  "wheel": {
+    "sha256": "3714fc784b95efd1fad1a05d3e9bfa6e39b0a46992132b0bb6c396d21f0e8328",
+    "package_files_byte_compared": 56,
+    "source_byte_match": true,
+    "scope": "build_and_bytes_only"
+  },
+  "source_hashes": {
+    "src/mcp_hcl/netstream_policy.py": "48f9d23c1330632d2c298db3d8a9c0589f1b1e21ade810e3322732c584847670",
+    "src/mcp_hcl/policy.py": "5036d880a746e4574c38c7ef157ed5997db23a3e2296f6fc5bf96748a84c2ea8",
+    "src/mcp_hcl/contracts.py": "cd3b5a982cd2c05be0d8fe94175a69df3706dade114ff617ff2b48a2bf542b20",
+    "src/mcp_hcl/parity.py": "ef91a66801348c7c718ed02a185c1a8da059a9aafae72014d5c4f717be3454ed",
+    "src/mcp_hcl/data/upstream_parity.json": "3e24df863e86341506717583b9a86f8d28eacc4d8443bbf0b357a3108537a028",
+    "docs/offline-contracts.json": "b7fa00e3a3675df3b22c0e936a1a8d6e7b285d3f9d8869f970bb63f8552d1c51",
+    "docs/netstream-transactions-20261007.md": "a722da9ee9f710942417aae790bc42d463e0a80a2d8b07638fa51d3b54ddba57"
+  },
+  "remaining_software_gaps": [
+    "native_named_exporter_and_monitor_objects",
+    "inert_named_exporter_creation",
+    "per_exporter_version_and_source",
+    "aggregation_and_inheritance_mapping",
+    "collector_delivery_and_operational_readback"
+  ],
+  "test_owner": "DeepSeek in DeepSeek Harness"
+}

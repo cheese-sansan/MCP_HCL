@@ -121,12 +121,50 @@ class TopologyPlan(StrictModel):
     wireless_associations: list[WirelessAssociation] = Field(default_factory=list, max_length=256)
 
 
-def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
+def wired_graph(plan: TopologyPlan, links: list[Link], wireless_devices: set[str]) -> dict[str, Any]:
+    """Connected components of valid declared wired links; no traffic simulation."""
+    identifiers = list(dict.fromkeys(device.id for device in plan.devices if device.id not in wireless_devices))
+    adjacency = {identifier: set() for identifier in identifiers}
+    edge_count = 0
+    for link in links:
+        if link.a.device in adjacency and link.b.device in adjacency:
+            adjacency[link.a.device].add(link.b.device)
+            adjacency[link.b.device].add(link.a.device)
+            edge_count += 1
+    unseen = set(identifiers)
+    components = []
+    for origin in identifiers:
+        if origin not in unseen:
+            continue
+        members = {origin}
+        queue = [origin]
+        unseen.remove(origin)
+        while queue:
+            for neighbor in adjacency[queue.pop()]:
+                if neighbor in unseen:
+                    unseen.remove(neighbor)
+                    members.add(neighbor)
+                    queue.append(neighbor)
+        components.append([identifier for identifier in identifiers if identifier in members])
+    return {'verified_scope':'declared_wired_links_only','connected':len(components)<=1,
+            'components':components,'wired_devices':identifiers,
+            'excluded_wireless_devices':sorted(wireless_devices),'edge_count':edge_count,
+            'connectivity_verified':False}
+
+
+def validate_plan(data: dict[str, Any], catalog: HclCatalog, *,
+                  validation_level: Literal['topology','configuration'] = 'topology') -> dict[str, Any]:
     result: dict[str, Any] = {
         'status': 'unverified', 'target_project': None, 'operation_id': uuid4().hex,
         'operation': 'validate_topology_plan', 'evidence': [], 'errors': [], 'warnings': [],
         'runtime_verified': False, 'full_live_gate_passed': False,
+        'guest_boot_verified':False,'configuration_verified':False,'connectivity_verified':False,
+        'validation_level': validation_level, 'graph': None,
     }
+    if validation_level not in ('topology','configuration'):
+        result.update(status='rejected',valid=False,validation_level=None,
+                      errors=[{'code':'invalid_validation_level','message':'Use topology or configuration validation'}])
+        return result
     try:
         plan = TopologyPlan.model_validate(data)
     except ValidationError as exc:
@@ -174,18 +212,26 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         return True
 
     used: set[tuple[str, str]] = set()
+    valid_links: list[Link] = []
     for link in plan.links:
+        valid_link = True
         if link.a.device == link.b.device:
             error('self_link', link.a.device)
+            valid_link = False
         for endpoint in (link.a, link.b):
-            check_endpoint(endpoint.device, endpoint.interface, physical_only=True)
+            if not check_endpoint(endpoint.device, endpoint.interface, physical_only=True):
+                valid_link = False
             key = (endpoint.device, endpoint.interface)
             if key in used:
                 error('duplicate_port', '/'.join(key))
+                valid_link = False
             used.add(key)
             is_serial = endpoint.interface.startswith('Serial')
             if is_serial != (link.medium == 'serial'):
                 error('medium_mismatch', '/'.join(key))
+                valid_link = False
+        if valid_link:
+            valid_links.append(link)
     assigned: set[tuple[str, str, int]] = set()
     addresses: set[str] = set()
     for address in plan.addresses:
@@ -240,8 +286,13 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         check_endpoint(ra.device, ra.interface)
         if (ra.device, ra.interface, 6) not in assigned:
             error('ra_without_ipv6_address', f'{ra.device}/{ra.interface}')
+    wireless_devices: set[str] = set()
     for association in plan.wireless_associations:
-        check_endpoint(association.device, association.interface, physical_only=True)
+        known_radio = check_endpoint(association.device, association.interface, physical_only=True)
+        if not association.interface.startswith(('WLAN','Wireless')):
+            error('wireless_interface_required',f'{association.device}/{association.interface}')
+        elif known_radio:
+            wireless_devices.add(association.device)
         device=devices.get(association.device)
         model=models.get(device.model,{}) if device else {}
         if model.get('control_kind')=='native_gui':
@@ -276,7 +327,20 @@ def validate_plan(data: dict[str, Any], catalog: HclCatalog) -> dict[str, Any]:
         result['warnings'].append({'code': 'feature_runtime_unverified', 'device': service.device,
                                    'feature': service.feature})
     result['errors'].extend(service_errors(plan, models))
+    if validation_level == 'topology':
+        graph = wired_graph(plan,valid_links,wireless_devices)
+        result['graph'] = graph
+        if not graph['connected']:
+            unreachable = [identifier for component in graph['components'][1:] for identifier in component]
+            result['errors'].append({'code':'topology_disconnected',
+                'message':'Separate wired components contain: '+', '.join(unreachable),
+                'detail':{'components':graph['components'],'unreachable_devices':unreachable},
+                'suggestion':'Connect the separate wired components using available installed-model interfaces.'})
+    else:
+        result['warnings'].append({'code':'wired_graph_not_checked',
+                                  'message':'Configuration validation does not require one connected wired topology.'})
     result.update(status='verified' if not result['errors'] else 'rejected', valid=not result['errors'],
-                  verified_scope='plan_structure_and_installed_default_interfaces_only',
+                  verified_scope=('offline_plan_wired_graph_and_configuration_semantics_only' if validation_level=='topology'
+                                  else 'plan_structure_and_installed_default_interfaces_only'),
                   plan=plan.model_dump(mode='json'))
     return result

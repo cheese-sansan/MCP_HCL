@@ -1,0 +1,32 @@
+{
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL",
+  "date": "2026-10-06",
+  "user_timezone": "Asia/Tokyo",
+  "functional_tests_executed": 0,
+  "sdk_discovery_tested": false,
+  "native_tuning_tested": false,
+  "full_live_gate_passed": false,
+  "expected_declared_tools": 49,
+  "resources": 6,
+  "limitations": [
+    "serial_clock_mapping_missing",
+    "IOS_EIGRP_delay_mapping_missing",
+    "plaintext_key_equivalence_unverified",
+    "neighbour_and_traffic_unverified"
+  ],
+  "wheel": {
+    "file": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\wheels-interface-tuning-untested-20261006\\mcp_hcl-0.5.0-py3-none-any.whl",
+    "sha256": "e262a5f550d43c894fb4570dca46c61d0cee83cec199f244db9c35e38c39b6e3",
+    "package_files_byte_compared": 49,
+    "source_byte_match": true,
+    "scope": "build_and_bytes_only"
+  },
+  "source_hashes": {
+    "src\\mcp_hcl\\interface_tuning.py": "da815ed7f71eab98144a52c98843de39ea20dccee6297ae5035657ada1815aa2",
+    "src\\mcp_hcl\\policy.py": "21d19b29652ccce75b7e385308408d8a1b87e58d28f5313a2c8af132ec671fdc",
+    "src\\mcp_hcl\\contracts.py": "b67becb2d00da5e70b283345c1d22d0534860e243d168901c06c181520684f04",
+    "src\\mcp_hcl\\parity.py": "34f65d1d0c016e7556e14bf059b27cc7947797309bce50f982494488bc43d425",
+    "src\\mcp_hcl\\data\\upstream_parity.json": "63f598fe6563e60e18ddb89048f34bd0acb55702bd0755d5793efdf075c9a3cd",
+    "docs\\offline-contracts.json": "363e0fe43d5f2fd414fc8f739e1798ddddf12e7215bd254bab1ceb2903a8a397"
+  }
+}

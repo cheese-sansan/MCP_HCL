@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -15,10 +16,13 @@ def preflight(installation: Path, *, runner=subprocess.run) -> dict:
         result['status'] = 'unknown'
         return result
     query = """$ErrorActionPreference='Stop';
+[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false);
 $v=Get-ItemProperty 'HKLM:\\SOFTWARE\\Oracle\\VirtualBox';
 $p=@(Get-CimInstance Win32_Process | Select-Object -ExpandProperty Name);
 @{hypervisor_present=(Get-CimInstance Win32_ComputerSystem).HypervisorPresent;
 virtualbox_version=$v.Version;virtualbox_directory=$v.InstallDir;
+profile_directory=[Environment]::GetFolderPath('UserProfile');
+user_sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value;
 gui_running=($p -contains 'SimwareClient.exe');wrapper_running=($p -contains 'SimwareWrapper.exe');
 external_console_present=([bool](@($p | Where-Object {$_ -in @('putty.exe','SimwareMultiCC.exe')}).Count))} | ConvertTo-Json -Compress"""
     try:
@@ -28,6 +32,15 @@ external_console_present=([bool](@($p | Where-Object {$_ -in @('putty.exe','Simw
         for key in ('hypervisor_present', 'gui_running', 'wrapper_running', 'external_console_present'):
             if type(facts.get(key)) is not bool: raise ValueError(f'Unknown observation: {key}')
         observations.update(facts)
+        from mcp_hcl.runtime import inspect_runtime
+        if (not isinstance(facts.get('profile_directory'),str) or
+                not isinstance(facts.get('user_sid'),str) or not re.fullmatch(r'S-\d+(?:-\d+)+',facts['user_sid'])):
+            raise ValueError('Windows runtime identity observation is incomplete')
+        runtime = inspect_runtime(Path(facts['profile_directory']))
+        runtime['user_sid'] = facts['user_sid']
+        observations['runtime'] = runtime
+        result['blockers'] = runtime['blockers']
+        result['errors'].extend(runtime['errors'])
         executable = Path(facts['virtualbox_directory']) / 'VBoxManage.exe'
         running = runner([str(executable), 'list', 'runningvms'], capture_output=True, timeout=12)
         if running.returncode: raise ValueError('Running guest observation failed')
@@ -54,6 +67,7 @@ external_console_present=([bool](@($p | Where-Object {$_ -in @('putty.exe','Simw
     except (OSError, ValueError) as exc:
         result['errors'].append({'code': 'catalog_unavailable', 'message': str(exc)})
     result['status'] = 'unknown' if result['errors'] else 'observed'
-    result['remaining'] = ['Exact staged-project GUI identity', 'Expected guest identities',
+    result['remaining'] = ['Runtime root and vendor cleanup isolation before HCL startup',
+                           'Exact staged-project GUI identity', 'Expected guest identities',
                            'Exclusive complete native console readbacks', 'Model and mapping evidence']
     return result

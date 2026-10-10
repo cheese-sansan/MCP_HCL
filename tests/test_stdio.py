@@ -10,6 +10,7 @@ import unittest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp_hcl import __version__
+from contract_inventory import TOOLS
 
 
 class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
@@ -17,6 +18,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as output_root:
             environment = dict(os.environ)
             environment["MCP_HCL_OUTPUT_ROOT"] = output_root
+            environment["MCP_HCL_ALLOW_LIVE_WRITE"] = "0"
             params = StdioServerParameters(
                 command=sys.executable,
                 args=["-m", "mcp_hcl.server"],
@@ -27,24 +29,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                     initialized = await asyncio.wait_for(session.initialize(), timeout=10)
                     self.assertEqual(initialized.serverInfo.version, __version__)
                     listed = await asyncio.wait_for(session.list_tools(), timeout=10)
-                    self.assertEqual(
-                        {tool.name for tool in listed.tools},
-                        {
-                            "hcl_capabilities", "hcl_list_projects", "hcl_inspect_project",
-                            "hcl_stage_add_device", "hcl_stage_link",
-                            "hcl_stage_copy", "hcl_parity_report", "hcl_bridge_status",
-                            "hcl_list_devices", "hcl_get_device_details",
-                            "hcl_validate_plan",
-                            "hcl_backend_capabilities", "hcl_backend_topology",
-                            "hcl_device_power", "hcl_console_exec",
-                            "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
-                            "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
-                            "hcl_export_artifacts", "hcl_load_plan", "hcl_stage_plan", "hcl_open_project", "hcl_save_project", "hcl_full_build",
-                            "hcl_stage_rename_device", "hcl_stage_move_device", "hcl_stage_delete_device",
-                            "hcl_stage_unlink", "hcl_stage_add_note", "hcl_stage_clear_annotations",
-                            "hcl_backup_config", "hcl_restore_config", "hcl_live_deploy", "hcl_verify_connectivity",
-                        },
-                    )
+                    self.assertEqual({tool.name for tool in listed.tools}, TOOLS)
                     result = await asyncio.wait_for(session.call_tool("hcl_capabilities", {}), timeout=10)
                     self.assertFalse(result.isError)
                     content = json.loads(result.content[0].text)

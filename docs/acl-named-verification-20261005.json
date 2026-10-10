@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-05",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "named_acl_wildcard_directional_binding_replacement_and_native_proof_flags",
+  "regression": {
+    "tests": 227,
+    "passed": 226,
+    "skipped": 1,
+    "elapsed_seconds": 47.015,
+    "log": "work/acl-named-final-regression-20261005.txt"
+  },
+  "targeted": {
+    "tests": 43,
+    "passed": 43,
+    "log": "work/acl-named-proof-targeted-20261005.txt"
+  },
+  "prior_records": [
+    "work/acl-named-existing-regression-20261005.txt",
+    "work/acl-named-targeted-20261005.txt",
+    "work/acl-named-regression-20261005.txt"
+  ],
+  "upstream_sources": {
+    "upstream_revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+    "source": "GitHub connector at pinned revision",
+    "prior_cache_verification": "acl-source-verification.json",
+    "correction": "Removed surplus trailing blank line introduced by cache patch only after exact Git blob match",
+    "files": [
+      {
+        "path": "work\\upstream-verified-20261005\\acl-exact\\acls.py",
+        "git_blob": "f590f5b10ca374eabe68958ec737c699be8d5555",
+        "sha256": "735dd7ccf3ea4323617cf1ddee6e2b23e78e5064a9392759625c165939587ab9",
+        "matches_primary": true
+      },
+      {
+        "path": "work\\upstream-verified-20261005\\acl-exact\\acl_rules.py",
+        "git_blob": "199d947d7b3aa992d6a3c9151e3142318205d693",
+        "sha256": "230626d9c76d7f0d7e65303bfa0e8bc3ac55dcb02be4c70ece0e62b577e8f67e",
+        "matches_primary": true
+      },
+      {
+        "path": "work\\upstream-verified-20261005\\acl-exact\\acl_cli_generator.py",
+        "git_blob": "7a12b16d5d00cebe5e7559fb11a8acbf4efe93a5",
+        "sha256": "dac92462bee97a389b9428de4995b3ec37bbc0b5198c9c2edfce398f0614f32f",
+        "matches_primary": true
+      }
+    ]
+  },
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_discovery_named_acl_wildcard_and_default_gate_only",
+    "sha256": "5e35a04ff5e286885d7687e53464b7c215fe747a70d56dcfab71f3b8113b5b82",
+    "package_files_compared": 41,
+    "tools": 44,
+    "resources": 6,
+    "full_live_gate_passed": false
+  },
+  "public_packet": "C:/Users/Public/Documents/MCP_HCL_Lab_20261005_ACLNamed",
+  "packet_operation_id": "4e32bbb839dd4187861b2f937ff16646",
+  "tools": 44,
+  "resources": 6,
+  "native_policy_tested": false,
+  "native_recovery_tested": false,
+  "runtime_isolation_verified": false,
+  "lab_profile_observed": false,
+  "account_readback": "work/acl-named-account-readback-20261005.json",
+  "remaining_acl_gaps": [
+    "IOS_implicit_deny_vs_Comware_unmatched_permit",
+    "configuration_persistence",
+    "real_firmware_commands_readback_restore_and_traffic",
+    "PT_object_API_functional_equivalence"
+  ],
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "full_live_gate_passed": false,
+  "completion": "incomplete",
+  "source_hashes": {
+    "src/mcp_hcl/services.py": "5793398aa26eb3b316ddde5fbc127344dee217a3ba19efccc4318428d61b949d",
+    "src/mcp_hcl/acl_values.py": "5fba7d63b8628b72ceff56bf41c32b00d6f5859b45072e948dcc6ac14ac98fb5",
+    "src/mcp_hcl/acl_semantics.py": "a182fc029f0a677aabdd411c8967ac7fc778e8e0c27943c155a039b93301bd33",
+    "src/mcp_hcl/generation.py": "59261cc56ffe9bbf59f9571c07adbbab96879d568be3e13d6f86d1c7cd500724",
+    "src/mcp_hcl/policy.py": "97e39fcdf28aab22f09d656eb34b327c087076facd0d2cd25b8f89b4052dd31f",
+    "src/mcp_hcl/deployment.py": "5eda51cc8098f6e70734baad7a98b84bfc732a69d247ef8cbb4376035e864fb2",
+    "src/mcp_hcl/data/upstream_parity.json": "12c5cafcd057ce5ed4d9aec7e32219939015c6a7509fc2cf34638ef38b872aa4",
+    "docs/offline-contracts.json": "637a434753c75060020d131c594b627fce70bb245beabf0beb21efc39a66c4eb",
+    "tests/test_acl_named.py": "169b0c5f1d4da1c12143df5d4833b729ea62135c5197f2b8be40ffe51783bcea",
+    "tests/test_040_deployment.py": "4136cd0ce33aeabe357c31c848a84558b31b49fad1e95be5ce3bb3d75ca78249",
+    "tests/test_policy.py": "879792ed55ca24c2ab962cc9a37c0b0581046b056766948711d8712747e01eec"
+  }
+}

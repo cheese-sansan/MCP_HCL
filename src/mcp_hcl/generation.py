@@ -1,6 +1,9 @@
 """Offline Comware command templates; no console, backend or GUI operations."""
 from __future__ import annotations
 from ipaddress import ip_interface, ip_network
+from ipaddress import IPv4Address
+from mcp_hcl.acl_values import address_pair,ICMP_MESSAGES,PROTOCOLS
+from mcp_hcl.vlan_semantics import permit_commands
 from mcp_hcl.topology import validate_plan, TopologyPlan
 from mcp_hcl.command_reference import feature_evidence
 
@@ -46,38 +49,65 @@ def render_rip(p):
 
 def render_vlan(p):
     lines=[]
-    for vlan in sorted(p.vlans): lines+=view(f'vlan {vlan}',[])
+    names={name.vlan:name.name for name in p.names}
+    for vlan in sorted(p.vlans): lines+=view(f'vlan {vlan}',[] if vlan not in names else ['name '+names[vlan]])
     for port in p.ports:
         commands=[f'port link-type {port.mode}']
-        commands.append(f'port access vlan {port.vlan}' if port.mode=='access' else 'port trunk permit vlan '+' '.join(map(str,sorted(port.allowed_vlans))))
+        commands.extend([f'port access vlan {port.vlan}'] if port.mode=='access' else permit_commands(port.allowed_vlans))
+        if port.native_vlan is not None:commands.append(f'port trunk pvid vlan {port.native_vlan}')
         lines+=view(f'interface {port.interface}',commands)
     for svi in p.svis: lines+=view(f'interface Vlan-interface{svi.vlan}',[address(svi.cidr)])
     return lines
 
 
 def acl_match(prefix,cidr):
-    if cidr is None: return f'{prefix} any'
-    n=ip_network(cidr); return f'{prefix} {n.network_address} {n.hostmask}'
+    address,wildcard=address_pair(cidr)
+    if wildcard==0xffffffff:return f'{prefix} any'
+    return f'{prefix} {IPv4Address(address)} {IPv4Address(wildcard)}'
 
 
-def render_acl(p):
+def render_acl(p,*,rules=None):
+    if rules is None:
+        from mcp_hcl.acl_semantics import effective_acl_parameters
+        rules=effective_acl_parameters(p).rules
     commands=[]
-    for rule in sorted(p.rules,key=lambda r:r.id):
+    for rule in sorted(rules,key=lambda r:r.id):
         fields=[f'rule {rule.id}',rule.action]
-        if p.number>=3000: fields.append(rule.protocol)
+        if p.kind=='advanced': fields.append(str(PROTOCOLS[rule.protocol] if rule.protocol in {'ah','ahp','eigrp','esp'} else rule.protocol))
         fields.append(acl_match('source',rule.source))
         if rule.source_port is not None: fields.append(f'source-port eq {rule.source_port}')
-        if p.number>=3000: fields.append(acl_match('destination',rule.destination))
+        if rule.source_port_match is not None:
+            match=rule.source_port_match
+            fields.append(f'source-port {match.operator} {match.port}'+(f' {match.end}' if match.end is not None else ''))
+        if p.kind=='advanced': fields.append(acl_match('destination',rule.destination))
         if rule.destination_port is not None: fields.append(f'destination-port eq {rule.destination_port}')
+        if rule.destination_port_match is not None:
+            match=rule.destination_port_match
+            fields.append(f'destination-port {match.operator} {match.port}'+(f' {match.end}' if match.end is not None else ''))
+        if rule.icmp is not None:
+            kind,code=ICMP_MESSAGES[rule.icmp] if isinstance(rule.icmp,str) else (rule.icmp.type,rule.icmp.code)
+            fields.append(f'icmp-type {kind}'+(f' {code}' if code is not None else ''))
+        fields.extend('established' if flag=='established' else f'{flag} 1' for flag in sorted(rule.tcp_flags))
+        if rule.log:fields.append('logging')
         commands.append(' '.join(fields))
-    lines=view(f'acl number {p.number}',commands)
-    for b in p.bindings: lines+=view(f'interface {b.interface}',[f'packet-filter {p.number} {b.direction}'])
+        if rule.remark is not None:commands.append(f'rule {rule.id} comment {rule.remark}')
+    lines=view(p.view,commands)
+    for b in p.bindings: lines+=view(f'interface {b.interface}',[f'packet-filter {p.reference} {b.direction}'])
     return lines
 
 
 def render_nat(p):
     lines=[]
-    for b in p.outbound: lines+=view(f'interface {b.interface}',[f'nat outbound {b.acl}'])
+    for group in p.address_groups:
+        first=int(IPv4Address(group.start));last=int(IPv4Address(group.end));members=[]
+        for start in range(first,last+1,256):members.append(f'address {IPv4Address(start)} {IPv4Address(min(start+255,last))}')
+        lines+=view(f'nat address-group {group.id}',members)
+    for b in p.outbound:
+        reference=str(b.acl) if b.acl is not None else 'name '+b.acl_name
+        command='nat outbound '+reference
+        if b.address_group is not None:command+=f' address-group {b.address_group}'
+        if not b.pat:command+=' no-pat'
+        lines+=view(f'interface {b.interface}',[command])
     for s in p.static:
         if s.protocol:
             lines+=view(f'interface {s.interface}',[f'nat server protocol {s.protocol} global {s.global_address} {s.global_port} inside {s.local_address} {s.local_port}'])
@@ -131,7 +161,9 @@ SERVICE_ORDER={'vlan':0,'acl':1,'dhcp':2,'ospf':3,'rip':4,'nat':5,'security':6,'
 
 
 def generate_configs(data,catalog):
-    validated=validate_plan(data,catalog)
+    # A per-device configuration bundle may intentionally describe isolated
+    # devices; complete graph validation belongs to hcl_validate_plan/planning.
+    validated=validate_plan(data,catalog,validation_level='configuration')
     if not validated.get('valid'): return validated
     if validated['plan']['wireless_associations']:
         return {'status': 'rejected', 'errors': [{'code': 'wireless_client_commands_unverified',
@@ -180,7 +212,7 @@ def generate_configs(data,catalog):
 
 
 def generate_operations(data,catalog,include_configs=True):
-    validated=generate_configs(data,catalog) if include_configs else validate_plan(data,catalog)
+    validated=generate_configs(data,catalog) if include_configs else validate_plan(data,catalog,validation_level='configuration')
     if validated['status']!='verified': return validated
     plan=validated['plan']; operations=[]
     models={m['model']:m for m in catalog.devices()['devices']}

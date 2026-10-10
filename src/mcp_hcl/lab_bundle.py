@@ -186,7 +186,8 @@ def main():
         print(json.dumps({'status':'rejected','errors':validation_errors(exc),'full_live_gate_passed':False},ensure_ascii=False))
         raise SystemExit(2)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, ConsoleError) as exc:
-        print(json.dumps({'status':'rejected','errors':[{'code':'lab_input_rejected','message':str(exc)}], 'full_live_gate_passed':False},ensure_ascii=False))
+        error=exc.as_error() if isinstance(exc,ConsoleError) else {'code':'lab_input_rejected','message':str(exc)}
+        print(json.dumps({'status':'rejected','errors':[error], 'full_live_gate_passed':False},ensure_ascii=False))
         raise SystemExit(2)
 
 

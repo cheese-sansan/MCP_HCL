@@ -10,9 +10,13 @@ import json
 import os
 import re
 import subprocess
+import threading
+from contextlib import ExitStack
 from importlib.resources import as_file, files
 from pathlib import Path
 from uuid import uuid4
+from mcp_hcl.console import ConsoleError
+from mcp_hcl.gui_identity import GuiIdentityGuard, GuiIdentityError, GuiProfileLease, ps_literal, windows_powershell
 
 
 def rejected(code, message):
@@ -21,10 +25,16 @@ def rejected(code, message):
 
 
 class HclGuiRelay:
-    def __init__(self, store, *, writes_enabled=False, runner=None):
+    def __init__(self, store, *, writes_enabled=False, runner=None, identity_guard=None, installation_root=None):
         self.store = store
         self.writes_enabled = writes_enabled
         self.runner = runner or self._run
+        self.native_runner = runner is None
+        self.native_dependencies = runner is None and identity_guard is None
+        self.identity_guard = identity_guard or GuiIdentityGuard(
+            installation_root or os.environ.get('MCP_HCL_INSTALL_ROOT', 'D:/HCL'),
+            backend_port=int(os.environ.get('MCP_HCL_BACKEND_PORT', '16600')))
+        self._lock = threading.Lock()
 
     @staticmethod
     def _run(command):
@@ -33,6 +43,15 @@ class HclGuiRelay:
     def execute(self, action: str, project_path: str, hcl_pid: int) -> dict:
         if not self.writes_enabled:
             return rejected('writes_disabled', 'Opening or saving the HCL GUI requires MCP_HCL_ALLOW_LIVE_WRITE=1')
+        if not self._lock.acquire(blocking=False):
+            return rejected('gui_operation_busy', 'Another GUI operation is active; no action was queued')
+        try:
+            with ExitStack() as scope:
+                return self._execute(action, project_path, hcl_pid, scope)
+        finally:
+            self._lock.release()
+
+    def _execute(self, action: str, project_path: str, hcl_pid: int, scope) -> dict:
         if action not in {'open', 'save'}:
             return rejected('invalid_action', 'Only open/save relay actions are supported')
         if isinstance(hcl_pid, bool) or not isinstance(hcl_pid, int) or hcl_pid < 1:
@@ -51,14 +70,44 @@ class HclGuiRelay:
                 raise ValueError('Stage receipt identity mismatch')
         except (ValueError, KeyError, TypeError) as exc:
             return rejected('invalid_stage_receipt', str(exc))
+        try:
+            identity = self.identity_guard.prepare(action, document, marker['operation_id'], hcl_pid)
+            if self.native_runner and identity.get('native_identity_verified') is not True:
+                return rejected('native_gui_identity_required', 'Synthetic identity observations cannot authorize native GUI actions')
+            if self.native_runner:
+                scope.enter_context(GuiProfileLease(identity['profile_directory']))
+                # Another controller could have changed the namespace before
+                # the OS lock was acquired. Recheck while holding that lock.
+                refreshed = self.identity_guard.prepare(action, document, marker['operation_id'], hcl_pid)
+                if refreshed['identity_key'] != identity['identity_key']:
+                    raise GuiIdentityError('gui_process_changed', 'GUI identity changed before obtaining the control lease')
+                identity = refreshed
+        except GuiIdentityError as exc:
+            return rejected(exc.code, str(exc))
+        except (OSError, ValueError, TypeError, KeyError, ConsoleError):
+            return rejected('gui_preconditions_unknown', 'GUI identity or runtime namespace could not be established')
         run_directory = self.store.output_root / '.relay-receipts' / uuid4().hex
         before = hashlib.sha256(document.net_path.read_bytes()).hexdigest()
         resource = files('mcp_hcl').joinpath('data/hcl_open_gate.ps1')
-        with as_file(resource) as script:
-            command = ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(script),
-                       '-WorkspaceWorkRoot', str(self.store.output_root), '-HclPid', str(hcl_pid),
-                       '-ProjectFile', str(document.net_path), '-OutputDirectory', str(run_directory)]
-            command.append('-OpenOnly' if action == 'open' else '-ResumeLoadedProject')
+        observer_resource = files('mcp_hcl').joinpath('data/hcl_process_identity.ps1')
+        with ExitStack() as stack:
+            script = stack.enter_context(as_file(resource))
+            observer_script = stack.enter_context(as_file(observer_resource))
+            arguments = {'WorkspaceWorkRoot': str(self.store.output_root), 'HclPid': hcl_pid,
+                         'ProjectFile': str(document.net_path), 'OutputDirectory': str(run_directory),
+                         'ExpectedOwnerSid': identity['owner_sid'], 'ExpectedCreationTime': identity['creation_time'],
+                         'ExpectedProfileDirectory': identity['profile_directory'],
+                         'ExpectedClientPath': identity['executable_path'],
+                         'IdentityObserverFile': str(observer_script), 'IdentityObserverSha256': identity['observer_sha256']}
+            arguments.update(ExpectedBackendPort=identity['broker']['port'], ExpectedBrokerPid=identity['broker']['pid'],
+                             ExpectedBrokerCreationTime=identity['broker']['creation_time'],
+                             ExpectedBrokerPath=identity['broker']['executable_path'])
+            # Restricted file execution is not bypassed. The trusted packaged
+            # body runs inline; paths are decoded constants, never code text.
+            expression = '& {\n' + script.read_bytes().decode('utf-8-sig') + '\n} '
+            expression += ' '.join('-' + key + ' ' + ps_literal(value) for key, value in arguments.items())
+            expression += ' -OpenOnly' if action == 'open' else ' -ResumeLoadedProject'
+            command = [str(windows_powershell()), '-NoProfile', '-NonInteractive', '-Command', expression]
             try:
                 process = self.runner(command)
             except (OSError, subprocess.TimeoutExpired):
@@ -66,7 +115,16 @@ class HclGuiRelay:
                         'errors': [{'code': 'relay_unavailable_or_timed_out',
                                     'message': 'The GUI operation has no verified result; it is not automatically replayed'}],
                         'receipt_directory': str(run_directory), 'runtime_verified': False,
-                        'full_live_gate_passed': False}
+                        'full_live_gate_passed': False, 'process_identity_before': identity}
+        try:
+            identity_after = self.identity_guard.probe(hcl_pid)
+            if identity_after['identity_key'] != identity['identity_key']:
+                raise GuiIdentityError('gui_process_changed', 'HCL process identity changed during the GUI operation')
+        except (GuiIdentityError, OSError, ValueError, KeyError, ConsoleError):
+            return {'status': 'unverified', 'target_project': str(document.net_path),
+                    'errors': [{'code': 'gui_process_changed_or_unknown', 'message': 'No stable HCL process identity after the GUI action'}],
+                    'receipt_directory': str(run_directory), 'process_identity_before': identity,
+                    'runtime_verified': False, 'full_live_gate_passed': False}
         receipt_path = run_directory / 'result.json'
         if not receipt_path.is_file() or receipt_path.is_symlink():
             return {'status': 'unverified', 'target_project': str(document.net_path),
@@ -83,7 +141,7 @@ class HclGuiRelay:
             bound = (receipt['hcl_pid'] == hcl_pid and
                      Path(receipt['project_file']).resolve() == document.net_path and
                      receipt['operation'] == ('isolated_project_open' if action == 'open' else 'isolated_project_save'))
-            required = ['project_preconditions', 'project_opened', 'canvas_project_identity']
+            required = ['project_preconditions', 'process_identity', 'project_opened', 'canvas_project_identity']
             if action == 'save': required += ['save_invoked', 'project_readback']
             verified = (process.returncode == 0 and bound and caption_matches and not receipt.get('validate_only') and
                         receipt.get('status') in {'verified', 'partial'} and
@@ -92,10 +150,13 @@ class HclGuiRelay:
         except (ValueError, KeyError, TypeError, OSError):
             return {'status': 'unverified', 'errors': [{'code': 'relay_receipt_invalid', 'message': 'Receipt or saved-project readback is invalid'}],
                     'runtime_verified': False, 'full_live_gate_passed': False}
-        return {'status': 'verified' if verified else 'unverified', 'operation': 'gui_project_' + action,
+        native = verified and self.native_dependencies and identity.get('native_identity_verified') is True and identity_after.get('native_identity_verified') is True
+        return {'status': 'verified' if native else 'output_received' if verified else 'unverified', 'operation': 'gui_project_' + action,
                 'operation_id': receipt.get('operation_id', uuid4().hex), 'target_project': str(document.net_path),
-                'verified_scope': 'gui_project_identity_and_saved_file_readback_only' if verified else 'none',
-                'project_identity_verified': verified, 'live_canvas_verified': False, 'runtime_verified': False,
+                'verified_scope': 'gui_project_identity_and_saved_file_readback_only' if native else 'synthetic_gui_receipt_protocol_only' if verified else 'none',
+                'project_identity_verified': native, 'protocol_project_identity_verified': verified,
+                'process_identity_before': identity, 'process_identity_after': identity_after,
+                'runtime_isolation_verified': False, 'live_canvas_verified': False, 'runtime_verified': False,
                 'guest_boot_verified': False, 'configuration_verified': False, 'connectivity_verified': False,
                 'full_live_gate_passed': False, 'project': readback, 'checks': checks,
                 'receipt_directory': str(run_directory), 'source_stage_operation_id': marker['operation_id'],

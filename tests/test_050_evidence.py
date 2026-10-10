@@ -92,11 +92,12 @@ class Evidence050Tests(unittest.TestCase):
             class Broken(Channel):
                 def exchange(self,command):
                     self.history.append({'command':command,'complete':False,'raw_output_b64':'aW5jb21wbGV0ZQ=='})
-                    raise ConsoleError('Continuous output timeout')
+                    raise ConsoleError('Continuous output timeout',code='prompt_timeout',detail={'stage':'read'})
             with patch('mcp_hcl.cli_session.PersistentConsole',Broken):
                 result=collect_evidence(spec,root/'failed')
             self.assertEqual(result['status'],'partial')
             self.assertTrue((root/'failed/capture-failed.json').is_file())
+            self.assertEqual(result['errors'][0]['code'],'prompt_timeout')
             self.assertIn('incomplete',base64.b64decode(json.loads((root/'failed/sources/0-failed-transcript.json').read_text())[0]['raw_output_b64']).decode())
 
     def test_hcl_and_firmware_version_mismatch_rejected(self):

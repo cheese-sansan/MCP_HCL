@@ -26,7 +26,8 @@ class Environment050Tests(unittest.TestCase):
 
     def test_processes_and_guest_lists_are_not_console_evidence(self):
         facts = dict(hypervisor_present=True, gui_running=True, wrapper_running=True,
-                     external_console_present=False, virtualbox_directory='D:/VirtualBox', virtualbox_version='6.0.14')
+                     external_console_present=False, virtualbox_directory='D:/VirtualBox', virtualbox_version='6.0.14',
+                     profile_directory=str(Path.home()),user_sid='S-1-5-21-1234')
         def run(args, **kwargs):
             return SimpleNamespace(returncode=0, stdout=json.dumps(facts).encode() if args[0]=='powershell.exe' else b'"guest" {id}')
         with patch('mcp_hcl.environment.os.name', 'nt'), patch('mcp_hcl.catalog.HclCatalog.devices', return_value={'devices':[]}):

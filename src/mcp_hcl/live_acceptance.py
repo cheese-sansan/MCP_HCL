@@ -50,7 +50,7 @@ def accept_lab(deployment,project_path,topology,gui_receipt):
         expected={'r1':{'192.0.2.2'},'r2':{'192.0.2.1','192.0.2.3'},'r3':{'192.0.2.2'}}
         leases=[];client_addresses={};client_gateways={}
         for router in routers:
-            with deployment.session_factory(endpoint(topology,bindings[router]['device_id'])) as channel:
+            with deployment.open_channel(doc,bindings[router],topology) as channel:
                 neighbor=channel.exchange('display ospf peer')['output']
                 routing=channel.exchange('display ip routing-table')['output']
                 lease=channel.exchange('display dhcp server ip-in-use')['output']
@@ -60,7 +60,7 @@ def accept_lab(deployment,project_path,topology,gui_receipt):
                 result['route_checks'].append({'device':router,'passed':all(any(n in line and re.search(r'\bOSPF\b',line,re.I) for line in routing.splitlines()) for n in remote)})
                 leases+=re.findall(r'(?m)^\s*(10\.\d+\.\d+\.\d+)\s+',lease)
         for client in clients:
-            with deployment.session_factory(endpoint(topology,bindings[client]['device_id'])) as channel:
+            with deployment.open_channel(doc,bindings[client],topology) as channel:
                 output=channel.exchange('display ip interface brief')['output']
                 route=channel.exchange('display ip routing-table')['output']
                 ips=set(re.findall(r'\b10\.\d+\.\d+\.\d+\b',output))
@@ -83,7 +83,7 @@ def accept_lab(deployment,project_path,topology,gui_receipt):
         result['rollback']=[]
         for backup in reversed(configuration['backups']):
             try:
-                with deployment.session_factory(endpoint(topology,bindings[backup['device']]['device_id'])) as channel:
+                with deployment.open_channel(doc,bindings[backup['device']],topology,backup.get('vm_uuid')) as channel:
                     result['rollback'].append(deployment._restore(channel,backup))
             except (ConsoleError,OSError,ValueError) as exc:
                 result['rollback'].append({'device':backup['device'],'status':'unverified','error':str(exc),'manual_restore_command':f"configuration replace file {backup['guest_file']}"})

@@ -6,7 +6,17 @@ param(
     [switch]$ResumeOpenDialog,
     [switch]$ResumeLoadedProject,
     [switch]$OpenOnly,
-    [Parameter(Mandatory = $true)][string]$WorkspaceWorkRoot
+    [Parameter(Mandatory = $true)][string]$WorkspaceWorkRoot,
+    [string]$ExpectedOwnerSid,
+    [string]$ExpectedCreationTime,
+    [string]$ExpectedProfileDirectory,
+    [string]$ExpectedClientPath,
+    [string]$IdentityObserverFile,
+    [string]$IdentityObserverSha256,
+    [int]$ExpectedBackendPort,
+    [int]$ExpectedBrokerPid,
+    [string]$ExpectedBrokerCreationTime,
+    [string]$ExpectedBrokerPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,6 +81,8 @@ $report = [ordered]@{
     full_live_gate_passed = $false
     checks = [ordered]@{
         project_preconditions = $false
+        process_identity = $false
+        fresh_runtime_namespace = $false
         accessibility = $false
         file_chooser_observed = $false
         project_opened = $false
@@ -127,6 +139,133 @@ try {
         $report.verified_scope = 'isolated_project_preconditions_only'
         return
     }
+    function Assert-HclIdentity {
+        if ($ExpectedOwnerSid -notmatch '^S-\d+(?:-\d+)+$' -or
+            [string]::IsNullOrEmpty($ExpectedCreationTime) -or
+            [string]::IsNullOrEmpty($ExpectedProfileDirectory) -or
+            [string]::IsNullOrEmpty($ExpectedClientPath) -or
+            $IdentityObserverSha256 -notmatch '^[0-9a-f]{64}$') {
+            throw 'Explicit HCL principal/process/profile identity is required'
+        }
+        $observer = Get-Item -LiteralPath $IdentityObserverFile -Force -ErrorAction Stop
+        if ($observer.Attributes -band [IO.FileAttributes]::ReparsePoint -or
+            (Get-FileHash -LiteralPath $IdentityObserverFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne $IdentityObserverSha256) {
+            throw 'Identity observer differs from the packaged source'
+        }
+        $observerBody = [IO.File]::ReadAllText($IdentityObserverFile, [Text.Encoding]::UTF8)
+        $identityText = & ([scriptblock]::Create($observerBody)) -HclPid $HclPid -BackendPort $ExpectedBackendPort
+        $identity = ($identityText -join "`n") | ConvertFrom-Json
+        $actualCreation = if ($identity.hcl.creation_time -is [datetime]) {
+            $identity.hcl.creation_time.ToUniversalTime().Ticks
+        } else {
+            ([DateTimeOffset]::Parse([string]$identity.hcl.creation_time, [Globalization.CultureInfo]::InvariantCulture)).UtcDateTime.Ticks
+        }
+        $expectedCreation = ([DateTimeOffset]::Parse($ExpectedCreationTime, [Globalization.CultureInfo]::InvariantCulture)).UtcDateTime.Ticks
+        $actualBrokerCreation = if ($identity.broker.creation_time -is [datetime]) {
+            $identity.broker.creation_time.ToUniversalTime().Ticks
+        } else {
+            ([DateTimeOffset]::Parse([string]$identity.broker.creation_time, [Globalization.CultureInfo]::InvariantCulture)).UtcDateTime.Ticks
+        }
+        $expectedBrokerCreation = ([DateTimeOffset]::Parse($ExpectedBrokerCreationTime, [Globalization.CultureInfo]::InvariantCulture)).UtcDateTime.Ticks
+        if ($identity.schema_version -ne 1 -or $identity.actual_sid -cne $ExpectedOwnerSid -or
+            $identity.hcl.pid -ne $HclPid -or $identity.hcl.owner_result -ne 0 -or
+            $identity.hcl.owner_sid -cne $ExpectedOwnerSid -or
+            $identity.hcl.name -cne 'SimwareClient.exe' -or
+            $actualCreation -ne $expectedCreation -or
+            $identity.caller.session_id -ne $identity.hcl.session_id -or
+            $identity.hcl.elevated -isnot [bool] -or $identity.hcl.elevated -ne $false -or
+            $identity.caller.elevated -isnot [bool] -or $identity.caller.elevated -ne $false) {
+            throw 'HCL principal, session, token or process identity changed'
+        }
+        if ($identity.broker.pid -ne $ExpectedBrokerPid -or $actualBrokerCreation -ne $expectedBrokerCreation -or
+            $identity.broker.port -ne $ExpectedBackendPort -or $identity.broker.name -cne 'SimwareWrapper.exe' -or
+            $identity.broker.owner_result -ne 0 -or $identity.broker.owner_sid -cne $ExpectedOwnerSid -or
+            $identity.broker.session_id -ne $identity.caller.session_id -or
+            $identity.broker.elevated -isnot [bool] -or $identity.broker.elevated -ne $false -or
+            -not ([IO.Path]::GetFullPath([string]$identity.broker.executable_path).Equals(
+                [IO.Path]::GetFullPath($ExpectedBrokerPath), [StringComparison]::OrdinalIgnoreCase))) {
+            throw 'Backend listener identity changed or belongs to another principal'
+        }
+        $expectedProfile = [IO.Path]::GetFullPath($ExpectedProfileDirectory)
+        foreach ($observedProfile in @($identity.cim_profile_directory, $identity.profile_directory, $identity.environment_profile)) {
+            if (-not ([IO.Path]::GetFullPath([string]$observedProfile).Equals($expectedProfile, [StringComparison]::OrdinalIgnoreCase))) {
+                throw 'HCL observer is running in an unexpected profile namespace'
+            }
+        }
+        foreach ($entry in @(
+            @($identity.application_data, 'AppData\Roaming'),
+            @($identity.environment_application_data, 'AppData\Roaming'),
+            @($identity.local_application_data, 'AppData\Local'),
+            @($identity.environment_local_application_data, 'AppData\Local'))) {
+            if (-not ([IO.Path]::GetFullPath([string]$entry[0]).Equals(
+                [IO.Path]::GetFullPath((Join-Path $expectedProfile $entry[1])), [StringComparison]::OrdinalIgnoreCase))) {
+                throw 'Application-data paths disagree with the observed principal'
+            }
+        }
+        $tempRoot = [IO.Path]::GetFullPath((Join-Path $expectedProfile 'AppData\Local\Temp'))
+        $actualTemp = [IO.Path]::GetFullPath([string]$identity.temporary_directory)
+        if (-not ($actualTemp.Equals($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            $actualTemp.StartsWith($tempRoot + '\', [StringComparison]::OrdinalIgnoreCase))) {
+            throw 'The observer inherited another temporary-file namespace'
+        }
+        if (-not ([IO.Path]::GetFullPath([string]$identity.hcl.executable_path).Equals(
+            [IO.Path]::GetFullPath($ExpectedClientPath), [StringComparison]::OrdinalIgnoreCase))) {
+            throw 'HCL executable path changed'
+        }
+        $report.checks.process_identity = $true
+        $report.process_identity = [ordered]@{
+            owner_sid = $identity.actual_sid
+            creation_time = $identity.hcl.creation_time
+            profile_directory = $identity.cim_profile_directory
+            executable_path = $identity.hcl.executable_path
+            caller_elevated = $false
+            hcl_elevated = $false
+        }
+    }
+    function Assert-FreshRuntimeNamespace {
+        $entries = @([IO.Directory]::EnumerateFileSystemEntries($ExpectedProfileDirectory))
+        $runtimeRoot = Join-Path $ExpectedProfileDirectory 'HCL VMs'
+        if (@($entries | Where-Object { [IO.Path]::GetFileName($_) -eq 'HCL VMs' }).Count -gt 0) {
+            if ((Get-Item -LiteralPath $runtimeRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw 'Runtime root is linked'
+            }
+            foreach ($entry in [IO.Directory]::EnumerateFileSystemEntries($runtimeRoot)) {
+                $item = Get-Item -LiteralPath $entry -Force
+                if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint -or
+                    $item.PSIsContainer -or $item.Name -ine 'lock.ini') {
+                    throw 'Existing runtime assets or directories are protected'
+                }
+            }
+        }
+        $registryRoot = Join-Path $ExpectedProfileDirectory '.VirtualBox'
+        if (@($entries | Where-Object { [IO.Path]::GetFileName($_) -eq '.VirtualBox' }).Count -gt 0) {
+            if ((Get-Item -LiteralPath $registryRoot -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw 'VirtualBox registry directory is linked'
+            }
+            $registryEntries = @([IO.Directory]::EnumerateFileSystemEntries($registryRoot))
+            $registry = Join-Path $registryRoot 'VirtualBox.xml'
+            if (@($registryEntries | Where-Object { [IO.Path]::GetFileName($_) -eq 'VirtualBox.xml' }).Count -gt 0) {
+                $registryItem = Get-Item -LiteralPath $registry -Force
+                if ($registryItem.Length -gt 1048576 -or $registryItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                    throw 'VirtualBox registry is linked or oversized'
+                }
+                $settings = New-Object System.Xml.XmlReaderSettings
+                $settings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+                $settings.XmlResolver = $null
+                $reader = [System.Xml.XmlReader]::Create($registry, $settings)
+                try {
+                    while ($reader.Read()) {
+                        if ($reader.NodeType -eq [System.Xml.XmlNodeType]::Element -and $reader.LocalName -eq 'MachineEntry') {
+                            throw 'Existing machine registrations are protected'
+                        }
+                    }
+                } finally { $reader.Dispose() }
+            }
+        }
+        $report.checks.fresh_runtime_namespace = $true
+    }
+    Assert-HclIdentity
+    if (-not $ResumeLoadedProject) { Assert-FreshRuntimeNamespace }
     $process = Get-Process -Id $HclPid -ErrorAction Stop
     if ($process.ProcessName -ne 'SimwareClient') {
         throw 'HclPid does not identify an HCL workspace'
@@ -165,6 +304,8 @@ public static class HclGateNative {
         return $parent.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
     }
     function Invoke-Element($element) {
+        Assert-HclIdentity
+        if (-not $ResumeLoadedProject -and -not $report.checks.project_opened) { Assert-FreshRuntimeNamespace }
         if ($null -eq $element -or -not $element.Current.IsEnabled) {
             throw 'Requested HCL control is missing or disabled'
         }
@@ -189,6 +330,7 @@ public static class HclGateNative {
         return (Find-Element $hclWindow 'ClassNameProperty' '#32770')
     }
     function Save-HclImage([string]$name) {
+        Assert-HclIdentity
         $rect = $hclWindow.Current.BoundingRectangle
         $bitmap = New-Object System.Drawing.Bitmap([int]$rect.Width, [int]$rect.Height)
         $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
@@ -200,6 +342,8 @@ public static class HclGateNative {
         finally { $graphics.Dispose(); $bitmap.Dispose() }
     }
     function Invoke-NativeButton($element) {
+        Assert-HclIdentity
+        if (-not $ResumeLoadedProject -and -not $report.checks.project_opened) { Assert-FreshRuntimeNamespace }
         if ($element.Current.ClassName -ne 'Button' -or
             $element.Current.NativeWindowHandle -eq 0 -or -not $element.Current.IsEnabled) {
             throw 'Requested native file-dialog button is not available'
@@ -272,6 +416,8 @@ public static class HclGateNative {
     $editHandle = [IntPtr]$fileNameField.Current.NativeWindowHandle
     if ($editHandle -eq [IntPtr]::Zero) { throw 'File name field has no native handle' }
     $setResult = [IntPtr]::Zero
+    Assert-HclIdentity
+    Assert-FreshRuntimeNamespace
     $setCall = [HclGateNative]::SetTextTimeout($editHandle, 0x000C, [IntPtr]::Zero,
         $projectFullPath, 2, 2000, [ref]$setResult)
     if ($setCall -eq [IntPtr]::Zero -or $setResult -eq [IntPtr]::Zero) {
@@ -342,6 +488,7 @@ public static class HclGateNative {
     if (-not $savedWorkingDirectory.Equals($expectedDirectory, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'The saved project working directory changed unexpectedly'
     }
+    Assert-HclIdentity
     $report.checks.project_readback = $true
     $report.evidence += [ordered]@{
         layer = 'project_file'

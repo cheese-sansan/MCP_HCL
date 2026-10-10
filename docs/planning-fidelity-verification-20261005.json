@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-05",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "offline_primary_lan_counts_vlan_and_build_fidelity",
+  "regression": {
+    "tests": 171,
+    "passed": 170,
+    "skipped": 1,
+    "elapsed_seconds": 47.943,
+    "log": "work/planning-fidelity-regression-20261005.txt"
+  },
+  "upstream_revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+  "primary_sources": [
+    {
+      "path": "src/packet_tracer_mcp/domain/services/orchestrator.py",
+      "git_blob_sha": "adda440566c377b03ef22d36950d67b66f7cd913",
+      "sha256": "fec705762b70b3804eeabc8b2b66a420e3a7f67b2221a9c6ebb3f81576feee8a",
+      "source_url": "https://github.com/Mats2208/MCP-Packet-Tracer/blob/846db381bc2c6ee0229d56e1d7ce8847eb6b213d/src/packet_tracer_mcp/domain/services/orchestrator.py"
+    },
+    {
+      "path": "src/packet_tracer_mcp/domain/rules/ip_rules.py",
+      "git_blob_sha": "306f93a875b0f6862fbbf26ceab47c667cd95abe",
+      "sha256": "8ef1b077cc9285f04379e09b71fec83dd9eaf9e17dc2bf46869e6c0b043a5178",
+      "source_url": "https://github.com/Mats2208/MCP-Packet-Tracer/blob/846db381bc2c6ee0229d56e1d7ce8847eb6b213d/src/packet_tracer_mcp/domain/rules/ip_rules.py"
+    },
+    {
+      "path": "src/packet_tracer_mcp/domain/rules/topology_rules.py",
+      "git_blob_sha": "299e2223addd958496c23074b92b00fb96183013",
+      "sha256": "79414a589159fe5935f48b5c2af91da798e52ac75e615bd7293d36bccebfed8c",
+      "source_url": "https://github.com/Mats2208/MCP-Packet-Tracer/blob/846db381bc2c6ee0229d56e1d7ce8847eb6b213d/src/packet_tracer_mcp/domain/rules/topology_rules.py"
+    },
+    {
+      "path": "src/packet_tracer_mcp/domain/models/requests.py",
+      "git_blob_sha": "9743f1caf4e67c91dbcd931f6cfd22c53cfb35ec",
+      "sha256": "b9c769d30f4686b2093cd778977aeaa072f74a1d1fdcf80d16b17a1579fb9216"
+    }
+  ],
+  "source_hashes": {
+    "src/mcp_hcl/planning.py": "af41ef6ca4e8ada2101ff000614611a5428ea708558f2b3e84c2ac55a3e7c200",
+    "tests/test_planning_fidelity.py": "a2f77259323983e7e79a5b4f68125c3cde1c3d3bae7a8f8bfeceafeef94fab9f",
+    "docs/offline-contracts.json": "36b612643e5c7b7b90ec82db6207cea5699c680d0d5039a73ebac18b6ef5f264"
+  },
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_and_offline_asymmetric_planning_only",
+    "wheel": "C:\\Users\\w8p1p\\.codex\\worktrees\\8a46\\MCP_HCL\\work\\wheels-planning-fidelity-20261005\\mcp_hcl-0.5.0-py3-none-any.whl",
+    "sha256": "535eedb0499d7181c1d578a5ef8179f9a4245d61eb9602dadafc232b133a64f5",
+    "package_files_compared": 35,
+    "tools": 39,
+    "resources": 6,
+    "host_count": 3,
+    "full_live_gate_passed": false
+  },
+  "prepared_bundle": "work/lab-planning-packets-20261005/MCPHCLLabPlanning",
+  "first_failures": [
+    "work/planning-fidelity-first-failure-20261005.json",
+    "work/planning-fidelity-build-chain-20261005.txt"
+  ],
+  "real_guest_operations": false,
+  "account_created": false,
+  "full_live_gate_passed": false,
+  "completion": "incomplete",
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  }
+}

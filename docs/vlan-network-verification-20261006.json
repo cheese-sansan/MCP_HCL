@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "single_and_multi_device_vlan_names_pvid_membership_subinterfaces_and_recovery_software_contracts",
+  "targeted": {
+    "tests": 9,
+    "passed": 9,
+    "elapsed_seconds": 3.11,
+    "log": "work/vlan-network-required-final-tests-20261006.txt"
+  },
+  "core_compatibility": {
+    "tests": 13,
+    "passed": 13,
+    "elapsed_seconds": 3.077,
+    "log": "work/vlan-core-targeted-final-20261006.txt"
+  },
+  "dependent_regression": {
+    "tests": 25,
+    "passed": 25,
+    "elapsed_seconds": 10.393,
+    "log": "work/vlan-dependent-regression-20261006.txt"
+  },
+  "full_regression_repeated": false,
+  "initial_failure": "work/vlan-core-targeted-20261006.txt",
+  "upstream_sources": {
+    "upstream_revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
+    "files": [
+      {
+        "path": "vlans.py",
+        "git_blob": "b1dbd18c49233816867da6bd9d11ba52397a8e96",
+        "sha256": "22c21ceb5481b7eed9f5fea363427d58005752d69be726abe67036b80c339da6"
+      },
+      {
+        "path": "vlan_rules.py",
+        "git_blob": "b8e93fe463ec44054cb0a41722fbdbefec5ab245",
+        "sha256": "665f5225c0de893c932ae1a6967238fed4c54cba6c8fabfb2b15853bd3f22259"
+      },
+      {
+        "path": "vlan_cli_generator.py",
+        "git_blob": "310485ec47925b6bd8d3cf14a58d93ba7c1b8bb7",
+        "sha256": "0bd6744d75635cabc35a74760ca8ddaf199807452104f4e23263da565999d5b3"
+      }
+    ]
+  },
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_discovery_vlan_target_mapping_and_default_gate_only",
+    "sha256": "c9cbd3be793c9d1dacab6829f7bae40156ef392124060f1f911ae73a1e415f11",
+    "package_files_compared": 44,
+    "tools": 45,
+    "resources": 6,
+    "full_live_gate_passed": false
+  },
+  "public_packet": "C:/Users/Public/Documents/MCP_HCL_Lab_20261006_VlanNetwork",
+  "packet_operation_id": "a4284b45b42c42cb8c2ba5f6756a1c7b",
+  "tools": 45,
+  "resources": 6,
+  "native_policy_tested": false,
+  "native_persistence_tested": false,
+  "native_recovery_tested": false,
+  "vlan_traffic_tested": false,
+  "guest_restart_tested": false,
+  "runtime_isolation_verified": false,
+  "full_live_gate_passed": false,
+  "completion": "incomplete",
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "cleanup_authorized_after_required_real_tests": true,
+  "cleanup_executed": false,
+  "necessary_tests_only": true,
+  "source_hashes": {
+    "src/mcp_hcl/vlan_network.py": "9cf723816f7520cebe492716f0f026bd88791cd27d51f743c51d85081693927e",
+    "src/mcp_hcl/vlan_semantics.py": "82c6730872134e4ef1c61d3ecbffbd471d6b8accf020acaf84c88f1bac8ad74c",
+    "src/mcp_hcl/services.py": "effc6631a84245457f649307bc32d14c446c13c449f75500e5213bbcde1d2ef0",
+    "src/mcp_hcl/generation.py": "0f6cc9c5291c2bae80a88cfd0d6747b09814fa45f5072c13359bde648e892c19",
+    "src/mcp_hcl/policy.py": "d0c42e7971d69e3df9b01b2f4a55255d9e0cb4f545a231c0974be27d6022d365",
+    "src/mcp_hcl/contracts.py": "eab7497342854b40ebe534f8d37db230ddabb82664535b7924c3a0d4d212b3e3",
+    "src/mcp_hcl/parity.py": "43db8233a296a6d37a4ea0b0c04e5309a35e6c09a4d709561fafda24e94d3bd8",
+    "src/mcp_hcl/data/upstream_parity.json": "207125d49b4cb92a77f3010ffeab87e3b6db9f635558422b1d6120b396a04798",
+    "docs/offline-contracts.json": "bf652c7cfb6d5fdd2a73db434f14fa655b10d4cc25d1af4469dd8845df3daab3",
+    "tests/test_vlan_network.py": "ba69ac008e339695bd3179fd6239afeaec1f14dbafc4adc29d404eaeb11ee29f"
+  }
+}

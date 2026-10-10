@@ -1,0 +1,1684 @@
+{
+  "date": "2026-10-11",
+  "timezone": "Asia/Tokyo",
+  "executor": "Codex, explicitly authorized by user",
+  "source_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL",
+  "head": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "dirty_head_is_not_version": true,
+  "evidence_root": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41",
+  "baseline_manifest": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\baseline-files.json",
+  "source_manifest": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\c648afa0515e4c62a17756b70275c543\\manifest.json",
+  "candidate_manifest": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\candidate-runs\\5a2a6356c48e42d09bd2c54a350d14e8\\manifest.json",
+  "source_result": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\c648afa0515e4c62a17756b70275c543\\result.json",
+  "candidate_result": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\candidate-runs\\5a2a6356c48e42d09bd2c54a350d14e8\\result.json",
+  "candidate": {
+    "wheel": "C:\\Users\\Public\\Documents\\MCP_HCL_Software_Verified_20261011_4589032f\\mcp_hcl-0.5.0-py3-none-any.whl",
+    "sha256": "3d3663ca1c65ffc9c93b5281a460469de3a0d1f39115307704e9775f33465f9a",
+    "package_files": 56,
+    "source_byte_match": true,
+    "missing_files": [],
+    "mismatches": [],
+    "setuptools": "84.0.0",
+    "full_live_gate_passed": false
+  },
+  "source_counts": {
+    "tests_run": 177,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "candidate_counts": {
+    "tests_run": 177,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "source_import": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\src\\mcp_hcl\\__init__.py",
+  "candidate_import": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\venv\\Lib\\site-packages\\mcp_hcl\\__init__.py",
+  "source_and_candidate_sdk_discovery": {
+    "tools": 55,
+    "resources": 6
+  },
+  "source_and_candidate_native_process_audit_passed": true,
+  "live_write": "0",
+  "changed_source_and_test_files": [
+    "src/mcp_hcl/interface_tuning.py",
+    "src/mcp_hcl/nat_policy.py",
+    "src/mcp_hcl/netstream_policy.py",
+    "src/mcp_hcl/security_audit.py",
+    "src/mcp_hcl/switch_security.py",
+    "tests/test_acl_removal.py",
+    "tests/test_gui_relay.py",
+    "tests/test_mcp_contract.py",
+    "tests/test_offline.py",
+    "tests/test_stdio.py",
+    "tests/test_vlan_network.py"
+  ],
+  "added_test_files": [
+    "tests/contract_inventory.py",
+    "tests/software_fixtures.py",
+    "tests/software_native_guard/sitecustomize.py",
+    "tests/test_address_observation.py",
+    "tests/test_gui_identity.py",
+    "tests/test_interface_tuning.py",
+    "tests/test_nat_transactions.py",
+    "tests/test_netstream_transactions.py",
+    "tests/test_new_sdk.py",
+    "tests/test_reconciliation.py",
+    "tests/test_security_audit.py",
+    "tests/test_switch_security.py",
+    "tests/test_transaction_failures.py"
+  ],
+  "contract_coverage": {
+    "test_new_sdk": [
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_remove_nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_interface_tuning')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_port_security')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_netstream')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_diff')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_health_check')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_audit_security')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_nat', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_remove_nat', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_interface_tuning', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_stp', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_port_security', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_apply_netstream', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_diff', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_health_check', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope (tool='hcl_audit_security', outer='type')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_all_nine_discovery_schema_default_gate_and_envelope",
+        "status": "Passed"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_apply_nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_remove_nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_apply_interface_tuning')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_apply_stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_apply_port_security')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls (tool='hcl_apply_netstream')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_new_sdk.NewSdkTests.test_write_tool_preview_and_nested_validation_without_native_calls",
+        "status": "Passed"
+      }
+    ],
+    "test_transaction_failures": [
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='nat', mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='nat', mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='nat', mode='busy')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='tuning', mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='tuning', mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='tuning', mode='busy')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stp', mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stp', mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stp', mode='busy')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='port', mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='port', mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='port', mode='busy')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stream', mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stream', mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands (feature='stream', mode='busy')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_binding_pipe_and_occupied_channel_stop_before_commands",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay (feature='nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay (feature='tuning')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay (feature='stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay (feature='port')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay (feature='stream')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_budget_expiry_recovery_has_new_connection_without_delta_replay",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='nat', mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='nat', mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='tuning', mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='tuning', mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='stp', mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='stp', mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='port', mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='port', mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='stream', mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success (feature='stream', mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_close_and_receipt_failures_are_not_complete_success",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', result='[]', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', result='{\"ok\":true,\"ok\":false}', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', result='not-json', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', mode='missing')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='nat', mode='malformed')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', result='[]', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', result='{\"ok\":true,\"ok\":false}', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', result='not-json', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', mode='missing')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='tuning', mode='malformed')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', result='[]', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', result='{\"ok\":true,\"ok\":false}', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', result='not-json', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', mode='missing')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stp', mode='malformed')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', result='[]', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', result='{\"ok\":true,\"ok\":false}', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', result='not-json', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', mode='missing')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='port', mode='malformed')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', result='[]', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', result='{\"ok\":true,\"ok\":false}', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', result='not-json', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', mode='reuse')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', mode='missing')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay (feature='stream', mode='malformed')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_same_key_conflict_missing_and_malformed_history_never_replay",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup (feature='nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup (feature='tuning')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup (feature='stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup (feature='port')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup (feature='stream')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_saved_content_failure_restores_running_and_startup",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal (feature='nat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal (feature='tuning')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal (feature='stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal (feature='port')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal (feature='stream')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unrequested_scope_change_and_changed_uuid_recovery_refusal",
+        "status": "Passed"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='nat', mode='backup')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='nat', mode='pointer')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='tuning', mode='backup')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='tuning', mode='pointer')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='stp', mode='backup')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='stp', mode='pointer')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='port', mode='backup')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='port', mode='pointer')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='stream', mode='backup')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay (feature='stream', mode='pointer')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_transaction_failures.TransactionFailures.test_unusable_backup_and_uncertain_startup_pointer_recover_before_replay",
+        "status": "Passed"
+      }
+    ],
+    "test_nat_transactions": [
+      {
+        "test": "test_nat_transactions.NatTests.test_acl_origin_named_type_and_preserved_existing_rules",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_dynamic_and_both_pat_transactions_with_independent_acl_readback (mode='dynamic', interface_overload=False)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_dynamic_and_both_pat_transactions_with_independent_acl_readback (mode='pat', interface_overload=False)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_dynamic_and_both_pat_transactions_with_independent_acl_readback (mode='pat', interface_overload=True)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_dynamic_and_both_pat_transactions_with_independent_acl_readback",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_incomplete_receipt_and_same_vm_recovery",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_metadata_identity_and_native_namespace_are_not_simulation_authority",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (network='any')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (network='host 192.0.2.1')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (network='10.0.0.0 0.255.0.255')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (network='10.0.0.0/24')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'timeout_seconds': True})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'use_interface_overload': 'true'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'pool_end': '202.0.0.1'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'pool_netmask': '255.0.255.0'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'inside_networks': []})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms (change={'unknown': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_modes_strict_types_acl_mapping_and_network_forms",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_pool_identity_drift_explicit_pin_and_unrelated_conflict",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_pool_modes_ranges_equivalent_readback_and_preservation (mode='dynamic')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_pool_modes_ranges_equivalent_readback_and_preservation (mode='pat')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_pool_modes_ranges_equivalent_readback_and_preservation",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_shared_acl_pool_and_static_enable_require_explicit_retention",
+        "status": "Passed"
+      },
+      {
+        "test": "test_nat_transactions.NatTests.test_static_transaction_persistence_idempotency_and_exact_removal",
+        "status": "Passed"
+      }
+    ],
+    "test_interface_tuning": [
+      {
+        "test": "test_interface_tuning.TuningTests.test_authentication_modes_preserve_other_keys_and_remain_partial",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_failure_redaction_and_secret_operation_key_reuse",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_fixed_defaults_and_network_dependent_timers",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'bandwidth': True})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'bandwidth': '1'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'bandwidth': 0})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_cost': 0})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_priority': 256})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_hello_interval': 11, 'ospf_dead_interval': 40})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_auth_key': '123456789'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_auth_key': '中文'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_md5_key_id': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'ospf_md5_key': '12345678901234567', 'ospf_md5_key_id': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths (change={'unknown': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalar_strictness_boundaries_timers_and_secret_lengths",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_scalars_persist_and_protect_unrequested_views",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_secret_adjacent_to_error_text_is_redacted_without_changing_status",
+        "status": "Passed"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_unsupported_operation_has_no_stage_or_console_io (change={'delay': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_unsupported_operation_has_no_stage_or_console_io (change={'clock_rate': 64000, 'interface': 'Serial0/0'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_interface_tuning.TuningTests.test_unsupported_operation_has_no_stage_or_console_io",
+        "status": "Passed"
+      }
+    ],
+    "test_switch_security": [
+      {
+        "test": "test_switch_security.SwitchTests.test_failure_recovers_original_uuid_without_replay",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_global_bpdu_edge_conflicts_refuse (before='#\\nversion 7.1.064\\nsysname preserved\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_global_bpdu_edge_conflicts_refuse (before='#\\nversion 7.1.064\\nsysname preserved\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n stp edged-port\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_global_bpdu_edge_conflicts_refuse (before='#\\nversion 7.1.064\\nsysname preserved\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n stp loop-protection\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_global_bpdu_edge_conflicts_refuse",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port link-type trunk')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port link-type hybrid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port link-mode route')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='dot1x')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='mac-authentication')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port-security mac-address dynamic')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port-security port-mode secure')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse (addition='port-security mac-address security 0011-2233-4455 vlan 2')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_port_modes_authentication_learning_and_mac_conflicts_refuse",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_positive_transactions_persist_and_preserve_scope (feature='stp')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_positive_transactions_persist_and_preserve_scope (feature='port_security')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_positive_transactions_persist_and_preserve_scope",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='StpRequest', change={'priority': {'10': True}})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='StpRequest', change={'priority': {'10': 1}})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='StpRequest', change={'priority': {'4095': 4096}})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='StpRequest', change={'mode': 'mstp'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='StpRequest', change={'timeout_seconds': '120'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'sticky': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'max_mac': True})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'static_macs': ['0000-0000-0000']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'static_macs': ['0100-0000-0001']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'static_macs': ['xx']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates (model='PortSecurityRequest', change={'static_macs': ['001122334455', '0011-2233-4455']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_strict_json_priority_mac_capacity_and_duplicates",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_unsupported_modes_stop_before_stage_read_console_and_backup (feature='stp', request={'switch': 'r1', 'mode': 'pvst', 'priority': {'10': 4096}, 'portfast_ports': ['GigabitEthernet0/0'], 'bpduguard_ports': ['GigabitEthernet0/0']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_unsupported_modes_stop_before_stage_read_console_and_backup (feature='port_security', request={'switch': 'r1', 'port': 'GigabitEthernet0/0', 'static_macs': ['0011-2233-4455'], 'violation': 'protect'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_unsupported_modes_stop_before_stage_read_console_and_backup (feature='port_security', request={'switch': 'r1', 'port': 'GigabitEthernet0/0', 'static_macs': ['0011-2233-4455'], 'violation': 'restrict'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_unsupported_modes_stop_before_stage_read_console_and_backup (feature='port_security', request={'switch': 'r1', 'port': 'GigabitEthernet0/0', 'static_macs': ['0011-2233-4455'], 'max_mac': 1025})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_unsupported_modes_stop_before_stage_read_console_and_backup",
+        "status": "Passed"
+      },
+      {
+        "test": "test_switch_security.SwitchTests.test_vlan_ranges_and_explicit_priority_override_root",
+        "status": "Passed"
+      }
+    ],
+    "test_address_observation": [
+      {
+        "test": "test_address_observation.AddressTests.test_diff_primary_prefix_missing_global_and_link_local_usability (address='fe80::1/64')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_diff_primary_prefix_missing_global_and_link_local_usability (address='2001:db8::1/64')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_diff_primary_prefix_missing_global_and_link_local_usability",
+        "status": "Passed"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_duplicate_domains_anycast_and_unusable_addresses_do_not_prove_health",
+        "status": "Passed"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv4_primary_secondary_absent_unknown_and_conflicts (extra='Internet address: none')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv4_primary_secondary_absent_unknown_and_conflicts (extra='Internet address: 10.3.0.2/24 (Primary)')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv4_primary_secondary_absent_unknown_and_conflicts (extra='Internet address: invalid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv4_primary_secondary_absent_unknown_and_conflicts (extra='Internet address: 10.3.0.1/24 (Secondary)')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv4_primary_secondary_absent_unknown_and_conflicts",
+        "status": "Passed"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_flags_lifetimes_link_local_and_disabled (flag='TENTATIVE')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_flags_lifetimes_link_local_and_disabled (flag='DUPLICATE')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_flags_lifetimes_link_local_and_disabled (flag='DEPRECATED')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_flags_lifetimes_link_local_and_disabled (flag='ANYCAST')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_flags_lifetimes_link_local_and_disabled",
+        "status": "Passed"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is enabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db8::/64\\nunknown:\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is enabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db8::/64 [UNKNOWN]\\nJoined group address(es):\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is enabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db8::/64 [DUPLICATE] [DUPLICATE]\\nJoined group address(es):\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is enabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db9::/64\\nJoined group address(es):\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is disabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db8::/64\\nJoined group address(es):\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject (text='GigabitEthernet0/0 current state: UP\\nLine protocol current state: UP\\nIPv6 is enabled, link-local address is FE80::1\\nGlobal unicast address(es):\\n 2001:db8::1, subnet is 2001:db8::/64\\n 2001:db8::1, subnet is 2001:db8::/64\\nJoined group address(es):\\n FF02::1\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_ipv6_incomplete_unknown_duplicate_and_conflicting_records_reject",
+        "status": "Passed"
+      },
+      {
+        "test": "test_address_observation.AddressTests.test_vpn_columns_exact_aliases_domains_and_changed_addresses",
+        "status": "Passed"
+      }
+    ],
+    "test_reconciliation": [
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown (mode='binding')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown (mode='pipe')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown (mode='complete')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown (mode='hash')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown (mode='ipv6')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_binding_pipe_truncation_and_partial_ipv6_failures_preserve_unknown",
+        "status": "Passed"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_default_gate_strict_timeout_ipv6_and_unknown_health (change={'timeout_seconds': True})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_default_gate_strict_timeout_ipv6_and_unknown_health (change={'timeout_seconds': 0})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_default_gate_strict_timeout_ipv6_and_unknown_health (change={'timeout_seconds': 601})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_default_gate_strict_timeout_ipv6_and_unknown_health (change={'include_ipv6': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_default_gate_strict_timeout_ipv6_and_unknown_health",
+        "status": "Passed"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_ipv6_on_request_and_plan_relevant_devices_only",
+        "status": "Passed"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_receipt_and_close_failure_never_report_complete",
+        "status": "Passed"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_stage_change_second_read_identity_and_deadline",
+        "status": "Passed"
+      },
+      {
+        "test": "test_reconciliation.ReconciliationTests.test_vpn_second_read_rejects_identity_or_address_changes_and_old_columns",
+        "status": "Passed"
+      }
+    ],
+    "test_gui_identity": [
+      {
+        "test": "test_gui_identity.IdentityTests.test_collector_failure_missing_duplicate_listener_and_custom_port (size=2)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_collector_failure_missing_duplicate_listener_and_custom_port (size=8)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_collector_failure_missing_duplicate_listener_and_custom_port (size=65537)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_collector_failure_missing_duplicate_listener_and_custom_port",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_constant_arguments_unicode_quotes_and_controls",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory (change={'files': [{'path': 'disk.vdi'}]})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory (change={'registered_machines': [{'uuid': 'same'}]})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory (change={'status': 'unknown'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory (change={'files': None})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory (change={'errors': ['denied']})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_existing_assets_empty_directory_registry_and_unknown_inventory",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_fresh_namespace_save_lease_and_restart (action='open')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_fresh_namespace_save_lease_and_restart (action='save')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_fresh_namespace_save_lease_and_restart",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_identity_key_changes_with_process_listener_and_binary (section='hcl', key='creation_time')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_identity_key_changes_with_process_listener_and_binary (section='broker', key='pid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_identity_key_changes_with_process_listener_and_binary",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_shared_profile_lock_is_nonblocking_and_released",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='owner_sid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='owner_result')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='elevated')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='caller', key='elevated')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='session_id')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='pid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='creation_time')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='hcl', key='executable_path')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='broker', key='owner_sid')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='broker', key='elevated')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='broker', key='port')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (section='broker', key='executable_path')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (key='environment_profile')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (key='application_data')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener (key='temporary_directory')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_identity.IdentityTests.test_validate_principal_session_tokens_paths_and_listener",
+        "status": "Passed"
+      }
+    ],
+    "test_gui_relay": [
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_actor_arguments_bind_identity_and_observer_hash",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_actor_identity_check_missing_or_invalid_receipt_and_nonzero_exit (mode='identity')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_actor_identity_check_missing_or_invalid_receipt_and_nonzero_exit (mode='structure')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_actor_identity_check_missing_or_invalid_receipt_and_nonzero_exit (mode='exit')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_actor_identity_check_missing_or_invalid_receipt_and_nonzero_exit",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_disabled_relay_does_not_read_or_invoke_anything",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_failed_identity_busy_and_changed_after_action_do_not_elevate",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_open_and_save_have_distinct_no_boot_actions_and_limited_evidence",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_original_project_and_missing_or_forged_stage_marker_are_rejected",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_timeout_is_not_replayed_and_prior_receipt_cannot_be_reused",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiRelayTests.test_wrong_project_or_preflight_only_receipts_cannot_prove_gui_success",
+        "status": "Passed"
+      },
+      {
+        "test": "test_gui_relay.GuiStdioTests.test_live_project_tools_are_visible_but_default_to_write_rejection",
+        "status": "Passed"
+      }
+    ],
+    "test_security_audit": [
+      {
+        "test": "test_security_audit.AuditTests.test_banner_fake_commands_storage_and_unknown_algorithms",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='truncated')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='hash')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='reject')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='close')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='timeout')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak (mode='receipt')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_failures_truncation_timeout_close_and_receipt_never_leak",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_footer_version_duplicate_users_and_banner_conflicts (text='#\\nversion 7.1.064\\nheader motd ^\\ntelnet server enable\\nlocal-user bannerfake\\n password simple fake\\n^\\n#\\nlocal-user alice class manage\\n password simple SyntheticSecret17\\n service-type ssh\\n authorization-attribute user-role network-admin\\n#\\nline vty 0 4\\n authentication-mode scheme\\n protocol inbound ssh\\n#\\n\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_footer_version_duplicate_users_and_banner_conflicts (text='#\\nversion 7.1.064\\nversion 7.1.065\\nheader motd ^\\ntelnet server enable\\nlocal-user bannerfake\\n password simple fake\\n^\\n#\\nlocal-user alice class manage\\n password simple SyntheticSecret17\\n service-type ssh\\n authorization-attribute user-role network-admin\\n#\\nline vty 0 4\\n authentication-mode scheme\\n protocol inbound ssh\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_footer_version_duplicate_users_and_banner_conflicts (text='#\\nversion 7.1.064\\nheader motd ^\\ntelnet server enable\\nlocal-user bannerfake\\n password simple fake\\nnot-closed\\n#\\nlocal-user alice class manage\\n password simple SyntheticSecret17\\n service-type ssh\\n authorization-attribute user-role network-admin\\n#\\nline vty 0 4\\n authentication-mode scheme\\n protocol inbound ssh\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_footer_version_duplicate_users_and_banner_conflicts (text='#\\nversion 7.1.064\\nheader motd ^\\ntelnet server enable\\nlocal-user bannerfake\\n password simple fake\\n^\\n#\\nlocal-user alice class manage\\n password simple SyntheticSecret17\\n service-type ssh\\n authorization-attribute user-role network-admin\\n#\\nlocal-user alice\\n#\\nline vty 0 4\\n authentication-mode scheme\\n protocol inbound ssh\\n#\\nreturn\\n')",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_footer_version_duplicate_users_and_banner_conflicts",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_gate_strict_timeout_bad_target_and_pc_exclusion",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_old_user_interface_plaintext_roles_and_remote_aaa_unknown",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_partial_device_and_stage_change_revoke_attribution",
+        "status": "Passed"
+      },
+      {
+        "test": "test_security_audit.AuditTests.test_success_is_private_synthetic_and_sorted_with_unknown_rules",
+        "status": "Passed"
+      }
+    ],
+    "test_netstream_transactions": [
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_empty_destination_reuse_new_inert_name_rejection_and_port_override",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_monitor_objects_are_rejected_before_stage_io",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_native_namespace_cannot_be_reused_by_a_synthetic_channel",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_registry_write_failure_restores_guest_and_old_or_new_name_file (existing=False)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_registry_write_failure_restores_guest_and_old_or_new_name_file (existing=True)",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_registry_write_failure_restores_guest_and_old_or_new_name_file",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export host 192.0.2.11 2055\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 5, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export host 192.0.2.11 2055\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}], 'source_port': 'GigabitEthernet0/0'}, names={})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export host 192.0.2.10 2055\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n ip netstream inbound\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={'collector': {'destination_ip': '192.0.2.10', 'udp_port': 9999, 'version': 9, 'source_native': ''}})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream aggregation protocol\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export version 9 peer-as bgp-nexthop\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 5, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export host 192.0.2.10 2055\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n ip netstream inbound\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={'other': {'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'source_native': ''}})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts (before='#\\nversion 7.1.064\\nsysname preserved\\nip netstream export host 192.0.2.11 2055\\nip netstream export host 192.0.2.12 2055\\nip netstream export host 192.0.2.13 2055\\nip netstream export host 192.0.2.14 2055\\n#\\ninterface GigabitEthernet0/0\\n mtu 1400\\n port link-type access\\n port access vlan 1\\n#\\ninterface GigabitEthernet0/1\\n ip address 10.0.0.2 255.255.255.252\\n#\\nreturn\\n', request={'device': 'r1', 'name': 'collector', 'destination_ip': '192.0.2.10', 'udp_port': 2055, 'version': 9, 'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]}, names={})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_shared_globals_drift_aggregation_capacity_bgp_and_name_conflicts",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'udp_port': True})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'udp_port': 0})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'udp_port': 65536})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'version': '9'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'version': 10})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'destination_ip': '::1'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'remove': 1})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'vpn_instance': 'vpnA'})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}, {'interface': 'GigabitEthernet0/0', 'direction': 'inbound'}]})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields (change={'interfaces': [{'interface': 'GigabitEthernet0/0', 'direction': 'both'}]})",
+        "status": "Passed",
+        "kind": "subtest"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_strict_addresses_ports_versions_directions_and_unknown_fields",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_transaction_name_identity_persistence_and_exact_remove",
+        "status": "Passed"
+      },
+      {
+        "test": "test_netstream_transactions.NetstreamTests.test_unrequested_nested_views_and_as_options_are_protected",
+        "status": "Passed"
+      }
+    ]
+  },
+  "original_68_test_log": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-test-20261011\\a35fafc8edd644838acc9cad26380107\\tests.log",
+  "run_history": [
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\0a63f8ee2aa645c0855d663132900032\\result.json",
+      "success": true
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\2024b04a2204413d9f25f2aee3a9063a\\result.json",
+      "success": true
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\31b1084c60494cdf968f40e179524943\\result.json",
+      "success": false
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\4a49b28016754ae8b318ee128e66764b\\result.json",
+      "success": false
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\61f88f45c00f4a20ad38c939722f36f4\\result.json",
+      "success": false
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\6dc7603622834b5e8752aea0a21cecca\\result.json",
+      "success": true
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\82e66f19811c463aa68b78363962be50\\result.json",
+      "success": true
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\855858ccf9404d5f9df04e5748967077\\result.json",
+      "success": true
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\9396cbceec0648e199c488813d561da9\\result.json",
+      "success": false
+    },
+    {
+      "receipt": "C:\\Users\\w8p1p\\.codex\\worktrees\\nat-transactions\\MCP_HCL\\work\\software-verification-20261011\\4589032fc5584d0b8cfedfa7c6cbee41\\runs\\c648afa0515e4c62a17756b70275c543\\result.json",
+      "success": true
+    }
+  ],
+  "not_implemented": [
+    "complete native device/cable inventory and live editing/capture",
+    "IOS ingress-role/pool mask effects",
+    "clock_rate/EIGRP delay",
+    "legacy PVST root-selection/protect/restrict",
+    "native named exporter/monitor objects",
+    "complete Cisco-to-Comware audit rules",
+    "secure Phone native association/persistence"
+  ],
+  "unverified": [
+    "native lifecycle isolation",
+    "exclusive real guest CLI",
+    "native config/startup/restart effects",
+    "wired/wireless traffic",
+    "authentication plaintext/cipher equivalence",
+    "root/BPDU/MAC-learning behavior",
+    "NetStream collector delivery"
+  ],
+  "full_live_gate_passed": false,
+  "completion": "Incomplete",
+  "upstream_tool_state_counts": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  }
+}

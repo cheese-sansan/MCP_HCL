@@ -28,6 +28,14 @@ REGISTERED_TOOLS = frozenset({
     "hcl_stage_rename_device", "hcl_stage_move_device", "hcl_stage_delete_device",
     "hcl_stage_unlink", "hcl_stage_add_note", "hcl_stage_clear_annotations",
     "hcl_backup_config", "hcl_restore_config", "hcl_live_deploy", "hcl_verify_connectivity",
+    "hcl_inspect_ports","hcl_read_vlans","hcl_read_qos",
+    "hcl_apply_acl","hcl_apply_vlan","hcl_apply_vlan_network","hcl_remove_acl",
+    "hcl_apply_nat","hcl_remove_nat",
+    "hcl_apply_interface_tuning",
+    "hcl_apply_stp","hcl_apply_port_security",
+    "hcl_diff","hcl_health_check",
+    "hcl_audit_security",
+    "hcl_apply_netstream",
 })
 REGISTERED_RESOURCES = frozenset({"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports",
                                  "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"})

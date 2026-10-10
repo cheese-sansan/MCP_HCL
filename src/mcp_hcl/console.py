@@ -27,6 +27,8 @@ Design rules enforced here:
 from __future__ import annotations
 
 import hashlib
+import errno
+import math
 import os
 import re
 import time
@@ -47,6 +49,59 @@ _POLL_SECONDS = 0.02
 
 class ConsoleError(RuntimeError):
     """The console channel cannot be used safely."""
+
+    def __init__(self, message: str, *, code: str = "console_unavailable",
+                 detail: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.detail = {"reason": code, **(detail or {})}
+
+    def as_error(self, *, code: str | None = None) -> dict[str, Any]:
+        return {"code": code or self.code, "message": str(self), "detail": dict(self.detail)}
+
+
+def _os_error(exc: OSError, *, stage: str, api: str) -> ConsoleError:
+    """Keep the native error, rather than interpreting a CRT exception name."""
+    native = getattr(exc, "winerror", None)
+    reasons = {2: "pipe_not_found", 3: "pipe_not_found", 5: "pipe_access_denied",
+               32: "pipe_sharing_violation", 109: "pipe_broken", 231: "pipe_busy",
+               232: "pipe_closing", 233: "pipe_not_connected", 121: "pipe_timeout"}
+    reason = reasons.get(native, "console_io_failed")
+    if native is None:
+        if exc.errno == errno.ENOENT:
+            reason = "pipe_not_found"
+        elif exc.errno in {errno.EACCES, errno.EPERM}:
+            reason = "pipe_access_denied"
+        elif exc.errno == errno.EPIPE:
+            reason = "pipe_broken"
+    return ConsoleError(f"Console {stage} failed: {exc.__class__.__name__}", code=reason,
+                        detail={"stage": stage, "api": api, "winerror": native,
+                                "errno": exc.errno, "access_mode": "read_write"})
+
+
+def _open_pipe_descriptor(pipe_name: str) -> int:
+    if os.name != "nt":
+        return os.open(pipe_name, os.O_RDWR | os.O_BINARY)
+    # CRT os.open can collapse PIPE_BUSY into PermissionError. Capture the
+    # Win32 result before transferring ownership to a Python descriptor.
+    import ctypes
+    import ctypes.wintypes as wt
+    import msvcrt
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = [wt.LPCWSTR, wt.DWORD, wt.DWORD, ctypes.c_void_p,
+                                  wt.DWORD, wt.DWORD, wt.HANDLE]
+    kernel.CreateFileW.restype = wt.HANDLE
+    kernel.CloseHandle.argtypes = [wt.HANDLE]
+    kernel.CloseHandle.restype = wt.BOOL
+    handle = kernel.CreateFileW(pipe_name, 0xC0000000, 0, None, 3, 0, None)
+    if handle == ctypes.c_void_p(-1).value:
+        native_error = ctypes.get_last_error()
+        raise ctypes.WinError(native_error)
+    try:
+        return msvcrt.open_osfhandle(handle, os.O_RDWR | os.O_BINARY)
+    except OSError as exc:
+        kernel.CloseHandle(handle)
+        raise _os_error(exc, stage="descriptor", api="open_osfhandle") from exc
 
 
 def endpoint(topology: str, device: int) -> str:
@@ -89,11 +144,15 @@ class ConsoleSession:
     """
 
     def __init__(self, read_fd: int, write_fd: int | None = None, *,
-                 max_bytes: int = MAX_OUTPUT_BYTES) -> None:
+                 max_bytes: int = MAX_OUTPUT_BYTES, write_timeout: float = 4.0) -> None:
         self._read_fd = read_fd
         self._write_fd = read_fd if write_fd is None else write_fd
         self._max_bytes = max_bytes
         self._closed = False
+        self.write_timeout = write_timeout
+        self.partial_output = b""
+        self.read_termination: str | None = None
+        self.last_write_bytes = 0
 
     # ------------------------------------------------------------------ io
     def _read_available(self) -> bytes:
@@ -102,7 +161,7 @@ class ConsoleSession:
         except BlockingIOError:
             return b""
         except OSError as exc:
-            raise ConsoleError(f"Console read failed: {exc.__class__.__name__}") from exc
+            raise _os_error(exc, stage="read", api="os.read") from exc
 
     def drain(self) -> bytes:
         """Discard and return everything already buffered (the 'stale output')."""
@@ -112,46 +171,67 @@ class ConsoleSession:
             if not chunk:
                 break
             collected.extend(chunk)
+        if len(collected) >= self._max_bytes:
+            raise ConsoleError("Stale stream reached the evidence limit; no command was sent",
+                               code="stale_output_limit", detail={"stage": "drain", "bytes": len(collected)})
         return bytes(collected)
 
     def read_until_idle(self, *, idle_gap: float, timeout: float) -> bytes:
         """Collect output until it stops arriving for ``idle_gap`` seconds."""
         collected = bytearray()
+        self.partial_output = b""
+        self.read_termination = None
         deadline = time.monotonic() + timeout
         last_data = time.monotonic()
         while True:
             if time.monotonic() >= deadline:
+                self.read_termination = "timeout"
                 break
             chunk = self._read_available()
             if chunk:
                 collected.extend(chunk)
                 if len(collected) > self._max_bytes:
-                    del collected[: len(collected) - self._max_bytes]
+                    self.partial_output = bytes(collected[:self._max_bytes])
+                    raise ConsoleError("Console output exceeds the evidence limit",
+                                       code="output_limit", detail={"stage": "read", "truncated": True,
+                                                                   "observed_bytes": len(collected)})
+                self.partial_output = bytes(collected)
                 last_data = time.monotonic()
                 continue
             now = time.monotonic()
             if now >= deadline:
+                self.read_termination = "timeout"
                 break
             if collected and (now - last_data) >= idle_gap:
+                self.read_termination = "idle"
                 break
             time.sleep(min(_POLL_SECONDS, max(deadline - now, 0.001)))
         return bytes(collected)
 
     def send(self, command: str) -> None:
         payload = (_validate_command(command) + "\r\n").encode("ascii", errors="strict")
-        deadline = time.monotonic() + 4.0
+        deadline = time.monotonic() + self.write_timeout
         offset = 0
+        self.last_write_bytes = 0
         while offset < len(payload):
             if time.monotonic() >= deadline:
-                raise ConsoleError('Console partial write timed out')
+                raise ConsoleError('Console partial write timed out', code="write_timeout",
+                                   detail={"stage": "write", "bytes_written": offset,
+                                           "command_outcome": "unknown" if offset else "not_sent"})
             try:
                 sent = os.write(self._write_fd, payload[offset:])
-                if sent == 0: raise ConsoleError('Console channel closed during write')
+                if sent == 0:
+                    raise ConsoleError('Console channel closed during write', code="pipe_broken",
+                                       detail={"stage": "write", "bytes_written": offset,
+                                               "command_outcome": "unknown" if offset else "not_sent"})
                 offset += sent
+                self.last_write_bytes = offset
             except BlockingIOError:
                 time.sleep(_POLL_SECONDS)
             except OSError as exc:
-                raise ConsoleError(f"Console write failed: {exc.__class__.__name__}") from exc
+                failure = _os_error(exc, stage="write", api="os.write")
+                failure.detail.update(bytes_written=offset, command_outcome="unknown" if offset else "not_sent")
+                raise failure from exc
 
     def close(self) -> None:
         if self._closed:
@@ -165,26 +245,32 @@ class ConsoleSession:
 
 
 def open_console_pipe(pipe_name: str, *, timeout: float = 2.0) -> int:
-    """Open one HCL console pipe non-blocking, retrying until ``timeout``."""
+    """Open one HCL pipe; wait only for absent/busy endpoints within a deadline."""
     describe(pipe_name)  # refuse anything that is not an HCL console pipe
+    if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout < 0:
+        raise ConsoleError("Open timeout must be finite and nonnegative", code="invalid_timeout")
     deadline = time.monotonic() + timeout
+    attempts = 0
     while True:
+        attempts += 1
         try:
-            descriptor = os.open(pipe_name, os.O_RDWR | os.O_BINARY)
+            descriptor = _open_pipe_descriptor(pipe_name)
         except OSError as exc:
-            if time.monotonic() >= deadline:
-                raise ConsoleError(
-                    f"Console pipe is not available: {exc.__class__.__name__}"
-                ) from exc
-            time.sleep(0.05)
+            failure = _os_error(exc, stage="open", api="CreateFileW" if os.name == "nt" else "os.open")
+            failure.detail.update(attempts=attempts)
+            remaining = deadline - time.monotonic()
+            if failure.code not in {"pipe_not_found", "pipe_busy"} or remaining <= 0:
+                failure.detail["wait_expired"] = remaining <= 0
+                raise failure from exc
+            time.sleep(min(0.05, remaining))
             continue
         try:
             os.set_blocking(descriptor, False)
         except (OSError, ValueError) as exc:
             os.close(descriptor)
-            raise ConsoleError(
-                f"Cannot make the console pipe non-blocking: {exc.__class__.__name__}"
-            ) from exc
+            raise ConsoleError(f"Cannot make the console pipe non-blocking: {exc.__class__.__name__}",
+                               code="nonblocking_failed", detail={"stage": "configure",
+                                  "winerror": getattr(exc, "winerror", None), "errno": getattr(exc, "errno", None)}) from exc
         return descriptor
 
 
@@ -235,12 +321,16 @@ class HclConsole:
 
         started = time.monotonic()
         session: ConsoleSession | None = None
+        channel = None
+        sent = False
         try:
             if self.lease_root is not None:
                 from mcp_hcl.cli_session import PersistentConsole
                 import base64
-                with PersistentConsole(pipe_name,self.lease_root,timeout=self.read_timeout) as channel:
+                with PersistentConsole(pipe_name,self.lease_root,timeout=self.read_timeout,
+                                       max_bytes=MAX_OUTPUT_BYTES,open_timeout=self.open_timeout) as channel:
                     reply=channel.exchange(command)
+                    sent = True
                     raw=base64.b64decode(reply['raw_output_b64'])
                     stale=b'0'*reply['discarded_stale_bytes']
             else:
@@ -249,10 +339,16 @@ class HclConsole:
                 time.sleep(min(self.settle_seconds, self.idle_gap))
                 stale = session.drain()
                 session.send(command)
+                sent = True
                 raw = session.read_until_idle(idle_gap=self.idle_gap, timeout=self.read_timeout)
         except ConsoleError as exc:
             result["status"] = "unverified"
-            result["errors"] = [{"code": "console_unavailable", "message": str(exc)}]
+            result["errors"] = [exc.as_error(code="console_unavailable")]
+            result["complete"] = False
+            result["command_outcome"] = "unknown" if sent or exc.detail.get("command_outcome") == "unknown" else "not_sent"
+            failed_raw = session.partial_output if session is not None else getattr(channel, "partial_output", b"")
+            result.update(output=_decode(failed_raw)[0], output_bytes=len(failed_raw),
+                          output_sha256=hashlib.sha256(failed_raw).hexdigest())
             result["elapsed_seconds"] = round(time.monotonic() - started, 3)
             return result
         finally:
@@ -269,6 +365,9 @@ class HclConsole:
             "output_sha256": hashlib.sha256(raw).hexdigest(),
             "output_encoding": encoding,
             "output": text[-MAX_OUTPUT_BYTES:],
+            "complete": bool(channel is not None and reply["complete"]),
+            "read_termination": "prompt" if channel is not None else session.read_termination,
+            "command_outcome": "response_received" if raw else "unknown",
             "expect": expect,
             "expect_found": None if expect is None else (expect in text),
             "elapsed_seconds": round(time.monotonic() - started, 3),
@@ -280,6 +379,9 @@ class HclConsole:
                 "output_sha256": hashlib.sha256(raw).hexdigest(),
             }],
         })
+        if session is not None and raw and session.read_termination == "timeout":
+            result["status"] = "unverified"
+            result["errors"] = [{"code": "console_read_timeout", "message": "Output did not become idle before the deadline"}]
         if expect is not None and result["expect_found"] is False:
             result["errors"] = [{
                 "code": "expected_text_missing",

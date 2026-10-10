@@ -36,23 +36,7 @@ from mcp.client.stdio import stdio_client
 from mcp.shared.exceptions import McpError
 from pydantic import AnyUrl
 
-EXPECTED_TOOLS = {
-    "hcl_capabilities", "hcl_list_projects", "hcl_inspect_project",
-    "hcl_stage_add_device", "hcl_stage_link", "hcl_stage_copy",
-    "hcl_parity_report", "hcl_bridge_status", "hcl_list_devices",
-    "hcl_get_device_details", "hcl_validate_plan",
-    # control-plane primitives: real implementations, write-gated, and not
-    # upstream parity claims.
-    "hcl_backend_capabilities", "hcl_backend_topology", "hcl_device_power", "hcl_console_exec",
-    "hcl_list_modules", "hcl_list_templates", "hcl_plan_topology", "hcl_estimate_plan",
-    "hcl_explain_plan", "hcl_fix_plan", "hcl_generate_configs", "hcl_generate_operations",
-    "hcl_export_artifacts", "hcl_load_plan", "hcl_stage_plan", "hcl_open_project", "hcl_save_project", "hcl_full_build",
-    "hcl_stage_rename_device", "hcl_stage_move_device", "hcl_stage_delete_device",
-    "hcl_stage_unlink", "hcl_stage_add_note", "hcl_stage_clear_annotations",
-    "hcl_backup_config", "hcl_restore_config", "hcl_live_deploy", "hcl_verify_connectivity",
-}
-EXPECTED_RESOURCES = {"hcl://capabilities", "hcl://catalog/devices", "hcl://catalog/ports",
-                      "hcl://catalog/aliases", "hcl://catalog/cables", "hcl://catalog/templates"}
+from contract_inventory import TOOLS as EXPECTED_TOOLS, RESOURCES as EXPECTED_RESOURCES
 
 # Any tool whose name suggests live canvas, power, console or capture control.
 LIVE_TOOL_NAME = re.compile(r"deploy|start|stop|power|cli|console|ping|capture|canvas|packet",
@@ -164,6 +148,7 @@ async def mcp_session(paths: dict[str, Any]) -> AsyncIterator[ClientSession]:
         "MCP_HCL_INSTALL_ROOT": str(paths["install"]),
         # a port nothing listens on: these tests never assert backend state
         "MCP_HCL_BACKEND_PORT": "16666",
+        "MCP_HCL_ALLOW_LIVE_WRITE": "0",
     })
     params = StdioServerParameters(
         command=sys.executable, args=["-m", "mcp_hcl.server"],
@@ -412,7 +397,7 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(body["status"], "verified")
                     self.assertTrue(body["valid"])
                     self.assertEqual(body["verified_scope"],
-                                     "plan_structure_and_installed_default_interfaces_only")
+                                     "offline_plan_wired_graph_and_configuration_semantics_only")
 
             services = copy.deepcopy(base_plan())
             services["services"] = [{"device": "r1", "feature": "ospf",

@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-05",
+  "timezone": "Asia/Singapore",
+  "base_commit": "9963ddc559d3f7d9ccecfc5a58f9adbaf2695f62",
+  "uncommitted_changes": true,
+  "scope": "extended_numbered_acl_semantics_and_shared_native_runtime_identity",
+  "regression": {
+    "tests": 212,
+    "passed": 211,
+    "skipped": 1,
+    "elapsed_seconds": 44.838,
+    "log": "work/acl-extended-final-regression-20261005.txt"
+  },
+  "prior_regression": "work/acl-extended-regression-20261005.txt",
+  "targeted": "work/acl-extended-identity-guards-20261005.txt",
+  "wheel": {
+    "status": "verified",
+    "verified_scope": "wheel_source_discovery_acl_semantics_and_default_write_gate_only",
+    "sha256": "7e0605be4efd96b6694d14171039619e60ac08cfdd6b63708ef738a18243372f",
+    "package_files_compared": 40,
+    "tools": 44,
+    "resources": 6,
+    "full_live_gate_passed": false
+  },
+  "public_packet": "C:/Users/Public/Documents/MCP_HCL_Lab_20261005_ACLExtended",
+  "packet_operation_id": "abe008a90fc244d3a562bb11f82efa63",
+  "tools": 44,
+  "resources": 6,
+  "native_policy_tested": false,
+  "native_recovery_tested": false,
+  "runtime_isolation_verified": false,
+  "lab_profile_observed": false,
+  "full_live_gate_passed": false,
+  "completion": "incomplete",
+  "upstream_tool_states": {
+    "implemented": 12,
+    "planned": 46,
+    "unverified": 3
+  },
+  "account_readback": "work/acl-extended-account-readback-20261005.json",
+  "source_hashes": {
+    "src/mcp_hcl/services.py": "0fc32406519381ac982acfebb51051a7815f46926bea7ccc7fcb4c64999c02e1",
+    "src/mcp_hcl/generation.py": "f8db035b22fd0c5e1032b9d408519b5cc4f5c307b9374cbaeffb1d647472346e",
+    "src/mcp_hcl/acl_semantics.py": "4772f5039190127f1dbdf5f3b4766dc57bfac7480a2774d6fed98eeb405e14da",
+    "src/mcp_hcl/policy.py": "ae6636ff4824181078a0550b6b035c80460dda134fa1efb874d3d7b0d95c5abc",
+    "src/mcp_hcl/deployment.py": "b893e339ab734bc5b4deca03e65f6dc09f85fd38adeb42b92484845034460925",
+    "src/mcp_hcl/live_acceptance.py": "d3538399e549bcd555de84289a1e396b71b8e76d55c946c27cba542ba4524a86",
+    "src/mcp_hcl/data/upstream_parity.json": "aa24b4ec1a26a3ee685252bea2e508777a19a1b1dae9789719f504ae53bf97e4",
+    "docs/offline-contracts.json": "2de57821da31c33468ce6371b694518db9f9e043ad7724e48346110f4702e74b",
+    "tests/test_acl_extended.py": "b71e8f8a4b5c90b0e1ebc24fbb73d9489d8cf3eae9a138fd50b8d4f97e24f8b5",
+    "tests/test_policy.py": "610355d388da1871de2918cae177c85dc12c22a4731103a8f730ffd0647f32b8"
+  }
+}
