@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-02",
+  "branch": "dsh-2",
+  "baseline_commit": "a3c042a40dae37ca9f6730b0df9b48c1b0941b94",
+  "authorization_scope": "branch-local execution; no shared VirtualBox replacement, BCD/security changes, reboot or real guest start",
+  "probe_script_sha256": "53f54b837f522f6d33be3154051332e6c0167c3ae5fc6acfb25aab05e3384838",
+  "tests": {
+    "run": 69,
+    "passed": 68,
+    "skipped": 1,
+    "duration_seconds": 18.018,
+    "log": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\branch-regression.txt",
+    "scope": "dsh-2 legacy application plus three SDK probe tests; not Codex 0.5.0"
+  },
+  "sdk_declarations": {
+    "selected_members": 30,
+    "unchanged_members": 29,
+    "differences": [
+      {
+        "interface": "IMachine",
+        "member": "launchVMProcess",
+        "state": "changed",
+        "before": {
+          "kind": "method",
+          "type": null,
+          "readonly": "no",
+          "params": [
+            {
+              "name": "session",
+              "type": "ISession",
+              "dir": "in",
+              "safearray": null,
+              "optional": null
+            },
+            {
+              "name": "name",
+              "type": "wstring",
+              "dir": "in",
+              "safearray": null,
+              "optional": null
+            },
+            {
+              "name": "environment",
+              "type": "wstring",
+              "dir": "in",
+              "safearray": null,
+              "optional": null
+            },
+            {
+              "name": "progress",
+              "type": "IProgress",
+              "dir": "return",
+              "safearray": null,
+              "optional": null
+            }
+          ]
+        },
+        "after": {
+          "kind": "method",
+          "type": null,
+          "readonly": "no",
+          "params": [
+            {
+              "name": "session",
+              "type": "ISession",
+              "dir": "in",
+              "safearray": null,
+              "optional": null
+            },
+            {
+              "name": "name",
+              "type": "wstring",
+              "dir": "in",
+              "safearray": null,
+              "optional": null
+            },
+            {
+              "name": "environmentChanges",
+              "type": "wstring",
+              "dir": "in",
+              "safearray": "yes",
+              "optional": null
+            },
+            {
+              "name": "progress",
+              "type": "IProgress",
+              "dir": "return",
+              "safearray": null,
+              "optional": null
+            }
+          ]
+        }
+      }
+    ],
+    "enum_differences": [
+      {
+        "enum": "MachineState",
+        "existing_values_unchanged": false,
+        "changed_or_removed": {
+          "FaultTolerantSyncing": {
+            "before": "16",
+            "after": null
+          },
+          "DeletingSnapshotOnline": {
+            "before": "17",
+            "after": "16"
+          },
+          "DeletingSnapshotPaused": {
+            "before": "18",
+            "after": "17"
+          },
+          "OnlineSnapshotting": {
+            "before": "19",
+            "after": "18"
+          },
+          "RestoringSnapshot": {
+            "before": "20",
+            "after": "19"
+          },
+          "DeletingSnapshot": {
+            "before": "21",
+            "after": "20"
+          },
+          "SettingUp": {
+            "before": "22",
+            "after": "21"
+          },
+          "Snapshotting": {
+            "before": "23",
+            "after": "22"
+          },
+          "LastOnline": {
+            "before": "19",
+            "after": "18"
+          },
+          "LastTransient": {
+            "before": "23",
+            "after": "22"
+          }
+        },
+        "added": {}
+      }
+    ],
+    "changed_interface_ids": [
+      {
+        "interface": "IMachine",
+        "before": "5047460a-265d-4538-b23e-ddba5fb84976",
+        "after": "85632c68-b5bb-4316-a900-5eb28d3413df"
+      }
+    ],
+    "sources": [
+      {
+        "path": "work\\feasibility\\plan-b-20261002\\VirtualBoxSDK-6.0.14-133895.zip",
+        "version": "6.0.14",
+        "sha256": "c7b848034939fa65be095752109009ad0c3733e5d10c09fd26b5addaf58ba159"
+      },
+      {
+        "path": "work\\feasibility\\plan-b-20261002\\VirtualBoxSDK-6.1.50-161033.zip",
+        "version": "6.1.50",
+        "sha256": "fb4ed0430f044016711e9727440fcc22c75e1d3b95f2f4d3f144832627553997"
+      }
+    ],
+    "corrected_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\sdk-comparison-corrected.json",
+    "invalid_prototype_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\initial-probe-review.json"
+  },
+  "installer_assets": [
+    {
+      "url": "https://download.virtualbox.org/virtualbox/6.0.14/VirtualBox-6.0.14-133895-Win.exe",
+      "path": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\VirtualBox-6.0.14-133895-Win.exe",
+      "sha256": "a24b3b3fd406766c409e5e2e8cf6d88cc7a50ad6694925e640c25e0d8d913063",
+      "hash_verified": true,
+      "executed": false
+    },
+    {
+      "url": "https://download.virtualbox.org/virtualbox/6.1.50/VirtualBox-6.1.50-161033-Win.exe",
+      "path": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\VirtualBox-6.1.50-161033-Win.exe",
+      "sha256": "7aa5429c84c76073a9c965d313ab6e68f2cdb30de00665e0becec2f89e61fc9f",
+      "hash_verified": true,
+      "executed": false
+    }
+  ],
+  "authenticode_signatures": [
+    {
+      "file": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\VirtualBox-6.0.14-133895-Win.exe",
+      "status": "Valid",
+      "status_message": "Signature verified.",
+      "signer": "CN=Oracle Corporation, OU=Virtualbox, O=Oracle Corporation, L=Redwood Shores, S=CA, C=US",
+      "issuer": "CN=DigiCert Assured ID Code Signing CA-1, OU=www.digicert.com, O=DigiCert Inc, C=US",
+      "timestamp_signer": "CN=Symantec Time Stamping Services Signer - G4, O=Symantec Corporation, C=US"
+    },
+    {
+      "file": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\VirtualBox-6.1.50-161033-Win.exe",
+      "status": "Valid",
+      "status_message": "Signature verified.",
+      "signer": "CN=Oracle Corporation, OU=VirtualBox, O=Oracle Corporation, L=Redwood City, S=California, C=US",
+      "issuer": "CN=DigiCert SHA2 Assured ID Code Signing CA, OU=www.digicert.com, O=DigiCert Inc, C=US",
+      "timestamp_signer": "CN=DigiCert Timestamp 2023, O=\"DigiCert, Inc.\", C=US"
+    }
+  ],
+  "backup": {
+    "directory": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\backup-a2cdb2394f9f4443bd12eff04a263917",
+    "file_count": 52,
+    "bytes_verified": true,
+    "global_settings_sha256": "272fb1bd86f15dd32d6d64e9eaebb541d4a1f739af3d20f8ce10d7377d9d7a5d",
+    "restoration_tested": false
+  },
+  "installed_virtualbox_after_probe": "6.0.14r133895",
+  "installer_executed": false,
+  "hcl_or_guest_started": false,
+  "machine_configuration_changes_applied": false,
+  "verdict": "not_yet_demonstrated; selected SDK surface contains real changes; shared upgrade is outside branch-only authorization",
+  "hcl_runtime_compatible": null,
+  "guest_boot_verified": false,
+  "rollback_verified": false,
+  "full_live_gate_passed": false,
+  "remaining": [
+    "Inspect actual HCL launch argument conversion under 6.1 COM registration",
+    "Verify Windows WHPX guest startup on a dedicated or explicitly authorized host",
+    "Verify HCL project open/save and binding behavior after upgrade",
+    "Verify restoration of old VM configuration and 6.0.14 installation"
+  ],
+  "official_sources": [
+    "https://download.virtualbox.org/virtualbox/6.0.14/SHA256SUMS",
+    "https://download.virtualbox.org/virtualbox/6.1.50/SHA256SUMS"
+  ],
+  "external_limits": [
+    "VirtualBox ticket 20536 and changelog pages returned HTTP 402 in this runtime; no claim based on unread contents"
+  ]
+}

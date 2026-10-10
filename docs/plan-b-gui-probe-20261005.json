@@ -1,0 +1,92 @@
+{
+  "observation_date": "2026-10-02",
+  "cleanup_and_report_date": "2026-10-05",
+  "branch": "dsh-2",
+  "baseline_commit": "4a638c7",
+  "authorization": "Owner explicitly permitted Computer Use to simulate HCL actions and then authorized reopening the client without elevation",
+  "versions": {
+    "hcl": "5.10.3 (visible GUI label)",
+    "virtualbox": "6.1.50r161033",
+    "hcl_embedded_python": "3.8 (runtime traceback)"
+  },
+  "first_attempt": {
+    "result": "device creation failed before guest startup",
+    "backend_error_code": 206,
+    "cause": "stale VirtualBox Python38 generated COM proxy uses old dispatch IDs",
+    "old_dispatch_ids": {
+      "FindMachine": 1610743850,
+      "CreateMachine": 1610743847
+    },
+    "actual_61_dispatch_ids": {
+      "FindMachine": 1610743851,
+      "CreateMachine": 1610743848
+    },
+    "private_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-1\\result.json"
+  },
+  "repair": {
+    "scope": "VirtualBox_specific_Python38_generated_cache_only",
+    "quarantined_files": 2,
+    "private_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\cache-quarantine-receipt.json",
+    "other_cache_removed": false,
+    "vendor_binaries_patched": false
+  },
+  "second_attempt": {
+    "project_file": "E:/MCP_HCL/work/gui-vbox61-probe/Gui61_870c0dbe/v7_sw_vlan_basic/v7_sw_vlan_basic.net",
+    "device": "Gui61RouterB",
+    "model": "MSR36-20",
+    "vm_uuid": "17cc6f4c-9671-4ec0-b5f6-fe9c8794be04",
+    "gui_project_identity_observed": true,
+    "net_vendor_validation_passed": true,
+    "device_created_verified": true,
+    "vm_started_verified": true,
+    "guest_os_startup_display_observed": true,
+    "display_text": "Automatic configuration attempt; Not ready for automatic configuration: no interface available",
+    "guest_cli_ready_verified": false,
+    "native_console_read_verified": false,
+    "native_console_error": "PermissionError on named pipe; cause not resolved",
+    "agent_console_commands_sent": [],
+    "guest_scope": "single unlinked MSR36-20; not firmware/configuration/network acceptance",
+    "startup_record": "2026-10-02 22:09:26 to 22:09:30; backend request 20, errorCode=100",
+    "stop_observed": true,
+    "stop_record": "2026-10-02 22:20:33; GUI-issued stop 6 0, backend request 22, errorCode=100",
+    "stop_second_parameter_semantics": "not proven; observation does not enable a new MCP verb"
+  },
+  "known_shutdown_warning": "HCL closeAllDisk reported duplicate UUIDs among vendor image paths; no vendor UUID/image modified; mixed-model behavior remains untested",
+  "cleanup": {
+    "hcl_running": false,
+    "running_guests": [],
+    "original_52_files_verified": true,
+    "restored_missing_count": 47,
+    "existing_files_overwritten": false,
+    "original_engineering_project_sha256": "ccc821a5fba6f30ae0f20cbb5fb4029d39a9d5812068b6b40047a1e85a785570",
+    "original_engineering_project_matches_historical_hash": true,
+    "original_base_registration_restored": true,
+    "base_vm_started": false,
+    "private_file_restore_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\cleanup-20261005-bbdcb9b5eb8f492f824c8668dace2911\\result.json",
+    "registration_restore_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\registration-restoration-20261005.json",
+    "virtualbox_downgraded": false
+  },
+  "limits": {
+    "configuration_verified": false,
+    "connectivity_verified": false,
+    "backup_restore_guest_config_verified": false,
+    "wireless_verified": false,
+    "full_live_gate_passed": false,
+    "BCD_write": false,
+    "security_setting_change": false,
+    "agent_reboot": false,
+    "upstream_implemented_count_changed": false
+  },
+  "verdict": "Plan B demonstrated single-device GUI creation and guest OS startup on this host after stale proxy quarantine; CLI and network closed loop remain incomplete",
+  "private_evidence": {
+    "running_ui": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-2\\running-ui.txt",
+    "running_vm_log": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-2\\running-VBox.log",
+    "guest_display": {
+      "path": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-2\\guest-display.png",
+      "sha256": "d455dbee48da34f411098f6083d7877152d7cbbb2a6ede58a5792d3331b3ece8"
+    },
+    "failed_console_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-2\\boot-console-receipt-2.json",
+    "running_receipt": "E:\\MCP_HCL\\work\\feasibility\\plan-b-20261002\\gui-attempt-2\\running-result.json"
+  },
+  "test_results": "No software code change or broad test rerun this continuation; prior dsh-2 69 tests / 68 passed / 1 skipped applies to its earlier source baseline, not Codex 0.5.0"
+}
