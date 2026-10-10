@@ -46,7 +46,7 @@ SHA256：`2c57afcdf7b0f5234a738a255c5b904e15d52a000e6ab7f5f6aacd6af9e5880a`。57
 - `baseline-runs/`、`format-runs/`、`final-runs/`、`candidate-runs/`：独立回执、日志、依赖、逐项结果与 manifest。
 - AST/事务助手提取及 `contract-before.json`/`contract-after.json`：保持性证据。
 - `source-worktree-preservation.json`：其他四个工作区文件/HEAD 未变；`historical-preservation.json`：34 个既有历史文件未变。
-- `delivery.json`：最终 main HEAD、全部原 refs 祖先检查、clean 状态与 bundle 复核。
+- `delivery.json`：最终 main HEAD、全部原分支 refs 祖先检查、clean 状态与 bundle 复核。
 
 原生生命周期/账号清理以原报告为准；CLI 独占阻塞、配置/startup/流量及完整 61/5 行为等价未决项没有关闭。继续从本地 main 的当前源码与新候选接手，来源工作区作为历史保留。
 
