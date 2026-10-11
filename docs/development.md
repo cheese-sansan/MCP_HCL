@@ -6,7 +6,7 @@
 
 `tests/` 的工具清单独立于生产注册表；模拟依赖不能产生原生验收标志。`scripts/` 放维护入口，`docs/` 放当前合同和具名记录。不得把配置、磁盘、账号凭据或运行时回执加入源码目录。
 
-本次重构保留 55 工具/6 资源的完整 SDK 声明、默认参数、错误码、门控与证据层次；固定上游目标仍为 61/5。`full_live_gate_passed=false` 不能由软件测试提升。
+本次重构保留 55 工具/6 资源的完整 SDK 声明、默认参数、错误码、门控与证据层次；固定上游目标仍为 62/5。`full_live_gate_passed=false` 不能由软件测试提升。
 
 ## 风格
 
@@ -34,3 +34,5 @@ python -m venv .venv
 ```
 
 原生生命周期、CLI、配置和流量测试按统一测试计划执行，不能放入默认软件检查。网络发布、push、分支删除和宿主动作各自需要对应授权。
+
+GitHub Actions 的 Software checks 在 main push、PR 和手动触发时使用 Windows/Python 3.12 运行同一软件检查，并构建 wheel、保存回执。执行动作按 SHA 固定、仓库权限仅 contents:read；不安装 HCL/VirtualBox 或进行原生验收。

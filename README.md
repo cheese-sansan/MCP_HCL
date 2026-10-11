@@ -1,6 +1,6 @@
 # MCP_HCL
 
-与 Agent 客户端无关的 HCL MCP Server，当前版本 **0.5.0**。本地主分支整合了已有分支历史和最新已验证的软件成果；完整 MCP-Packet-Tracer 61 工具/5 资源等价仍为 **Incomplete**。
+与 Agent 客户端无关的 HCL MCP Server，当前版本 **0.5.0**。本地主分支整合了已有分支历史和最新已验证的软件成果；完整 MCP-Packet-Tracer 62 工具/5 资源等价仍为 **Incomplete**。
 
 接手读 [HANDOFF.md](HANDOFF.md)，完整索引见 [docs/README.md](docs/README.md)。当前发现面为 **55 工具/6 资源**；发现、软件合同、原生配置与真实流量分别记账，`full_live_gate_passed=false`。
 
@@ -11,7 +11,7 @@
 - 差异、健康、地址观察和安全审计保留未知值及模拟/原生来源；不把缺字段、阶段库存或保存文件解释为完整实时拓扑。
 - GUI 保护验证身份、当前账号目录、监听者及工程回执；不能证明厂商运行时环境或清理边界。
 
-上游工具库存仍为 12 implemented / 46 planned / 3 unverified。原生完整设备/线缆库存、若干 IOS→Comware 行为映射、命名 exporter/monitor 与安全 Phone 关联等仍缺。
+上游工具库存仍为 12 implemented / 47 planned / 3 unverified。原生完整设备/线缆库存、若干 IOS→Comware 行为映射、命名 exporter/monitor 与安全 Phone 关联等仍缺。
 
 2026-10-11 具名报告记录一次单设备隔离生命周期和账号清理；候选独占 CLI 被后台 MultiCC 保护拒绝，配置与网络验收未完成。证据位置与后续门槛见 [当前交接](HANDOFF.md) 和 [测试指南](docs/live-acceptance.md)。
 

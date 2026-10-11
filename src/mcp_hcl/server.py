@@ -101,7 +101,7 @@ def create_server(
             "live_gate": {"state": "not_passed", "full_live_gate_passed": False},
             "registered_tools": sorted(REGISTERED_TOOLS),
             "registered_resources": sorted(REGISTERED_RESOURCES),
-            "upstream_parity": "incomplete; call hcl_parity_report for the pinned 61-tool inventory",
+            "upstream_parity": "incomplete; call hcl_parity_report for the pinned 62-tool inventory",
             "backend_probe": "read-only version and memory; does not prove live canvas control",
             "control_plane": (
                 "observed SimwareWrapper verbs plus a named-pipe device console; every "

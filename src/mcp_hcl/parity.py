@@ -8,8 +8,8 @@ from importlib.resources import files
 from typing import Any
 from uuid import uuid4
 
-UPSTREAM_REVISION = "846db381bc2c6ee0229d56e1d7ce8847eb6b213d"
-UPSTREAM_TOOL_NAMES_SHA256 = "c41b46b028cce01070e60b2c8787fd7e20a0ac7a3ab59935abd18e6ed74e2e49"
+UPSTREAM_REVISION = "3c7c7a46b9ea27c914f845d161f95f0fc3f53d5f"
+UPSTREAM_TOOL_NAMES_SHA256 = "42a0fd202034cf2a6016ec3fe67f9c8f67eb894f3cb902d4653c7b55ecdc0d69"
 REGISTERED_TOOLS = frozenset(
     {
         "hcl_capabilities",
@@ -81,6 +81,21 @@ REGISTERED_RESOURCES = frozenset(
         "hcl://catalog/templates",
     }
 )
+REPRODUCTION_TARGET_IDS = frozenset(
+    {
+        "exclusive_cli",
+        "native_inventory",
+        "live_editing",
+        "wired_end_to_end",
+        "configuration_semantics",
+        "wireless",
+        "live_observation",
+        "simulation_workspace",
+        "dhcp_server",
+        "api_compatibility",
+        "delivery_evidence",
+    }
+)
 
 
 def validate_inventory(inventory: dict[str, Any]) -> None:
@@ -93,8 +108,10 @@ def validate_inventory(inventory: dict[str, Any]) -> None:
     resources = inventory.get("resources", [])
     tool_names = [row["upstream_tool"] for row in tools]
     resource_names = [row["upstream_uri"] for row in resources]
-    if len(tools) != 61 or len(set(tool_names)) != 61:
-        raise ValueError("Parity inventory must contain 61 unique upstream tools")
+    if len(tools) != 62 or len(set(tool_names)) != 62:
+        raise ValueError("Parity inventory must contain 62 unique upstream tools")
+    if inventory.get("expected_tool_count") != 62 or inventory.get("expected_resource_count") != 5:
+        raise ValueError("Declared upstream counts do not match the pinned inventory")
     if len(resources) != 5 or len(set(resource_names)) != 5:
         raise ValueError("Parity inventory must contain 5 unique upstream resources")
     fingerprint = hashlib.sha256("\n".join(sorted(tool_names)).encode("utf-8")).hexdigest()
@@ -115,6 +132,47 @@ def validate_inventory(inventory: dict[str, Any]) -> None:
             raise ValueError("Unknown resource implementation state")
         if row["state"] == "implemented" and row["hcl_uri"] not in REGISTERED_RESOURCES:
             raise ValueError(f"Unregistered resource claim: {row['upstream_uri']}")
+    goals = inventory.get("reproduction_targets", [])
+    if not isinstance(goals, list) or len(goals) != len(REPRODUCTION_TARGET_IDS):
+        raise ValueError("The complete reproduction goal set is required")
+    if any(not isinstance(goal, dict) or not isinstance(goal.get("id"), str) for goal in goals):
+        raise ValueError("Invalid reproduction goal structure")
+    if {goal["id"] for goal in goals} != REPRODUCTION_TARGET_IDS:
+        raise ValueError("The reproduction goal set differs from the accepted scope")
+    graph = {}
+    for goal in goals:
+        dependencies = goal.get("depends_on")
+        acceptance = goal.get("acceptance")
+        if goal.get("state") not in {"planned", "partial", "blocked"}:
+            raise ValueError("Reproduction goals cannot claim unsupported completion")
+        if (
+            not isinstance(dependencies, list)
+            or any(not isinstance(d, str) for d in dependencies)
+            or not set(dependencies).issubset(REPRODUCTION_TARGET_IDS)
+        ):
+            raise ValueError("Unknown reproduction goal dependency")
+        if (
+            not isinstance(acceptance, list)
+            or not acceptance
+            or any(not isinstance(item, str) or not item.strip() for item in acceptance)
+        ):
+            raise ValueError("Each reproduction goal needs explicit acceptance criteria")
+        graph[goal["id"]] = dependencies
+    visited, active = set(), set()
+
+    def visit(identifier):
+        if identifier in active:
+            raise ValueError("Reproduction goal dependencies contain a cycle")
+        if identifier in visited:
+            return
+        active.add(identifier)
+        for dependency in graph[identifier]:
+            visit(dependency)
+        active.remove(identifier)
+        visited.add(identifier)
+
+    for identifier in graph:
+        visit(identifier)
 
 
 def parity_report() -> dict[str, Any]:

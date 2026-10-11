@@ -57,7 +57,7 @@ class StdioProtocolTests(unittest.IsolatedAsyncioTestCase):
                     )
                     report_result = await session.call_tool("hcl_parity_report", {})
                     report = json.loads(report_result.content[0].text)
-                    self.assertEqual(len(report["tools"]), 61)
+                    self.assertEqual(len(report["tools"]), 62)
                     self.assertEqual(len(report["resources"]), 5)
                     self.assertEqual(
                         set(report["registered_tools"]), {tool.name for tool in listed.tools}

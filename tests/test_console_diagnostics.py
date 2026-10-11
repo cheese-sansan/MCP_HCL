@@ -163,7 +163,7 @@ class DiagnosticTests(unittest.TestCase):
             with (
                 patch("mcp_hcl.cli_session.Path.home", return_value=root),
                 patch(
-                    "mcp_hcl.cli_session.subprocess.run",
+                    "subprocess.run",
                     return_value=SimpleNamespace(returncode=0, stdout=b"false"),
                 ),
                 patch("mcp_hcl.cli_session.open_console_pipe", return_value=-1),

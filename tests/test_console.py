@@ -83,8 +83,11 @@ def _pump(fd: int, size: int, timeout: float = 3.0) -> bytes:
 class NamedPipeServer:
     """A real byte-mode Windows named pipe that answers each line with a reply."""
 
-    def __init__(self, name: str, *, banner: bytes = b"", reply: bytes = b"") -> None:
+    def __init__(
+        self, name: str, *, banner: bytes = b"", reply: bytes = b"", max_instances=1
+    ) -> None:
         self.name = name
+        self.max_instances = max_instances
         self.banner = banner
         self.reply = reply
         self.received: list[str] = []
@@ -99,7 +102,7 @@ class NamedPipeServer:
             self.name,
             PIPE_ACCESS_DUPLEX,
             PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            PIPE_UNLIMITED_INSTANCES,
+            self.max_instances,
             4096,
             4096,
             0,

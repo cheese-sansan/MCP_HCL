@@ -6,7 +6,6 @@ import base64
 import hashlib
 import os
 import re
-import subprocess
 import time
 from pathlib import Path
 
@@ -93,45 +92,9 @@ class PersistentConsole:
         self.timeout = timeout
         self.max_bytes = max_bytes
         try:
-            if session is None and os.name == "nt":
-                # Never close PuTTY or MultiCC automatically. Query only a
-                # boolean; do not expose other process command lines.
-                needle = pipe.replace("'", "''")
-                query = (
-                    "$needle='"
-                    + needle
-                    + "'; $p=@(Get-CimInstance Win32_Process -ErrorAction Stop | "
-                    "Where-Object {$_.Name -in @('putty.exe','SimwareMultiCC.exe')}); "
-                    "[bool](@($p | Where-Object {$_.Name -eq 'SimwareMultiCC.exe' -or "
-                    "[string]::IsNullOrEmpty($_.CommandLine) -or $_.CommandLine.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase) -ge 0}).Count)"
-                )
-                try:
-                    checked = subprocess.run(
-                        ["powershell.exe", "-NoProfile", "-Command", query],
-                        capture_output=True,
-                        timeout=10,
-                    )
-                except (OSError, subprocess.TimeoutExpired) as exc:
-                    raise ConsoleError(
-                        "Console ownership observation failed",
-                        code="console_owner_unknown",
-                        detail={"stage": "ownership"},
-                    ) from exc
-                if checked.returncode != 0 or checked.stdout.strip().lower() not in {
-                    b"false",
-                    b"true",
-                }:
-                    raise ConsoleError(
-                        "Console ownership observation is unknown",
-                        code="console_owner_unknown",
-                        detail={"stage": "ownership"},
-                    )
-                if checked.stdout.strip().lower() == b"true":
-                    raise ConsoleError(
-                        "PuTTY/MultiCC may own this console; release it before requesting an exclusive lease",
-                        code="external_console_present",
-                        detail={"stage": "ownership"},
-                    )
+            # Native open_console_pipe proves the connected instance is exclusive
+            # before any drain or input. Process existence is not ownership:
+            # an idle MultiCC (or an unrelated PuTTY) must not veto this endpoint.
             self.session = session or ConsoleSession(
                 open_console_pipe(pipe, timeout=open_timeout), max_bytes=max_bytes
             )

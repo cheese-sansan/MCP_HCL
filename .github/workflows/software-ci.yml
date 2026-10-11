@@ -1,0 +1,46 @@
+name: Software checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-software:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      MCP_HCL_ALLOW_LIVE_WRITE: "0"
+      PYTHONIOENCODING: utf-8
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]' 'setuptools>=69'
+      - name: Verify dependencies
+        run: python -m pip check
+      - name: Lint, formatting and full software suite
+        run: python scripts/check_all.py --receipt-root work/ci-checks
+      - name: Build wheel
+        run: python -m pip wheel --no-deps --no-build-isolation --wheel-dir dist .
+      - name: Preserve software evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-software-${{ github.sha }}
+          path: |
+            work/ci-checks/
+            dist/*.whl
+          if-no-files-found: warn
+          retention-days: 14

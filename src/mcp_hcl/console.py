@@ -100,6 +100,59 @@ def _os_error(exc: OSError, *, stage: str, api: str) -> ConsoleError:
     )
 
 
+def _require_single_pipe_instance(kernel, handle) -> None:
+    """Prove endpoint exclusivity on the connected client handle, before I/O.
+
+    CreateFile uses share mode zero. A maximum of one byte-mode instance
+    additionally rules out another client connected to a different instance
+    of the same name. This does not establish the VM or server principal;
+    staged transactions still require RuntimeBinding.verify_pipe.
+    """
+    import ctypes
+    import ctypes.wintypes as wt
+
+    flags, maximum = wt.DWORD(), wt.DWORD()
+    try:
+        query = kernel.GetNamedPipeInfo
+        query.argtypes = [
+            wt.HANDLE,
+            ctypes.POINTER(wt.DWORD),
+            ctypes.POINTER(wt.DWORD),
+            ctypes.POINTER(wt.DWORD),
+            ctypes.POINTER(wt.DWORD),
+        ]
+        query.restype = wt.BOOL
+        if not query(handle, ctypes.byref(flags), None, None, ctypes.byref(maximum)):
+            raise ConsoleError(
+                "Connected pipe exclusivity could not be observed",
+                code="console_exclusivity_unverified",
+                detail={
+                    "stage": "ownership",
+                    "api": "GetNamedPipeInfo",
+                    "winerror": ctypes.get_last_error(),
+                    "command_outcome": "not_sent",
+                },
+            )
+    except (AttributeError, OSError, TypeError) as exc:
+        raise ConsoleError(
+            "Connected pipe exclusivity observation is unavailable",
+            code="console_exclusivity_unverified",
+            detail={"stage": "ownership", "api": "GetNamedPipeInfo", "command_outcome": "not_sent"},
+        ) from exc
+    if flags.value != 0 or maximum.value != 1:
+        raise ConsoleError(
+            "A single byte-mode client instance is required before console input",
+            code="console_exclusivity_unverified",
+            detail={
+                "stage": "ownership",
+                "api": "GetNamedPipeInfo",
+                "pipe_flags": flags.value,
+                "maximum_instances": maximum.value,
+                "command_outcome": "not_sent",
+            },
+        )
+
+
 def _open_pipe_descriptor(pipe_name: str) -> int:
     if os.name != "nt":
         return os.open(pipe_name, os.O_RDWR | os.O_BINARY)
@@ -127,7 +180,11 @@ def _open_pipe_descriptor(pipe_name: str) -> int:
         native_error = ctypes.get_last_error()
         raise ctypes.WinError(native_error)
     try:
+        _require_single_pipe_instance(kernel, handle)
         return msvcrt.open_osfhandle(handle, os.O_RDWR | os.O_BINARY)
+    except ConsoleError:
+        kernel.CloseHandle(handle)
+        raise
     except OSError as exc:
         kernel.CloseHandle(handle)
         raise _os_error(exc, stage="descriptor", api="open_osfhandle") from exc

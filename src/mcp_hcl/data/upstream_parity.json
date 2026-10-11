@@ -2,11 +2,11 @@
   "schema_version": 1,
   "upstream": {
     "repository": "https://github.com/Mats2208/MCP-Packet-Tracer",
-    "revision": "846db381bc2c6ee0229d56e1d7ce8847eb6b213d",
-    "tool_registry_sha256": "959fe3060fec198e3e46e7b0ca1fa282356e65aef319f8048d904d3bbbaaac2b",
-    "resource_registry_sha256": "8b2847e135d9126c375d052cd04505a8f2312100b329fbca46d68e9e2bc160eb"
+    "revision": "3c7c7a46b9ea27c914f845d161f95f0fc3f53d5f",
+    "tool_registry_sha256": "4bc46167fefc0c3b375900b01b7774fd0d098bfdf0877647bd20b110f0e86769",
+    "resource_registry_sha256": "66e8f8d5bdf73214580790016dd82ad0dae46ed0902df73b47641b28100a9b14"
   },
-  "expected_tool_count": 61,
+  "expected_tool_count": 62,
   "expected_resource_count": 5,
   "tools": [
     {
@@ -191,6 +191,16 @@
       "state": "planned",
       "live_required": true,
       "note": "A live implementation requires the HCL gate and operation-specific read-back."
+    },
+    {
+      "upstream_tool": "pt_configure_dhcp_server",
+      "category": "configuration",
+      "hcl_targets": [
+        "hcl_configure_dhcp_server"
+      ],
+      "state": "planned",
+      "live_required": true,
+      "note": "Dedicated server pool read/create/update/remove and native readback are reproduction goals. Router DHCP alone is not this contract."
     },
     {
       "upstream_tool": "pt_delete_device",
@@ -678,6 +688,136 @@
       "hcl_uri": "hcl://catalog/templates",
       "state": "implemented",
       "verified_scope": "offline_hcl_catalog_only"
+    }
+  ],
+  "reproduction_targets": [
+    {
+      "id": "exclusive_cli",
+      "state": "partial",
+      "depends_on": [],
+      "acceptance": [
+        "Single connected native pipe instance proven before any read/write, with busy/unknown paths refused.",
+        "Current-user VM UUID/configuration disk/server process binding and complete echo/prompt evidence on an exact candidate.",
+        "No external process termination or blind command retry."
+      ]
+    },
+    {
+      "id": "native_inventory",
+      "state": "planned",
+      "depends_on": [],
+      "acceptance": [
+        "Authoritative full device, cable and port inventory including non-VM endpoints; stage files do not substitute for live facts.",
+        "Stable identity and source provenance; missing and unknown fields are explicit."
+      ]
+    },
+    {
+      "id": "live_editing",
+      "state": "planned",
+      "depends_on": [
+        "native_inventory"
+      ],
+      "acceptance": [
+        "Create/delete/rename/move devices, links and annotations, set ports and install modules with native before/after readback.",
+        "Lifecycle and runtime namespace protections apply to every mutating primitive."
+      ]
+    },
+    {
+      "id": "wired_end_to_end",
+      "state": "blocked",
+      "depends_on": [
+        "exclusive_cli",
+        "native_inventory",
+        "live_editing"
+      ],
+      "acceptance": [
+        "Plan/create/link/start/configure/verify/save/restore complete without manual configuration copying.",
+        "3 MSR36-20, 3 switches, 6 unique DHCP clients, four directional FULL OSPF neighbors and bidirectional LAN pings with zero loss."
+      ]
+    },
+    {
+      "id": "configuration_semantics",
+      "state": "partial",
+      "depends_on": [
+        "exclusive_cli"
+      ],
+      "acceptance": [
+        "Close NAT ingress-role/pool-mask, interface clock/delay/EIGRP, STP/BPDU/learned-MAC, authentication and named NetFlow object semantic gaps.",
+        "Exact native running/startup readback, same-UUID recovery and restart effects; unsupported mappings never execute a subset."
+      ]
+    },
+    {
+      "id": "wireless",
+      "state": "blocked",
+      "depends_on": [
+        "exclusive_cli",
+        "native_inventory",
+        "live_editing"
+      ],
+      "acceptance": [
+        "Native AC/AP/switch/2 Phone secure WPA2-PSK association, unique leases and bidirectional zero-loss ping.",
+        "Native settings persistence and restore; no open-WiFi or wired substitutions."
+      ]
+    },
+    {
+      "id": "live_observation",
+      "state": "partial",
+      "depends_on": [
+        "exclusive_cli",
+        "native_inventory"
+      ],
+      "acceptance": [
+        "Complete native topology diff/health, port/VLAN/QoS and IPv4/IPv6/domain coverage with source attribution.",
+        "Known missing/extra devices and link peers; complete inventory required for positive healthy/in_sync claims."
+      ]
+    },
+    {
+      "id": "simulation_workspace",
+      "state": "planned",
+      "depends_on": [
+        "native_inventory"
+      ],
+      "acceptance": [
+        "Define and implement verifiable HCL equivalents for PT simulation forward/back/reset, per-layer packet trace, screenshots, project metadata and workspace options.",
+        "A packet capture or saved engineering file alone does not satisfy the full simulation/object contract."
+      ]
+    },
+    {
+      "id": "dhcp_server",
+      "state": "planned",
+      "depends_on": [
+        "exclusive_cli",
+        "native_inventory"
+      ],
+      "acceptance": [
+        "Explicit dedicated-server pool read/create/update/remove, defaults, gateway/DNS/range validation and persistence.",
+        "Native pool readback and real client leases; do not replace the dedicated-server role with router DHCP silently."
+      ]
+    },
+    {
+      "id": "api_compatibility",
+      "state": "planned",
+      "depends_on": [],
+      "acceptance": [
+        "Explicit translation or capability negotiation for all 62 upstream tools and 5 resources, argument/default/error/output differences.",
+        "No successful placeholder tool declarations; unsupported native effects remain typed and incomplete."
+      ]
+    },
+    {
+      "id": "delivery_evidence",
+      "state": "blocked",
+      "depends_on": [
+        "wired_end_to_end",
+        "wireless",
+        "configuration_semantics",
+        "live_observation",
+        "simulation_workspace",
+        "dhcp_server",
+        "api_compatibility"
+      ],
+      "acceptance": [
+        "Exact-candidate reproducible wired/wireless/native acceptance and per-tool proof scopes.",
+        "Full upstream behavior, raw private evidence preservation and meaningful publish/CI checks; software counts alone do not close this goal."
+      ]
     }
   ]
 }

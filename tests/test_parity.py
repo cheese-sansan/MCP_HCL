@@ -11,7 +11,7 @@ class ParityInventoryTests(unittest.TestCase):
         report = parity_report()
         validate_inventory(report)
         rows = {row["upstream_tool"]: row for row in report["tools"]}
-        self.assertEqual(len(rows), 61)
+        self.assertEqual(len(rows), 62)
         self.assertEqual(rows["pt_list_projects"]["state"], "implemented")
         self.assertEqual(rows["pt_simulation_step"]["state"], "unverified")
         self.assertEqual(rows["pt_simulation_step"]["hcl_targets"], [])

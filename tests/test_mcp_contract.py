@@ -11,7 +11,7 @@ be entered and exited in the same task, which rules out holding the stdio
 session across ``asyncSetUp``/``asyncTearDown``.
 
 Coverage groups:
-  * discovery surface and pinned 61/5 inventory
+  * discovery surface and pinned 62/5 inventory
   * plan validation: implemented checks, documented non-checks, error shapes
   * project path and configured-root safety
   * staging name / coordinate grammar
@@ -347,10 +347,10 @@ class McpContractTests(unittest.IsolatedAsyncioTestCase):
             )
 
             _, report = await call(session, "hcl_parity_report", {})
-            self.assertEqual(len(report["tools"]), 61)
+            self.assertEqual(len(report["tools"]), 62)
             self.assertEqual(len(report["resources"]), 5)
             self.assertEqual(
-                report["tool_state_counts"], {"implemented": 12, "planned": 46, "unverified": 3}
+                report["tool_state_counts"], {"implemented": 12, "planned": 47, "unverified": 3}
             )
             self.assertEqual(report["completion"], "incomplete")
             self.assertFalse(report["full_live_gate_passed"])
