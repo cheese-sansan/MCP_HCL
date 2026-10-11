@@ -166,7 +166,10 @@ def audit_evidence(directory: Path) -> dict:
     doc = ProjectStore([template[1].parent], directory.parent / "unused-output")._open(
         str(template[1].parent)
     )
-    if doc.net_path != template[1]:
+    # ProjectStore canonicalizes Windows 8.3 aliases. Compare the same resolved
+    # file rather than rejecting a valid bundle solely for its spelling.
+    # read_file/relative_file above still reject links, traversal and bad hashes.
+    if doc.net_path != template[1].resolve(strict=True):
         raise ValueError("Ambiguous template file")
     doc.summary()
     recorded_version = re.search(r"(?m)^version\s*=\s*(\S+)", template[2].decode("utf-8-sig"))

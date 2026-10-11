@@ -177,7 +177,7 @@ class NetstreamTests(SoftwareCase):
         original = __import__("mcp_hcl.netstream_policy", fromlist=["atomic_json"]).atomic_json
         for existing in (False, True):
             with self.subTest(existing=existing):
-                registry = self.paths["output"] / ".netstream-protocol-names" / "r1" / "same.json"
+                registry = self.store.output_root / ".netstream-protocol-names" / "r1" / "same.json"
                 if existing:
                     registry.parent.mkdir(parents=True, exist_ok=True)
                     registry.write_text(
@@ -204,6 +204,7 @@ class NetstreamTests(SoftwareCase):
 
                 with patch("mcp_hcl.netstream_policy.atomic_json", write):
                     result = self.operation().apply(self.project, "lab", REQUEST)
+                self.assertTrue(failed[0], "The canonical registry write must receive the fault")
                 self.assertEqual(self.guest.current, BASE, result)
                 self.assertTrue(result["name_registry_restored"], result)
                 self.assertEqual(

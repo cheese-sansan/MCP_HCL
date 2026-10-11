@@ -1,4 +1,6 @@
+import ctypes
 import json
+import os
 import shutil
 import tempfile
 import unittest
@@ -32,6 +34,28 @@ def captured(root):
 
 
 class Evidence050Tests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows short-path aliases required")
+    def test_short_path_alias_is_the_same_evidence_template(self):
+        import ctypes.wintypes as wt
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            _, source = captured(root)
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel.GetShortPathNameW.argtypes = [wt.LPCWSTR, wt.LPWSTR, wt.DWORD]
+            kernel.GetShortPathNameW.restype = wt.DWORD
+            buffer = ctypes.create_unicode_buffer(32768)
+            length = kernel.GetShortPathNameW(str(source), buffer, len(buffer))
+            self.assertGreater(length, 0)
+            self.assertLess(length, len(buffer))
+            short = Path(buffer.value)
+            if short == source:
+                self.skipTest("This volume does not expose a distinct 8.3 alias")
+            self.assertEqual(short.resolve(), source)
+            observed = audit_evidence(short)
+            self.assertFalse(observed["runtime_verified"])
+            self.assertFalse(observed["full_live_gate_passed"])
+
     def test_import_concurrency_restart_and_write_failure_preserve_sources(self):
         import subprocess
         import sys
