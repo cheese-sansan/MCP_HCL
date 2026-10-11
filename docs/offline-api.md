@@ -16,6 +16,14 @@ MCP 当前发现 55 工具/6 资源，协议 `contract_version=2`，计划 `sche
 
 资源为 `hcl://capabilities` 和 `hcl://catalog/` 下的 devices、ports、aliases、cables、templates。
 
+## 上游 API 对应
+
+`hcl_parity_report.api_compatibility` 对照固定上游 62 工具/5 资源的 Python 声明与当前 MCP 发现结果。每个工具列出上游参数、类型注解、必填性、默认值及返回注解，以及实际注册的 HCL 目标和完整输入 Schema。差异包括参数名、必填性、默认值；`request`/`parameters` 包装中的同名候选另列，不能当成已经实现的转换。
+
+上游声明从哈希匹配的源码经 AST 提取，未导入或执行上游代码；嵌套模型和运行时错误/输出/行为没有由此验证。报告明确保留 `automatic_translation_available=false`，不注册 `pt_*` 别名。`mapped_entry_point` 只表示对应 HCL 入口已注册，仍须使用它的参数和证据边界；未注册目标为 `not_implemented`。阶段替代项限于保存的工程。
+
+例如上游规划参数平铺且 DHCP 默认为 true，HCL 接收严格 `request`、DHCP 默认为 false，当前路由选择没有 EIGRP。上游独立 DHCP Server 没有 HCL 入口。调用者必须明确这些差异，不能只更换工具前缀。资源 URI 对应也不表示两平台目录或能力内容等价。
+
 ## 离线流程
 
 1. 配置实际安装/工程根和独立输出根，保持真实写开关为 0。

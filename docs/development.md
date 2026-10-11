@@ -36,3 +36,9 @@ python -m venv .venv
 原生生命周期、CLI、配置和流量测试按统一测试计划执行，不能放入默认软件检查。网络发布、push、分支删除和宿主动作各自需要对应授权。
 
 GitHub Actions 的 Software checks 在 main push、PR 和手动触发时使用 Windows/Python 3.12 运行同一软件检查，并构建 wheel、保存回执。执行动作按 SHA 固定、仓库权限仅 contents:read；不安装 HCL/VirtualBox 或进行原生验收。
+
+## 上游声明快照
+
+`data/upstream_contracts.json` 保存固定上游的参数声明；`api_compatibility.py` 校验快照字节 SHA、上游版本、源文件 SHA 和完整清单，再与当前 MCP discovery 比较。维护时使用 `scripts/capture_upstream_contracts.py`，提供原始 tool/resource registry、`upstream_parity.json` 与输出路径。源文件字节必须匹配库存中的 SHA；脚本仅解析 AST，不运行注册器、默认表达式或函数体。
+
+刷新快照后核对独立具名参数用例及 62/5 覆盖，更新校验常量，再运行 SDK 对照测试。未知输出、错误、嵌套类型和原生行为仍须明确标记；声明快照不能替代模型 Schema 或行为验收。

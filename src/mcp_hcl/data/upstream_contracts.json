@@ -1,0 +1,2308 @@
+{
+  "schema_version": 1,
+  "revision": "3c7c7a46b9ea27c914f845d161f95f0fc3f53d5f",
+  "verified_scope": "python_declarations_only; nested models and runtime behavior unverified",
+  "sources": {
+    "tool_registry_sha256": "4bc46167fefc0c3b375900b01b7774fd0d098bfdf0877647bd20b110f0e86769",
+    "resource_registry_sha256": "66e8f8d5bdf73214580790016dd82ad0dae46ed0902df73b47641b28100a9b14"
+  },
+  "tools": {
+    "pt_add_device": {
+      "parameters": [
+        {
+          "name": "name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "model",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "x",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 200
+          }
+        },
+        {
+          "name": "y",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 200
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_add_link": {
+      "parameters": [
+        {
+          "name": "device1",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "port1",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "device2",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "port2",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "cable_type",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_add_module": {
+      "parameters": [
+        {
+          "name": "device_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "slot",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "module_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_add_note": {
+      "parameters": [
+        {
+          "name": "x",
+          "annotation": "int",
+          "required": true
+        },
+        {
+          "name": "y",
+          "annotation": "int",
+          "required": true
+        },
+        {
+          "name": "text",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_acl": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "name_or_number",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "acl_type",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "entries",
+          "annotation": "list[dict]",
+          "required": true
+        },
+        {
+          "name": "binding_interface",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "binding_direction",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "in"
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_acl_object": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "name_or_number",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "acl_type",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "entries",
+          "annotation": "list[dict]",
+          "required": true
+        },
+        {
+          "name": "binding_interface",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "binding_direction",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "in"
+          }
+        },
+        {
+          "name": "replace_existing",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_hardening": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "hostname",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "banner_motd",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "enable_secret",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "users",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ssh",
+          "annotation": "dict | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "service_password_encryption",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_interface_tuning": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "clock_rate",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "bandwidth",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_cost",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_priority",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_hello_interval",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_dead_interval",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_auth_key",
+          "annotation": "str | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_md5_key_id",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "ospf_md5_key",
+          "annotation": "str | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "delay",
+          "annotation": "int | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_nat": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "inside_interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "outside_interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "static_mappings",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "inside_networks",
+          "annotation": "list[str] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "acl_number",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "1"
+          }
+        },
+        {
+          "name": "pool_name",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "NAT-POOL"
+          }
+        },
+        {
+          "name": "pool_start",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "pool_end",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "pool_netmask",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "use_interface_overload",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_netflow": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "destination_ip",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "udp_port",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 2055
+          }
+        },
+        {
+          "name": "version",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 9
+          }
+        },
+        {
+          "name": "source_port",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "monitors",
+          "annotation": "list[str] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "remove",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_port_security": {
+      "parameters": [
+        {
+          "name": "switch",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "port",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "max_mac",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "violation",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "shutdown"
+          }
+        },
+        {
+          "name": "sticky",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "static_macs",
+          "annotation": "list[str] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_stp": {
+      "parameters": [
+        {
+          "name": "switch",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "rapid-pvst"
+          }
+        },
+        {
+          "name": "root_primary_vlans",
+          "annotation": "list[int] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "priority",
+          "annotation": "dict | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "portfast_ports",
+          "annotation": "list[str] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "bpduguard_ports",
+          "annotation": "list[str] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_apply_vlan": {
+      "parameters": [
+        {
+          "name": "switch",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "vlans",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "access_ports",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "trunks",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "subinterfaces",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_audit_security": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_backup_config": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "include_xml",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_bridge_status": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_clear_annotations": {
+      "parameters": [
+        {
+          "name": "kind",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "all"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_configure_dhcp_server": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "network",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "mask",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "255.255.255.0"
+          }
+        },
+        {
+          "name": "gateway",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "dns",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "start_ip",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "max_users",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "pool_name",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "expression",
+            "source": "DEFAULT_SERVER_POOL"
+          }
+        },
+        {
+          "name": "port",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "FastEthernet0"
+          }
+        },
+        {
+          "name": "enabled",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "drop_factory_pool",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "remove",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_delete_device": {
+      "parameters": [
+        {
+          "name": "device_name",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_delete_link": {
+      "parameters": [
+        {
+          "name": "device_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "interface_name",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_deploy": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "project_name",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "topology"
+          }
+        },
+        {
+          "name": "output_dir",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "projects"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_device_power": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "on",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_diff": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_estimate_plan": {
+      "parameters": [
+        {
+          "name": "routers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 2
+          }
+        },
+        {
+          "name": "pcs_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 3
+          }
+        },
+        {
+          "name": "laptops_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "switches_per_router",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "servers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "access_points",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "has_wan",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dhcp",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "routing",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "static"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_explain_plan": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_export": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "project_name",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "topology"
+          }
+        },
+        {
+          "name": "output_dir",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "projects"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_export_topology": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_fix_plan": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_full_build": {
+      "parameters": [
+        {
+          "name": "routers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 2
+          }
+        },
+        {
+          "name": "pcs_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 3
+          }
+        },
+        {
+          "name": "laptops_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "switches_per_router",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "servers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "access_points",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "has_wan",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dhcp",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "routing",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "static"
+          }
+        },
+        {
+          "name": "router_model",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2911"
+          }
+        },
+        {
+          "name": "switch_model",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2960-24TT"
+          }
+        },
+        {
+          "name": "template",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "multi_lan"
+          }
+        },
+        {
+          "name": "deploy",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "floating_routes",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "ospf_process_id",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "eigrp_as",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 100
+          }
+        },
+        {
+          "name": "vlans",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "dual_stack",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "ipv6_base",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2001:db8::/32"
+          }
+        },
+        {
+          "name": "wireless_laptops",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_generate_configs": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_generate_script": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "include_configs",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_get_device_details": {
+      "parameters": [
+        {
+          "name": "model_name",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_health_check": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_inspect_ports": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "only_linked",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_install_modules_batch": {
+      "parameters": [
+        {
+          "name": "modules",
+          "annotation": "list[dict]",
+          "required": true
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_list_devices": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_list_modules": {
+      "parameters": [
+        {
+          "name": "router_model",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "category",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_list_projects": {
+      "parameters": [
+        {
+          "name": "output_dir",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "projects"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_list_templates": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_live_deploy": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "command_delay",
+          "annotation": "float",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0.0
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_load_project": {
+      "parameters": [
+        {
+          "name": "project_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "output_dir",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "projects"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_move_device": {
+      "parameters": [
+        {
+          "name": "device_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "x",
+          "annotation": "int",
+          "required": true
+        },
+        {
+          "name": "y",
+          "annotation": "int",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_open_project": {
+      "parameters": [
+        {
+          "name": "path",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_plan_topology": {
+      "parameters": [
+        {
+          "name": "routers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 2
+          }
+        },
+        {
+          "name": "pcs_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 3
+          }
+        },
+        {
+          "name": "laptops_per_lan",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "switches_per_router",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "servers",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "access_points",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "has_wan",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "dhcp",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        },
+        {
+          "name": "routing",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "static"
+          }
+        },
+        {
+          "name": "router_model",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2911"
+          }
+        },
+        {
+          "name": "switch_model",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2960-24TT"
+          }
+        },
+        {
+          "name": "template",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "multi_lan"
+          }
+        },
+        {
+          "name": "floating_routes",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "ospf_process_id",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        },
+        {
+          "name": "eigrp_as",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 100
+          }
+        },
+        {
+          "name": "vlans",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "dual_stack",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        },
+        {
+          "name": "ipv6_base",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "2001:db8::/32"
+          }
+        },
+        {
+          "name": "wireless_laptops",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_project_metadata": {
+      "parameters": [
+        {
+          "name": "description",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_query_topology": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt_read_packet_trace": {
+      "parameters": [
+        {
+          "name": "limit",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 20
+          }
+        },
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "include_decisions",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_read_qos": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_read_vlans": {
+      "parameters": [
+        {
+          "name": "switch",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_remove_acl": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "name_or_number",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "binding_interface",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "binding_direction",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "in"
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_remove_acl_object": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "name_or_number",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "binding_interface",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "binding_direction",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "in"
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_remove_nat": {
+      "parameters": [
+        {
+          "name": "router",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "inside_interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "outside_interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "acl_number",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "1"
+          }
+        },
+        {
+          "name": "pool_name",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "static_mappings",
+          "annotation": "list[dict] | None",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_rename_device": {
+      "parameters": [
+        {
+          "name": "old_name",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "new_name",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_save_project": {
+      "parameters": [
+        {
+          "name": "filename",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "directory",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_screenshot": {
+      "parameters": [
+        {
+          "name": "filename",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "topology"
+          }
+        },
+        {
+          "name": "fmt",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "PNG"
+          }
+        },
+        {
+          "name": "output_dir",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "projects"
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_send_raw": {
+      "parameters": [
+        {
+          "name": "js_code",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "wait_result",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_set_port": {
+      "parameters": [
+        {
+          "name": "device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "interface",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "bandwidth",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 0
+          }
+        },
+        {
+          "name": "bandwidth_auto",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "full_duplex",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "duplex_auto",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "description",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "mac_address",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "power",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "zone_member",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": ""
+          }
+        },
+        {
+          "name": "proxy_arp",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "ike",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_simulation_mode": {
+      "parameters": [
+        {
+          "name": "on",
+          "annotation": "bool",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": true
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_simulation_step": {
+      "parameters": [
+        {
+          "name": "action",
+          "annotation": "str",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": "forward"
+          }
+        },
+        {
+          "name": "times",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 1
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_validate_plan": {
+      "parameters": [
+        {
+          "name": "plan_json",
+          "annotation": "str",
+          "required": true
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_verify_connectivity": {
+      "parameters": [
+        {
+          "name": "from_device",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "to_ip",
+          "annotation": "str",
+          "required": true
+        },
+        {
+          "name": "count",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 4
+          }
+        },
+        {
+          "name": "timeout_s",
+          "annotation": "float",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": 20.0
+          }
+        }
+      ],
+      "return_annotation": "str"
+    },
+    "pt_workspace_options": {
+      "parameters": [
+        {
+          "name": "auto_cabling",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "external_network_access",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "show_port_labels",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "show_link_lights",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        },
+        {
+          "name": "show_device_labels",
+          "annotation": "int",
+          "required": false,
+          "default": {
+            "kind": "literal",
+            "value": -1
+          }
+        }
+      ],
+      "return_annotation": "str"
+    }
+  },
+  "resources": {
+    "pt://capabilities": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt://catalog/aliases": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt://catalog/cables": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt://catalog/devices": {
+      "parameters": [],
+      "return_annotation": "str"
+    },
+    "pt://catalog/templates": {
+      "parameters": [],
+      "return_annotation": "str"
+    }
+  }
+}

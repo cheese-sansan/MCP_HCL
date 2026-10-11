@@ -13,6 +13,7 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_hcl import __version__
 from mcp_hcl import console as hcl_console
+from mcp_hcl.api_compatibility import api_compatibility_report
 from mcp_hcl.artifact_store import ArtifactRetries
 from mcp_hcl.backend import BackendError, HclBackend
 from mcp_hcl.build_pipeline import register_build_tool
@@ -176,9 +177,15 @@ def create_server(
         return json.dumps(catalog_read(catalog.ports), ensure_ascii=False)
 
     @mcp.tool()
-    def hcl_parity_report() -> dict[str, Any]:
-        """Read the pinned upstream mapping, with implemented and pending states."""
-        return parity_report()
+    async def hcl_parity_report() -> dict[str, Any]:
+        """Read the pinned mapping and API differences against current MCP discovery."""
+        report = parity_report()
+        report["api_compatibility"] = api_compatibility_report(
+            report,
+            {tool.name: tool.inputSchema for tool in await mcp.list_tools()},
+            {str(resource.uri) for resource in await mcp.list_resources()},
+        )
+        return report
 
     @mcp.tool()
     def hcl_bridge_status() -> dict[str, Any]:

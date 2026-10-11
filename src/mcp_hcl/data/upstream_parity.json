@@ -95,8 +95,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Interface bandwidth/OSPF transaction implementation added without tests. Serial clock and EIGRP delay mappings, encrypted plaintext-key equivalence and native/IOS behavior remain unverified.",
-      "software_verification": "pending_external_DeepSeek_testing"
+      "note": "Software-tested bandwidth/OSPF transactions and failure recovery. Serial clock and EIGRP delay mappings, encrypted plaintext-key equivalence and actual native/IOS behavior remain unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_apply_nat",
@@ -106,8 +106,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Software transaction implementation added without tests in the isolated nat-transactions worktree. Runtime, persistence/recovery and IOS ingress-role/pool-mask equivalence remain unverified.",
-      "software_verification": "pending_external_DeepSeek_testing"
+      "note": "Software-tested NAT transactions, identity binding, persistence and failure recovery. Actual native behavior and IOS ingress-role/pool-mask equivalence remain unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_apply_netflow",
@@ -117,7 +117,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested NetStream destination transactions use VM-bound local name metadata. Native named exporter/monitor objects, inert creation, per-exporter source/version and collector delivery remain incomplete or unverified."
+      "note": "Software-tested NetStream destination transactions use VM-bound local name metadata. Native named exporter/monitor objects, inert creation, per-exporter source/version and collector delivery remain incomplete or unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_apply_port_security",
@@ -127,8 +128,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Software configuration transaction added without tests. Legacy PVST, IOS root priority selection, per-port guard scope and protect/restrict behavior remain incomplete/unverified.",
-      "software_verification": "pending_external_DeepSeek_testing"
+      "note": "Software-tested configuration transactions and pre-I/O unsupported-mode rejection. IOS protect/restrict behavior and native firmware equivalence remain incomplete/unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_apply_stp",
@@ -138,8 +139,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Software configuration transaction added without tests. Legacy PVST, IOS root priority selection, per-port guard scope and protect/restrict behavior remain incomplete/unverified.",
-      "software_verification": "pending_external_DeepSeek_testing"
+      "note": "Software-tested configuration transactions and pre-I/O unsupported-mode rejection. Legacy PVST, IOS root priority selection and per-port BPDU guard scope remain incomplete/unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_apply_vlan",
@@ -160,7 +161,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested bound configuration-posture audit prototype exports classified observations only. Cisco enable/encryption/config-register rules and Comware credential algorithms remain unmapped or unverified; full native inventory and upstream equivalence are incomplete."
+      "note": "Software-tested bound configuration-posture audit exports classified observations with credential and raw-config redaction. Cisco enable/encryption/config-register rules and Comware credential algorithms remain unmapped or unverified; full native inventory and upstream equivalence are incomplete.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_backup_config",
@@ -250,7 +252,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested hcl_diff prototype reads bound staged guests and reports address differences. Native missing/extra device inventory and positive in_sync remain unavailable; full upstream behavior is incomplete."
+      "note": "Software-tested bound staged-guest address comparison with identity/stage drift protection. Native missing/extra device inventory and positive in_sync remain unavailable; full upstream behavior is incomplete.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_estimate_plan",
@@ -361,7 +364,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested hcl_health_check prototype reports IPv4 and optional IPv6 observations and samples IPv4 VPN membership for repeated addresses. Native cable inventory, IPv6 routing domains, full-device coverage and a healthy verdict remain unavailable."
+      "note": "Software-tested IPv4/optional IPv6 observations and IPv4 VPN queries for repeated addresses. Native cable inventory, IPv6 routing domains, full-device coverage and a healthy verdict remain unavailable.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_inspect_ports",
@@ -463,7 +467,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested GUI identity/namespace guards precede the staged-project open relay; principal, token, listener and process-local freshness checks do not prove vendor runtime isolation or full live topology contents."
+      "note": "Software-tested GUI identity/namespace guards precede the staged-project open relay; principal, token, listener and process-local freshness checks do not prove vendor runtime isolation or full live topology contents.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_plan_topology",
@@ -557,8 +562,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Software transaction implementation added without tests in the isolated nat-transactions worktree. Runtime, persistence/recovery and IOS ingress-role/pool-mask equivalence remain unverified.",
-      "software_verification": "pending_external_DeepSeek_testing"
+      "note": "Software-tested precise NAT removal, shared-reference protection and original-UUID recovery. Actual native behavior and IOS equivalence remain unverified.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_rename_device",
@@ -578,7 +583,8 @@
       ],
       "state": "planned",
       "live_required": true,
-      "note": "Untested GUI save relay requires stable principal/token/process/listener identity and a matching in-memory namespace lease. Active caption and saved-file readback do not prove native whole-topology inventory, guests or CLI effects."
+      "note": "Software-tested GUI save relay requires stable principal/token/process/listener identity and a matching in-memory namespace lease. Active caption and saved-file readback do not prove native whole-topology inventory, guests or CLI effects.",
+      "software_verification": "scoped_software_contracts; native_behavior_unverified"
     },
     {
       "upstream_tool": "pt_screenshot",
@@ -795,12 +801,13 @@
     },
     {
       "id": "api_compatibility",
-      "state": "planned",
+      "state": "partial",
       "depends_on": [],
       "acceptance": [
         "Explicit translation or capability negotiation for all 62 upstream tools and 5 resources, argument/default/error/output differences.",
         "No successful placeholder tool declarations; unsupported native effects remain typed and incomplete."
-      ]
+      ],
+      "progress": "Hash-pinned declarations for all 62/5 and current HCL discovery/schema differences exposed; executable translation and output/error/behavior equivalence remain unverified."
     },
     {
       "id": "delivery_evidence",
