@@ -4,11 +4,11 @@
 
 ## 当前版本与证据
 
-当前候选：`C:/Users/Public/Documents/MCP_HCL_Reproduction62_20261011_018ef188/mcp_hcl-0.5.0-py3-none-any.whl`。
+当前候选：`C:/Users/Public/Documents/MCP_HCL_Reproduction62_20261011_018ef188_Final/mcp_hcl-0.5.0-py3-none-any.whl`。
 
-SHA256：`b52e247c3118023b37167bb7b802c57e2a8dd26dba01c3e8efd52ccc9fb56812`。57 个包文件与本轮源码逐字节一致。完整软件检查 337 项：336 通过、1 符号链接权限跳过；候选安装专项 135 项：134 通过、1 跳过。HCL SDK 声明面保持 55/6，复现目标更新到上游 62/5。符号链接实际拒绝路径不记为通过。
+SHA256：`7a74d260b364197352ce5d080cd47164c40e3784dc0ff75a920afaa442cbc9c9`。该 wheel 由通过的软件 CI（源码提交 a007f15）构建，57 个包文件与当前 Git 源码逐字节一致。云端完整 338 项全部通过；本机对应完整检查 337 通过、1 符号链接权限跳过；候选安装专项 143 项、142 通过、1 跳过。HCL 声明面 55/6，复现基线 62/5。没有对应权限的跳过路径不记为本机通过。
 
-此前规范化候选 `2c57afcd…5880a` 与其 330/177 项结果保留，属于修改前范围，不标识当前源码。
+旧规范化候选 `2c57afcd…5880a` 和首轮 `b52e247c…56812` 及其结果保留，不能标识修复后的当前源码。
 
 软件证据根：`work/normalization-20261011/ccf9210a95624f7ba9401fbb79e0dead/`，含备份 bundle、来源快照、manifest、SDK/AST 对比和逐项结果。旧候选和原始失败日志保留。
 
@@ -47,3 +47,5 @@ hcl_parity_report 的 reproduction_targets 保存以下全部目标、依赖和�
 本轮源码/测试基线和新回执根：`work/reproduction-62-20261011/018ef18892ed4024a273473dcefef4b6/`。原失败与旧候选不覆盖。
 
 软件交付检查已加入 `.github/workflows/software-ci.yml`：Windows/Python 3.12、默认写开关 0、完整软件检查、wheel 构建及独立日志制品。CI 是软件门槛，不替代原生验收；实际运行状态以对应提交的 Actions 结果为准。
+
+云端干净环境暴露的 Windows 8.3 路径别名误判已修复：证据模板比较解析后的同一文件，路径/哈希/链接保护保留；NetStream 故障注入明确命中规范化目标。首轮失败回执和原工作副本换行字节保存在本轮 work 目录。当前数据文件与 Git/CI 的正式字节对齐，避免旧工作区换行差异混用候选。
