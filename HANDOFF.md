@@ -18,7 +18,7 @@ SHA256：`2213e9c3e81e4d9e26e2ad6a22c3b4e41412ecc88f613bb59b3337686e56849f`。59
 
 ## 下一步
 
-真实 CLI 仍需验证内核独占检查及执行身份，再准备必要专项。用户已确认普通账号与隔离工程暂未准备；软件工作继续，原生专项保持 Unverified。有效成功生命周期应复用，不重复启动，不自动重建旧账号。真实执行按 [测试指南](docs/live-acceptance.md)；参数、恢复与功能限制见 [合同](docs/contract-v2.md)。
+真实 CLI 仍需验证内核独占检查及执行身份，再准备必要专项。用户随后已授权临时普通账号用于最基础测试；2026-10-12 的最小预检在环境隔离检查失败，未启动 HCL/guest 或发送命令。该账号已按本次 SID/创建标记删除，profile 和失败证据保留，原生专项保持 Unverified。有效成功生命周期应复用，不重复启动，不复用已删除账号的旧 SID。真实执行按 [测试指南](docs/live-acceptance.md)；参数、恢复与功能限制见 [合同](docs/contract-v2.md)。
 
 复现目标已扩展并固定到上游 `3c7c7a46b9ea27c914f845d161f95f0fc3f53d5f` 的 62 工具/5 资源，库存为 12 implemented / 47 planned / 3 unverified，HCL 声明面仍为 55/6。原生完整设备/线缆库存、若干 IOS 语义、clock_rate/EIGRP delay、旧 PVST/protect/restrict、原生命名 Exporter/monitor、完整审计规则和安全 Phone 关联等仍缺。
 
@@ -59,3 +59,13 @@ hcl_parity_report 的 reproduction_targets 保存以下全部目标、依赖和�
 同时修正库存中“未测试/等待外部测试”的旧描述，明确 NAT、接口、交换机安全、NetStream、观察/审计及 GUI 的软件测试层与原生未验证层。
 
 基线、源码/依赖清单、逐项测试、API 对照快照和新候选身份位于 `work/api-contracts-20261012/5e8578f9bf144f489deb1433ea9733f3/`。旧失败、历史候选及原生证据保留。下一软件目标继续处理配置语义及原生库存的可验证来源；真实调用等待已准备的普通身份/隔离工程。
+
+## 身份预检诊断增量（2026-10-17）
+
+上次最小原生预检记录为 `C:/Users/Public/Documents/MCP_HCL_Basic_20261012/250073e1572e4b0b9491ac125e4a2bb8/result.json`。其中只有 `Profile environment mismatch`，没有具体字段，不能据此断言 TEMP 或其他变量是根因。
+
+现有 `scripts/hcl_lab_environment_identity.ps1` 改为必须显式传入本次预期 SID/profile，不再绑定已删除账号的旧 SID。只读输出 14 个身份/路径检查的 observed、expected、passed/failed/unknown；缺失不猜测，拒绝不符合普通账号身份或 profile/Temp 的路径。即使路径匹配，activation_allowed、runtime_isolation_verified 和 full_live_gate_passed 仍为 false；不修改环境、不创建账号、不启动 HCL。
+
+本机受影响软件检查 14 项全部通过，首次失败保留。另仅在当前原账号执行一次只读观察，14 字段匹配；这不复现或关闭旧临时账号的环境故障。回执根：`work/identity-diagnostics-20261017/bcdea944e8884091967d5f5b3516680d/`。运行器现在把 scripts 的实际字节也纳入测试 manifest。
+
+本轮只修改仓库脚本、测试和文档，包内源码未变，无需重建候选；当前候选 SHA 与 55/6 声明面保持。软件 CI 结果以本轮提交为准，真实 CLI/配置/流量仍未验证。

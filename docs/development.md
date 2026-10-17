@@ -24,6 +24,8 @@ python -m venv .venv
 
 `check_all.py` 先运行 Ruff lint/format 检查，再执行全部软件测试；只检查格式，不自动改文件。每轮创建新回执目录，保存逐文件 SHA、依赖、实际导入来源、逐项及子用例结果。
 
+验证 manifest 覆盖 src、tests 和 scripts，确保 PowerShell 观察器及运行器的实际文件字节也绑定到结果。`test_lab_account_plan` 的诊断用例通过 AST 读取纯比较函数，并在完整脚本调用中模拟 CIM、阻断进程/账号写操作；不得为软件测试重新创建账号或启动 HCL。
+
 检查强制父进程和 SDK 子进程的真实写开关为 0。新增事务中的未注入采集/API/管道调用会失败；进程审计只允许软件 MCP server、已审阅的离线证据 CLI，以及四个明确的 PowerShell 软件测试模块。它们检查 Plan、ValidateOnly、解析或退役拒绝，不启动 HCL/guest、不创建或删除账号，也不修改宿主配置。既有 named pipe 测试使用私有合成服务。
 
 需要修正格式时，单独执行并审阅差异：

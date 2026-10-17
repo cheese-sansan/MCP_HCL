@@ -40,7 +40,7 @@ import sitecustomize
 
 manifest = {
     str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-    for folder in ("src", "tests")
+    for folder in ("src", "tests", "scripts")
     for p in (root / folder).rglob("*")
     if p.is_file()
     and "__pycache__" not in p.parts

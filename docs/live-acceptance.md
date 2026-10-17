@@ -53,4 +53,12 @@ SimwareClient 是已有普通入口，身份可能因 UAC 变化；出现提权/
 
 最近只读接手复核没有观察到 MCPHCLLab 账号及 Client/Wrapper/MultiCC/guest 进程。真实测试需先准备已审阅的非提权身份、隔离工程和资产基线；不自动重建账号或启动 guest。原生最小验项为实际 GetNamedPipeInfo/服务器 PID/SID/UUID/配置盘归因、占用/未知拒绝、display version 完整回显与提示符。结果绑定新候选 SHA，旧失败保留。
 
-用户已确认普通账号与隔离工程暂未准备。当前继续软件复现，真实 CLI 专项保持 Unverified。API 对应软件测试检查全部 62/5 的声明覆盖、源/快照 SHA、实际 SDK Schema、缺入口、参数包装/默认差异及错误/结果未知标志；不执行映射目标，不导入上游注册器，不升级原生验收。
+用户已授权临时普通账号进行最基础测试；2026-10-12 最小预检在环境检查被拒绝，账号已回退删除，profile 与失败记录保留，未启动 HCL/guest。当时未记录具体失败字段，不能事后补写根因或通过。真实 CLI 专项保持 Unverified。API 对应软件测试检查全部 62/5 的声明覆盖、源/快照 SHA、实际 SDK Schema、缺入口、参数包装/默认差异及错误/结果未知标志；不执行映射目标，不导入上游注册器，不升级原生验收。
+
+后续在实际目标账号中先运行只读诊断（使用本次创建回执的 SID 和已审阅的 profile，不能照抄历史值）：
+
+```powershell
+powershell.exe -NoProfile -File scripts\hcl_lab_environment_identity.ps1 -ExpectedSid '本次SID' -ExpectedProfile '本次实际profile路径'
+```
+
+输出包含 14 项检查及明确字段；环境匹配返回 0，拒绝或未知返回 2。通过只表示当前身份及路径字符串匹配，不证明路径无链接、VM 隔离、HCL/guest 或 CLI 可用，也不授权启动。不要用修改 USERPROFILE/AppData/Temp 或降低检查来制造通过。脚本仅选择已知路径/token 字段，不导出完整环境；回执留在本地私有证据目录。
