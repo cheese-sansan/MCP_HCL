@@ -69,3 +69,13 @@ hcl_parity_report 的 reproduction_targets 保存以下全部目标、依赖和�
 本机受影响软件检查 14 项全部通过，首次失败保留。另仅在当前原账号执行一次只读观察，14 字段匹配；这不复现或关闭旧临时账号的环境故障。回执根：`work/identity-diagnostics-20261017/bcdea944e8884091967d5f5b3516680d/`。运行器现在把 scripts 的实际字节也纳入测试 manifest。
 
 本轮只修改仓库脚本、测试和文档，包内源码未变，无需重建候选；当前候选 SHA 与 55/6 声明面保持。软件 CI 结果以本轮提交为准，真实 CLI/配置/流量仍未验证。
+
+## 跨账号只读启动增量（2026-10-18）
+
+已通过两次必要只读尝试取得新的原生证据：File 调用首先被新账号的执行策略拒绝；切换为核对 SHA 后的 Command 调用后，SID/profile/AppData 与 TEMP/TMP 共 13 项匹配，HOMEDRIVE+HOMEPATH 却指向启动工作目录。TEMP/TMP 是正确 profile 的 8.3 别名，不能用未经规范化的前缀判断。不能把此新结果直接写成 2026-10-12 旧失败的已证实根因。
+
+`hcl_lab_observation_launch.ps1` 已移除旧账号/SID/历史文件哈希，改用本次创建回执、SID/标记/非管理员成员与预期 profile 核对。PlanOnly 不读取密码、不启动进程；实际启动要求已初始化的正确 CIM profile，并以该 profile 为工作目录。观察器在同一缓冲区核对 SHA 后执行，不改执行策略或环境根；超时返回 3 并保留 PID，不重放。请求加载 profile 不再写为已经验证加载。
+
+两个临时账号 MCPHCLQ1018（SID 尾号 1008）和 MCPHCLQ1018B（1009）均已按各自创建回执停用删除，profile 保留且未加载；没有 HCL/guest 或 CLI 动作。原始证据根及后续操作步骤见测试指南。受影响软件检查 21 项全部通过，含实际 8.3 别名、SHA 改变拒绝、Unicode/引号常量、旧 marker、未初始化 profile 及超时不重放。回执根：`work/observation-launch-20261018/f06c9e6ab6524ea6a8bec9ba55993cf5/`。
+
+包内源码与候选保持不变；当前修正启动器在目标普通账号中的完整成功观察仍 Unverified。下一步是在已初始化的普通账号中，以 profile 工作目录取得 14 项完整匹配，再接必要单设备 CLI，不能把本轮 13 项匹配当成已解除所有隔离前提。整体仍 Incomplete，full_live_gate_passed=false。

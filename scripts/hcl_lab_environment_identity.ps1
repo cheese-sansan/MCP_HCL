@@ -7,6 +7,9 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+foreach ($module in @('Microsoft.PowerShell.Utility','CimCmdlets')) {
+    Import-Module (Join-Path $PSHOME ('Modules\'+$module+'\'+$module+'.psd1')) -ErrorAction Stop
+}
 
 function Normalize-LabPath($Value) {
     if ($Value -isnot [string] -or $Value -notmatch '^[A-Za-z]:[\\/]' -or

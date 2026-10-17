@@ -55,10 +55,17 @@ SimwareClient 是已有普通入口，身份可能因 UAC 变化；出现提权/
 
 用户已授权临时普通账号进行最基础测试；2026-10-12 最小预检在环境检查被拒绝，账号已回退删除，profile 与失败记录保留，未启动 HCL/guest。当时未记录具体失败字段，不能事后补写根因或通过。真实 CLI 专项保持 Unverified。API 对应软件测试检查全部 62/5 的声明覆盖、源/快照 SHA、实际 SDK Schema、缺入口、参数包装/默认差异及错误/结果未知标志；不执行映射目标，不导入上游注册器，不升级原生验收。
 
-后续在实际目标账号中先运行只读诊断（使用本次创建回执的 SID 和已审阅的 profile，不能照抄历史值）：
+后续先用本次创建回执、已审阅的实际 profile 和观察器 SHA 准备只读启动计划，不能照抄历史 SID。以下命令在原账号 Windows PowerShell 5.1 中执行，PlanOnly 不询问密码或启动子进程：
 
 ```powershell
-powershell.exe -NoProfile -File scripts\hcl_lab_environment_identity.ps1 -ExpectedSid '本次SID' -ExpectedProfile '本次实际profile路径'
+$observerSha = (Get-FileHash scripts\hcl_lab_environment_identity.ps1).Hash.ToLowerInvariant()
+scripts\hcl_lab_observation_launch.ps1 -CreationRecord '本次创建回执.json' -ExpectedProfile '本次实际profile路径' -ObserverSha256 $observerSha -OutputRoot '已审阅的私有回执目录' -PlanOnly
 ```
 
 输出包含 14 项检查及明确字段；环境匹配返回 0，拒绝或未知返回 2。通过只表示当前身份及路径字符串匹配，不证明路径无链接、VM 隔离、HCL/guest 或 CLI 可用，也不授权启动。不要用修改 USERPROFILE/AppData/Temp 或降低检查来制造通过。脚本仅选择已知路径/token 字段，不导出完整环境；回执留在本地私有证据目录。
+
+确认计划后，去掉 PlanOnly 才会在原账号进程中读取 SecureString 密码并请求目标账号子进程。目标账号必须已有与创建 SID 匹配的 CIM profile；未初始化时在凭据输入/启动之前拒绝。工作目录固定为该 profile，不能使用 SystemRoot 或回执目录替代；本机跨账号实测发现后者会进入 HOMEDRIVE/HOMEPATH。
+
+新账号的执行策略可能拒绝 `-File`。启动器按 SHA 读取同一缓冲区后使用 Command 模式运行固定观察器，不更改执行策略，不使用 ExecutionPolicy Bypass。读取固定系统模块也不改写 PSModulePath。等待超时返回 3，保留该 PID，先观察同一子进程；不能因为观察超时重新创建账号或重放启动。日志区分 profile_load_requested 与 profile_loaded_for_child，后者不凭启动请求写为 true。
+
+2026-10-18 两次必要只读尝试及回退分别位于 `C:/Users/Public/Documents/MCP_HCL_ReadOnly_20261018/86b79cf7245a49e4b5da269e97cc2422/`、`C:/Users/Public/Documents/MCP_HCL_ReadOnly_20261018/770a2178352a48bc911bba5066c8d347/`。前次在 File 模式被执行策略拒绝；修正后取得 14 字段，其中 13 项匹配、HOME 组合项指向回执工作目录。TEMP/TMP 的 8.3 路径经规范化指向正确 profile，不能按字符串前缀误判。两个新账号均按各自 SID/标记停用删除，profile/证据保留；未启动 HCL/guest，未发送 CLI。该新观察不补写 2026-10-12 的未知字段。
