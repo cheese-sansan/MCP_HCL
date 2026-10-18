@@ -385,7 +385,7 @@ class LabObservationLauncherTests(unittest.TestCase):
             command += (
                 "function Start-Process {param($WorkingDirectory) "
                 f"if($WorkingDirectory -ne '{literal_profile}'){{throw 'Wrong working directory'}};"
-                "$p=[pscustomobject]@{Id=888};$p|Add-Member ScriptMethod WaitForExit {param($ms) $false};$p};"
+                "$p=[pscustomobject]@{Id=888;Handle=[IntPtr]1};$p|Add-Member ScriptMethod WaitForExit {param($ms) $false};$p};"
                 "$r=@{schema_version=1;kind='lab_account_creation';status='created_standard_account';"
                 "owner_sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value;"
                 f"account_name='FreshLab';account_sid='S-1-5-21-1-2-3-1009';description='{marker}'}};"
@@ -417,3 +417,18 @@ class LabObservationLauncherTests(unittest.TestCase):
         result = self.guarded_launch(initialized=True, stale_marker=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(b"Lab account creation identity changed", result.stderr)
+
+    def test_exit_code_is_observed_from_exact_retained_handle(self):
+        script = str(self.root / "scripts/hcl_lab_observation_launch.ps1").replace("'", "''")
+        command = (
+            "$ErrorActionPreference='Stop';$t=$null;$e=$null;"
+            f"$ast=[Management.Automation.Language.Parser]::ParseFile('{script}',[ref]$t,[ref]$e);"
+            "$f=$ast.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] "
+            "-and $n.Name -eq 'Get-LabChildExitCode'},$true);"
+            ". ([ScriptBlock]::Create($f.Extent.Text));"
+            "$p=Start-Process (Join-Path $PSHOME 'powershell.exe') -ArgumentList @('-NoProfile','-Command','exit 7') -WindowStyle Hidden -PassThru;"
+            "$handle=$p.Handle;$p.WaitForExit();try{@{code=(Get-LabChildExitCode $handle)}|ConvertTo-Json}finally{$p.Dispose()}"
+        )
+        result = self.run_command(command)
+        self.assertEqual(result.returncode, 0, result.stderr.decode(errors="replace"))
+        self.assertEqual(json.loads(result.stdout.decode("utf-8-sig"))["code"], 7)

@@ -30,6 +30,22 @@ function New-LabObservationCommand([string]$Reader,[string]$Sha256,[string]$Sid,
         '&([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString($b).TrimStart([char]0xfeff))) '+
         '-ExpectedSid '+(& $literal $Sid)+' -ExpectedProfile '+(& $literal $Profile)
 }
+function Get-LabChildExitCode([IntPtr]$Handle) {
+    if (-not ('McpHclChildExitNative' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class McpHclChildExitNative {
+    [DllImport("kernel32.dll", SetLastError=true)]
+    public static extern bool GetExitCodeProcess(IntPtr process, out uint code);
+}
+'@
+    }
+    $code=[uint32]0
+    if (-not [McpHclChildExitNative]::GetExitCodeProcess($Handle,[ref]$code)) { throw 'Child exit code could not be observed from its retained handle.' }
+    if ($code -eq 259) { return $null }
+    return $code
+}
 $reader=Join-Path $PSScriptRoot 'hcl_lab_environment_identity.ps1'
 $expectedHash=$ObserverSha256.ToLowerInvariant()
 if ((Get-FileHash -LiteralPath $reader -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'Reviewed observer content changed.' }
@@ -95,16 +111,21 @@ try {
     # CreateProcessWithLogonW has a shorter command limit. Keep the reviewed
     # content in its public file and hash the same bytes in the child too.
     $child=Start-Process -FilePath $shell -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-Command',$runner) -Credential $credential -LoadUserProfile -WindowStyle Hidden -WorkingDirectory $actualWorkingDirectory -RedirectStandardOutput $outputFile -RedirectStandardError $errorFile -PassThru
+    # Retain the exact process handle before waiting. Start-Process can leave
+    # the managed ExitCode property empty after the child has already exited.
+    $nativeProcessHandle=$child.Handle
     $record['pid']=$child.Id;$record['phase']='running';$record['profile_load_requested']=$true
     $record | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $recordFile -Encoding UTF8
     if (-not $child.WaitForExit(45000)) {
         $record['phase']='running_after_observation_timeout'
     } else {
-        $record['exit_code']=$child.ExitCode;$record['phase']='terminal_observed'
+        $record['exit_code']=Get-LabChildExitCode $nativeProcessHandle
+        $record['phase']=if($null -eq $record['exit_code']){'terminal_exit_code_unknown'}else{'terminal_observed'}
         if (Test-Path -LiteralPath $outputFile) { $record['stdout_sha256']=(Get-FileHash -LiteralPath $outputFile).Hash.ToLowerInvariant() }
     }
 } catch { $record['phase']='failed';$record['error']=$_.Exception.Message }
 finally {
+    if ($child -is [Diagnostics.Process]) { $child.Dispose() }
     $credential=$null
     if ($passwordInput) { $passwordInput.Dispose() }
     $record | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $recordFile -Encoding UTF8
@@ -115,4 +136,5 @@ if ($record['phase'] -eq 'terminal_observed') {
     if ($record['exit_code'] -ne 0) { exit 2 }
 }
 elseif ($record['phase'] -eq 'running_after_observation_timeout') { exit 3 }
+elseif ($record['phase'] -eq 'terminal_exit_code_unknown') { exit 2 }
 elseif ($record['phase'] -eq 'failed') { exit 2 }

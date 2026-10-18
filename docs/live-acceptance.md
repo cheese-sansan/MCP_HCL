@@ -69,3 +69,11 @@ scripts\hcl_lab_observation_launch.ps1 -CreationRecord '本次创建回执.json'
 新账号的执行策略可能拒绝 `-File`。启动器按 SHA 读取同一缓冲区后使用 Command 模式运行固定观察器，不更改执行策略，不使用 ExecutionPolicy Bypass。读取固定系统模块也不改写 PSModulePath。等待超时返回 3，保留该 PID，先观察同一子进程；不能因为观察超时重新创建账号或重放启动。日志区分 profile_load_requested 与 profile_loaded_for_child，后者不凭启动请求写为 true。
 
 2026-10-18 两次必要只读尝试及回退分别位于 `C:/Users/Public/Documents/MCP_HCL_ReadOnly_20261018/86b79cf7245a49e4b5da269e97cc2422/`、`C:/Users/Public/Documents/MCP_HCL_ReadOnly_20261018/770a2178352a48bc911bba5066c8d347/`。前次在 File 模式被执行策略拒绝；修正后取得 14 字段，其中 13 项匹配、HOME 组合项指向回执工作目录。TEMP/TMP 的 8.3 路径经规范化指向正确 profile，不能按字符串前缀误判。两个新账号均按各自 SID/标记停用删除，profile/证据保留；未启动 HCL/guest，未发送 CLI。该新观察不补写 2026-10-12 的未知字段。
+
+随后初始化新账号 profile 并使用 profile 工作目录，已得到真实 14/14 匹配及退出码 0。启动器现在保留原始进程句柄读取退出码，避免把 Start-Process 的空托管属性当成失败。独立运行目录只复制已有 CPython/标准库并保存逐文件哈希，不复制原账号 site-packages、profile 或环境配置。该运行目录只验证当前最小 console/runtime-binding 导入，不表示完整 SDK 环境安装完成。
+
+最小单设备工程已在上述正确身份下启动并正常停止/保存/退出。旧 CLI 临时脚本异常后无完整回执，命令结果 unknown；未重放，配置与流量未运行。原生记录及清理/原账号资产的范围化核对见 HANDOFF。本次关闭后不重复生命周期验收，只在必要 CLI 补测时准备当前 SID、当前 VM UUID 与配置盘绑定。
+
+后续单次 CLI 使用 `scripts/hcl_lab_console_once.py --spec 本次spec.json --output-root 新私有目录`，必须在已经通过环境观察的目标普通账号中运行。spec 只含 candidate、candidate_sha256、project_file（绝对 .net 路径）、topology、严格整数 device_id、owner_sid 与 vm_uuid，分别取自本次候选和原生观察；不接受额外命令字段。默认不开通真实输入；显式写开关为 1 后也只发送一次 display version。候选 SHA/实际导入路径、原生当前用户 VM/配置盘/服务器身份由现有生产绑定器核对，多个辅助 VM 的存在不代替或推翻目标 VM 的精确绑定。
+
+探针每次创建独立目录，校验失败也写明 stage 和 command_outcome；只在完整归因回显/提示符后记录 output_received，原生总门槛仍 false。unexpected 异常不在公开摘要输出原始消息，原始响应仅留私有回执。回执落盘失败必须保留已知命令结果，不能写成未发送或自动重放。该新探针的软件用例通过不等于其原生调用已通过。

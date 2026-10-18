@@ -70,12 +70,14 @@ hcl_parity_report 的 reproduction_targets 保存以下全部目标、依赖和�
 
 本轮只修改仓库脚本、测试和文档，包内源码未变，无需重建候选；当前候选 SHA 与 55/6 声明面保持。软件 CI 结果以本轮提交为准，真实 CLI/配置/流量仍未验证。
 
-## 跨账号只读启动增量（2026-10-18）
+## 原生最小测试当前结果（2026-10-18）
 
-已通过两次必要只读尝试取得新的原生证据：File 调用首先被新账号的执行策略拒绝；切换为核对 SHA 后的 Command 调用后，SID/profile/AppData 与 TEMP/TMP 共 13 项匹配，HOMEDRIVE+HOMEPATH 却指向启动工作目录。TEMP/TMP 是正确 profile 的 8.3 别名，不能用未经规范化的前缀判断。不能把此新结果直接写成 2026-10-12 旧失败的已证实根因。
+跨账号初始化 profile 后，修正后的启动器在 MCPHCLQ1018D（新 SID 尾号 1011）完成真实 14/14 身份/路径观察，子进程退出码 0。环境字段匹配这一层已得到证据；不等于 VM、管道或流量隔离全部通过。C 账号（1010）的早期观察也匹配，但其 Python 位于原账号私有目录而不可访问，未启动 HCL；两个账号均已删除，profile/证据保留。
 
-`hcl_lab_observation_launch.ps1` 已移除旧账号/SID/历史文件哈希，改用本次创建回执、SID/标记/非管理员成员与预期 profile 核对。PlanOnly 不读取密码、不启动进程；实际启动要求已初始化的正确 CIM profile，并以该 profile 为工作目录。观察器在同一缓冲区核对 SHA 后执行，不改执行策略或环境根；超时返回 3 并保留 PID，不重放。请求加载 profile 不再写为已经验证加载。
+D 账号使用逐文件哈希核对的独立 CPython/标准库目录（651 文件、约 36.8MB，不含原账号 site-packages），固定候选仍为 2213e9c3…56849f。仅一个 MSR36-20 工程完成创建/启动/正常停止/保存/退出，VM 进程 UUID 为 d9d57b86-2746-442c-9ab4-d93bbe00bc22。没有配置或流量测试。旧临时 CLI 脚本异常发生后缺少完整回执，无法可靠判定命令结果，记录 unknown，未重放；不能把它称为 CLI 通过或确定 not_sent。
 
-两个临时账号 MCPHCLQ1018（SID 尾号 1008）和 MCPHCLQ1018B（1009）均已按各自创建回执停用删除，profile 保留且未加载；没有 HCL/guest 或 CLI 动作。原始证据根及后续操作步骤见测试指南。受影响软件检查 21 项全部通过，含实际 8.3 别名、SHA 改变拒绝、Unicode/引号常量、旧 marker、未初始化 profile 及超时不重放。回执根：`work/observation-launch-20261018/f06c9e6ab6524ea6a8bec9ba55993cf5/`。
+原生证据：`C:/Users/Public/Documents/MCP_HCL_Basic_20261018/df0ea35cc8f2412e8632c7a6847317b7/`。HCL/guest 已正常退出，D 账号按本次 SID/marker 停用删除。原账号三个记录根共 97 文件无新增、删除或变动；检查只覆盖大小/mtime 及不超过 1MiB 文件的哈希，不宣称大磁盘内容完整校验。首次日期自动解析误判及复核结果均保留。
 
-包内源码与候选保持不变；当前修正启动器在目标普通账号中的完整成功观察仍 Unverified。下一步是在已初始化的普通账号中，以 profile 工作目录取得 14 项完整匹配，再接必要单设备 CLI，不能把本轮 13 项匹配当成已解除所有隔离前提。整体仍 Incomplete，full_live_gate_passed=false。
+启动器修复了 Start-Process 的托管 ExitCode 为空时误判：先保留原始进程句柄，再用 GetExitCodeProcess 读取真实退出码；仍活动/未知不写成功，关闭观察句柄不终止子进程。新增 `scripts/hcl_lab_console_once.py` 只允许明确启用后发送一次 display version，复用候选 RuntimeBinding.resolve/verify_pipe 和共享 PersistentConsole，不再手写“注册表必须只有一台 VM”等猜测。参数/候选/身份/打开/交换/关闭失败均保存具名阶段；回执写入失败保留已有 command_outcome，禁止冒充 not_sent 后重放。
+
+受影响软件检查 28 项全部通过；回执根 `work/profile-runtime-20261018/80a9d4f318d24f48b85b4dac2f0f9d06/`。包内源码未变，不重建候选。新单次 CLI 探针尚未原生验证；下一步仅补必要绑定后的单次 CLI，复用生命周期证据，不扩大到配置/流量。完整复现目标仍 Incomplete、full_live_gate_passed=false。
