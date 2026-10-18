@@ -79,7 +79,7 @@ def probe(spec_path, output_root, *, candidate_loader=load_candidate):
             any(not isinstance(spec[k], str) for k in fields - {"device_id"})
             or type(spec["device_id"]) is not int
             or not 1 <= spec["device_id"] <= 1024
-            or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", spec["topology"])
+            or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,31}", spec["topology"])
             or not re.fullmatch(r"S-\d+(?:-\d+)+", spec["owner_sid"])
             or not re.fullmatch(r"[0-9a-f]{64}", spec["candidate_sha256"])
         ):

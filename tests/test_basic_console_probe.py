@@ -127,7 +127,14 @@ class BasicConsoleProbeTests(unittest.TestCase):
         self.assertFalse(result["runtime_verified"])
 
     def test_unknown_fields_bool_device_and_bad_uuid_reject_before_loading(self):
-        for field, value in (("command", "save"), ("device_id", True), ("vm_uuid", "wrong")):
+        for field, value in (
+            ("command", "save"),
+            ("device_id", True),
+            ("vm_uuid", "wrong"),
+            ("topology", ".."),
+            ("topology", "topo1/other"),
+            ("topology", "name;exit"),
+        ):
             with self.subTest(field=field):
                 spec = copy.deepcopy(self.spec)
                 spec[field] = value
