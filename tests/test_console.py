@@ -18,6 +18,7 @@ import sys
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from mcp_hcl.console import (
     ConsoleError,
@@ -84,12 +85,20 @@ class NamedPipeServer:
     """A real byte-mode Windows named pipe that answers each line with a reply."""
 
     def __init__(
-        self, name: str, *, banner: bytes = b"", reply: bytes = b"", max_instances=1
+        self,
+        name: str,
+        *,
+        banner: bytes = b"",
+        reply: bytes = b"",
+        max_instances=1,
+        expect_client_rejection=False,
     ) -> None:
         self.name = name
         self.max_instances = max_instances
         self.banner = banner
         self.reply = reply
+        self.expect_client_rejection = expect_client_rejection
+        self.rejected_disconnect = False
         self.received: list[str] = []
         self.errors: list[Exception] = []
         self._handle = None
@@ -117,8 +126,15 @@ class NamedPipeServer:
     def _serve(self) -> None:
         try:
             connected = kernel32.ConnectNamedPipe(self._handle, None)
-            if not connected and ctypes.get_last_error() != ERROR_PIPE_CONNECTED:
-                raise ctypes.WinError(ctypes.get_last_error())
+            if not connected:
+                code = ctypes.get_last_error()
+                if self.expect_client_rejection and code == 232 and not self.received:
+                    # The identity-rejection client can close before this
+                    # server thread has returned from ConnectNamedPipe.
+                    self.rejected_disconnect = True
+                    return
+                if code != ERROR_PIPE_CONNECTED:
+                    raise ctypes.WinError(code)
             descriptor = msvcrt.open_osfhandle(self._handle, os.O_RDWR | os.O_BINARY)
             self._owns_handle = False
             try:
@@ -154,6 +170,26 @@ class NamedPipeServer:
             kernel32.CloseHandle(self._handle)
         if self.errors:
             raise self.errors[0]
+
+
+class PipeFixtureTests(unittest.TestCase):
+    def test_early_disconnect_requires_explicit_rejection_and_known_native_code(self):
+        for expected_rejection, code in ((True, 232), (False, 232), (True, 5)):
+            with self.subTest(expected_rejection=expected_rejection, code=code):
+                server = NamedPipeServer("unused", expect_client_rejection=expected_rejection)
+                with (
+                    patch.object(kernel32, "ConnectNamedPipe", return_value=False),
+                    patch("ctypes.get_last_error", return_value=code),
+                ):
+                    server._serve()
+                self.assertEqual(server.received, [])
+                if expected_rejection and code == 232:
+                    self.assertTrue(server.rejected_disconnect)
+                    server.close()
+                else:
+                    with self.assertRaises(OSError) as caught:
+                        server.close()
+                    self.assertEqual(caught.exception.winerror, code)
 
 
 class PipeNameTests(unittest.TestCase):

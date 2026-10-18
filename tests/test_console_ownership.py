@@ -46,7 +46,12 @@ class OwnershipTests(unittest.TestCase):
 
     def test_multiple_instance_pipe_is_refused_without_sending(self):
         pipe = rf"\\.\pipe\ownership{uuid4().hex}-device2"
-        server = NamedPipeServer(pipe, max_instances=2, reply=b"display version\r\nBuild\r\n<R1>")
+        server = NamedPipeServer(
+            pipe,
+            max_instances=2,
+            reply=b"display version\r\nBuild\r\n<R1>",
+            expect_client_rejection=True,
+        )
         server.start()
         try:
             with (
@@ -71,7 +76,7 @@ class OwnershipTests(unittest.TestCase):
 
     def test_unknown_pipe_info_closes_handle_before_io(self):
         pipe = rf"\\.\pipe\ownership{uuid4().hex}-device3"
-        server = NamedPipeServer(pipe, max_instances=1)
+        server = NamedPipeServer(pipe, max_instances=1, expect_client_rejection=True)
         server.start()
         kernel = ctypes.WinDLL("kernel32", use_last_error=True)
         try:
@@ -89,7 +94,7 @@ class OwnershipTests(unittest.TestCase):
 
     def test_raw_console_path_cannot_bypass_exclusivity(self):
         pipe = rf"\\.\pipe\ownership{uuid4().hex}-device4"
-        server = NamedPipeServer(pipe, max_instances=255)
+        server = NamedPipeServer(pipe, max_instances=255, expect_client_rejection=True)
         server.start()
         try:
             result = HclConsole(writes_enabled=True).run(pipe, "display version")

@@ -299,7 +299,7 @@ class RuntimeBindingTests(unittest.TestCase):
 
     def test_real_pipe_server_that_is_not_a_virtualbox_process_is_rejected(self):
         pipe = rf"\\.\pipe\identity{uuid4().hex}-device1"
-        server = NamedPipeServer(pipe)
+        server = NamedPipeServer(pipe, expect_client_rejection=True)
         server.start()
         fd = open_console_pipe(pipe, timeout=1)
         channel = SimpleNamespace(session=ConsoleSession(fd))
@@ -317,9 +317,10 @@ class RuntimeBindingTests(unittest.TestCase):
             )
         )
         try:
-            with self.assertRaises(ConsoleError):
+            with self.assertRaisesRegex(ConsoleError, "expected current-user VirtualBox process"):
                 binder.verify_pipe(channel, {"owner_sid": "S-1-5-21-1", "vm_uuid": self.vm_uuid})
             self.assertEqual(server.received, [])
+            self.assertEqual(channel.session.last_write_bytes, 0)
         finally:
             channel.session.close()
             server.close()
