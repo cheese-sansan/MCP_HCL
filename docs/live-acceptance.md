@@ -77,3 +77,7 @@ scripts\hcl_lab_observation_launch.ps1 -CreationRecord '本次创建回执.json'
 后续单次 CLI 使用 `scripts/hcl_lab_console_once.py --spec 本次spec.json --output-root 新私有目录`，必须在已经通过环境观察的目标普通账号中运行。spec 只含 candidate、candidate_sha256、project_file（绝对 .net 路径）、topology、严格整数 device_id、owner_sid 与 vm_uuid，分别取自本次候选和原生观察；不接受额外命令字段。默认不开通真实输入；显式写开关为 1 后也只发送一次 display version。候选 SHA/实际导入路径、原生当前用户 VM/配置盘/服务器身份由现有生产绑定器核对，多个辅助 VM 的存在不代替或推翻目标 VM 的精确绑定。
 
 探针每次创建独立目录，校验失败也写明 stage 和 command_outcome；只在完整归因回显/提示符后记录 output_received，原生总门槛仍 false。unexpected 异常不在公开摘要输出原始消息，原始响应仅留私有回执。回执落盘失败必须保留已知命令结果，不能写成未发送或自动重放。该新探针的软件用例通过不等于其原生调用已通过。
+
+新单次探针已在 E 账号取得真实拒绝回执：runtime_binding/not_sent，原因为 HCL 描述文件的 DmiBoardSerial 包含 XML 1.0 禁止的字面 0x03。当前新候选对这一已观察到的非身份元数据作内存解析兼容，原文件、原始哈希和所有 UUID/存储/管道约束保留；未知控制字符和 DTD/实体仍拒绝。捕获样本的离线重读不等于真实运行绑定或 CLI 通过。新旧候选、受影响软件检查及原始拒绝位置见 HANDOFF。
+
+本次 E 账号已正常关闭 HCL/guest 并按新 SID/marker 删除，不能重用旧 SID 继续操作。后续确有必要补测时，探针脚本、spec、Python 和新候选须处于目标普通账号可读且已核对哈希的目录，不引用原账号私有 checkout/venv；重新绑定当次真实 VM UUID。仍不自动扩展到配置、重启或流量测试。

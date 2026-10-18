@@ -45,6 +45,58 @@ def machine_values(text):
     return result
 
 
+class _DescriptorTreeBuilder(ET.TreeBuilder):
+    def doctype(self, *args):
+        # Parser-level rejection also covers UTF-16 declarations, for which
+        # an ASCII byte scan alone cannot enforce the no-DTD contract.
+        fail("Unsafe VM descriptor declarations")
+
+
+def _descriptor_tree(data):
+    return ET.fromstring(data, parser=ET.XMLParser(target=_DescriptorTreeBuilder()))
+
+
+def identity_descriptor(data):
+    """Parse identity XML, tolerating only observed ETX in ignored HCL DMI metadata.
+
+    VirtualBox accepts HCL's literal ETX board serial, which XML 1.0 rejects.
+    The on-disk bytes and their identity hash are never changed. UUID/storage/
+    UART fields and all other invalid controls retain strict parsing.
+    """
+    if b"<!DOCTYPE" in data.upper() or b"<!ENTITY" in data.upper():
+        fail("Unsafe VM descriptor declarations")
+    try:
+        return _descriptor_tree(data)
+    except ET.ParseError:
+        if b"\x03" not in data:
+            raise
+    # Never treat tag-looking text inside comments, CDATA or PIs as metadata.
+    for block in re.finditer(rb"<!--.*?-->|<!\[CDATA\[.*?\]\]>|<\?.*?\?>", data, re.S):
+        if b"\x03" in block[0]:
+            fail("Unsupported control bytes outside HCL board-serial metadata")
+    key = b"VBoxInternal/Devices/pcbios/0/Config/DmiBoardSerial"
+    pattern = rb'<ExtraDataItem\s+name="' + re.escape(key) + rb'"\s+value="[^"<>&]*"\s*/>'
+    parsed_data = re.sub(pattern, lambda match: match[0].replace(b"\x03", b" "), data)
+    if b"\x03" in parsed_data:
+        fail("Unsupported control bytes outside HCL board-serial metadata")
+    root = _descriptor_tree(parsed_data)
+    parents = {child: parent for parent in root.iter() for child in parent}
+    for item in root.iter():
+        if item.tag.rsplit("}", 1)[-1] != "ExtraDataItem" or item.get("name") != key.decode():
+            continue
+        parent = parents.get(item)
+        grandparent = parents.get(parent)
+        if (
+            parent is None
+            or grandparent is None
+            or parent.tag.rsplit("}", 1)[-1] != "ExtraData"
+            or grandparent.tag.rsplit("}", 1)[-1] != "Machine"
+            or set(item.attrib) != {"name", "value"}
+        ):
+            fail("HCL board-serial metadata is outside its expected view")
+    return root
+
+
 class RuntimeBinding:
     def __init__(self, *, runner=subprocess.run):
         self.runner = runner
@@ -92,10 +144,8 @@ class RuntimeBinding:
         if not config.is_file() or config.stat().st_size > 1024 * 1024:
             fail("The expected current-user VM descriptor is missing or oversized")
         data = config.read_bytes()
-        if b"<!DOCTYPE" in data.upper() or b"<!ENTITY" in data.upper():
-            fail("Unsafe VM descriptor declarations")
         try:
-            root = ET.fromstring(data)
+            root = identity_descriptor(data)
             machines = [item for item in root.iter() if item.tag.rsplit("}", 1)[-1] == "Machine"]
             if len(machines) != 1:
                 fail("VM descriptor has no unique machine")

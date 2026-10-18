@@ -4,9 +4,9 @@
 
 ## 当前版本与证据
 
-当前候选：`C:/Users/Public/Documents/MCP_HCL_API_Contracts_20261012_5e8578f9/mcp_hcl-0.5.0-py3-none-any.whl`。
+当前候选：`C:/Users/Public/Documents/MCP_HCL_Descriptor_20261018_f71b2415/mcp_hcl-0.5.0-py3-none-any.whl`。
 
-SHA256：`2213e9c3e81e4d9e26e2ad6a22c3b4e41412ecc88f613bb59b3337686e56849f`。59 个包文件与当前源码及候选安装副本逐字节一致。本机完整软件检查 346 项、345 通过、1 符号链接权限跳过；候选 SDK/协议/API 对应专项 40 项、39 通过、1 跳过。HCL 声明面 55/6，复现基线 62/5。没有对应权限的跳过路径不记为本机通过。
+SHA256：`bb07a86555255bc6e20a2a5e3a2cd8f3f29cd4ecea2a793ebe9c094910f82586`。59 个包文件与当前源码及候选安装副本逐字节一致。受影响源码检查 52 项全部通过；新候选安装专项 68 项、67 通过、1 符号链接权限跳过。当前 HCL 声明面 55/6，固定上游复现基线 62/5；当前提交的完整 CI 单独核对。旧候选 `2213e9c3…56849f` 保留，它才是本次原生拒绝所用包，不能混作新包的原生结果。
 
 前一候选 `7a74d260…9c9` 及其提交 2f7ec0f 的云端 338 项结果保留；它不包含当前 API 对照增量，不能冒充新源码或候选的结果。当前 CI 状态须按实际提交检查。
 
@@ -72,12 +72,12 @@ hcl_parity_report 的 reproduction_targets 保存以下全部目标、依赖和�
 
 ## 原生最小测试当前结果（2026-10-18）
 
-跨账号初始化 profile 后，修正后的启动器在 MCPHCLQ1018D（新 SID 尾号 1011）完成真实 14/14 身份/路径观察，子进程退出码 0。环境字段匹配这一层已得到证据；不等于 VM、管道或流量隔离全部通过。C 账号（1010）的早期观察也匹配，但其 Python 位于原账号私有目录而不可访问，未启动 HCL；两个账号均已删除，profile/证据保留。
+新账号 MCPHCLQ1018E（SID 尾号 1012）已完成真实 14/14 身份/路径观察，子进程退出码 0。使用逐文件核对的 CPython/标准库和旧候选 2213e9c3…56849f，仅启动一个 MSR36-20，VM UUID 60e8a662-885b-4ccc-b4b3-504aec8037ac。单次探针在 runtime_binding 拒绝，command_outcome=not_sent；未打开控制台或重放，配置/流量未运行。
 
-D 账号使用逐文件哈希核对的独立 CPython/标准库目录（651 文件、约 36.8MB，不含原账号 site-packages），固定候选仍为 2213e9c3…56849f。仅一个 MSR36-20 工程完成创建/启动/正常停止/保存/退出，VM 进程 UUID 为 d9d57b86-2746-442c-9ab4-d93bbe00bc22。没有配置或流量测试。旧临时 CLI 脚本异常发生后缺少完整回执，无法可靠判定命令结果，记录 unknown，未重放；不能把它称为 CLI 通过或确定 not_sent。
+拒绝的实证原因：HCL 生成的 .vbox 在非身份 ExtraDataItem/DmiBoardSerial 属性中写入字面 0x03，导致标准 XML 1.0 解析失败。原始描述文件 5271 字节，SHA 2708f9dc1e16e94b01f0fbe5598e2cd87a0cac95187d9ac3942a9961e7b3ea21。证据根：`C:/Users/Public/Documents/MCP_HCL_Console_20261018/57ba837b6b0744c5ba181cd6f486e759/`。HCL/guest 已正常停止、保存和退出，账号按本次 SID/marker 停用删除，profile/证据保留。原账号三个记录根共 97 文件无增删或变动；只校验大小/mtime 和不超过 1MiB 文件的哈希。
 
-原生证据：`C:/Users/Public/Documents/MCP_HCL_Basic_20261018/df0ea35cc8f2412e8632c7a6847317b7/`。HCL/guest 已正常退出，D 账号按本次 SID/marker 停用删除。原账号三个记录根共 97 文件无新增、删除或变动；检查只覆盖大小/mtime 及不超过 1MiB 文件的哈希，不宣称大磁盘内容完整校验。首次日期自动解析误判及复核结果均保留。
+当前源码仅对已观察到的 Machine/ExtraData/DmiBoardSerial 字面 ETX，在内存身份解析副本中作兼容；不写文件、不改 UUID/镜像/序列号，不删除其他未知控制字节。DTD/实体（含 UTF-16）、注释/CDATA/PI、其他属性与错误视图中的控制字节仍拒绝。原始 descriptor_sha256、UUID/配置盘/管道与真实进程检查保留，验证标志不提升。
 
-启动器修复了 Start-Process 的托管 ExitCode 为空时误判：先保留原始进程句柄，再用 GetExitCodeProcess 读取真实退出码；仍活动/未知不写成功，关闭观察句柄不终止子进程。新增 `scripts/hcl_lab_console_once.py` 只允许明确启用后发送一次 display version，复用候选 RuntimeBinding.resolve/verify_pipe 和共享 PersistentConsole，不再手写“注册表必须只有一台 VM”等猜测。参数/候选/身份/打开/交换/关闭失败均保存具名阶段；回执写入失败保留已有 command_outcome，禁止冒充 not_sent 后重放。
+首次软件失败、修复、源码 52 项和新安装候选 68 项检查位于 `work/vbox-descriptor-20261018/f71b241523d5469bb713acb767047811/`。捕获文件仅作离线解析复核；新包尚未完成后续真实配置盘/管道/CLI 验证，不得据此关闭 exclusive_cli 或原生总门槛。
 
-受影响软件检查 28 项全部通过；回执根 `work/profile-runtime-20261018/80a9d4f318d24f48b85b4dac2f0f9d06/`。包内源码未变，不重建候选。新单次 CLI 探针尚未原生验证；下一步仅补必要绑定后的单次 CLI，复用生命周期证据，不扩大到配置/流量。完整复现目标仍 Incomplete、full_live_gate_passed=false。
+历史 C/D 账号的 14 项匹配、独立运行目录、退出码修复及旧 CLI unknown 回执继续保留；D 账号证据根为 `C:/Users/Public/Documents/MCP_HCL_Basic_20261018/df0ea35cc8f2412e8632c7a6847317b7/`，不能把 D 的 unknown 补写成 E 的 not_sent。旧脚本失败不重放，新单次脚本覆盖全阶段回执，回执落盘失败保留已有命令结果。生命周期成功证据继续复用，不另做配置/流量。完整目标仍 Incomplete，full_live_gate_passed=false。

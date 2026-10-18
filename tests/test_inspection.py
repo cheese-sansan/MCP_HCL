@@ -297,6 +297,57 @@ class RuntimeBindingTests(unittest.TestCase):
         with self.assertRaises(ConsoleError):
             self.binder().resolve(self.document, {"device_id": 3}, "lab")
 
+    def test_native_dmi_board_serial_etx_keeps_raw_identity_and_storage_checks(self):
+        raw = self.cfg.read_bytes().replace(
+            b"<MediaRegistry>",
+            b'<ExtraData><ExtraDataItem name="VBoxInternal/Devices/pcbios/0/Config/DmiBoardSerial" value="\x03\x03\x038888\x03\x03\x03\x03"/></ExtraData><MediaRegistry>',
+        )
+        self.cfg.write_bytes(raw)
+        target = self.binder().resolve(self.document, {"device_id": 3}, "lab")
+        self.assertEqual(target["vm_uuid"], self.vm_uuid)
+        self.assertEqual(target["descriptor_sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.cfg.read_bytes(), raw)
+        self.assertFalse(target["runtime_isolation_verified"])
+        self.values["UUID"] = str(uuid4())
+        with self.assertRaises(ConsoleError):
+            self.binder().resolve(self.document, {"device_id": 3}, "lab")
+
+    def test_board_serial_compatibility_does_not_clean_unknown_views_or_controls(self):
+        base = self.cfg.read_bytes()
+        serial = b'<ExtraDataItem name="VBoxInternal/Devices/pcbios/0/Config/DmiBoardSerial" value="\x038888\x03"/>'
+        cases = {
+            "unknown_name": b"<ExtraData>"
+            + serial.replace(b"DmiBoardSerial", b"OtherName")
+            + b"</ExtraData>",
+            "wrong_view": b"<Hardware>" + serial + b"</Hardware>",
+            "comment": b"<!--" + serial + b"-->",
+            "cdata": b"<![CDATA[" + serial + b"]]>",
+            "instruction": b"<?probe " + serial + b"?>",
+            "other_control": b"<ExtraData>" + serial.replace(b"\x03", b"\x04") + b"</ExtraData>",
+        }
+        for name, fragment in cases.items():
+            with self.subTest(name=name):
+                self.cfg.write_bytes(
+                    base.replace(b"<MediaRegistry>", fragment + b"<MediaRegistry>")
+                )
+                with self.assertRaises(ConsoleError):
+                    self.binder().resolve(self.document, {"device_id": 3}, "lab")
+        self.cfg.write_bytes(base.replace(b"lab-device3", b"lab-\x03device3", 1))
+        with self.assertRaises(ConsoleError):
+            self.binder().resolve(self.document, {"device_id": 3}, "lab")
+
+    def test_descriptor_dtd_is_rejected_in_utf8_and_utf16(self):
+        base = self.cfg.read_text()
+        for encoding in ("utf-8", "utf-16"):
+            with self.subTest(encoding=encoding):
+                data = (
+                    f'<?xml version="1.0" encoding="{encoding}"?><!DOCTYPE VirtualBox [<!ENTITY x "unused">]>'
+                    + base
+                ).encode(encoding)
+                self.cfg.write_bytes(data)
+                with self.assertRaisesRegex(ConsoleError, "Unsafe VM descriptor declarations"):
+                    self.binder().resolve(self.document, {"device_id": 3}, "lab")
+
     def test_real_pipe_server_that_is_not_a_virtualbox_process_is_rejected(self):
         pipe = rf"\\.\pipe\identity{uuid4().hex}-device1"
         server = NamedPipeServer(pipe, expect_client_rejection=True)
